@@ -66,8 +66,8 @@ extern "C" void app_main(void)
         printf("full charge capacity: %dmah\n", BQ27220->get_full_charge_capacity());
         printf("raw coulomb count: %dc\n", BQ27220->get_raw_coulomb_count());
         printf("cycle count: %d\n", BQ27220->get_cycle_count());
-        printf("battery level: %d%%\n", BQ27220->get_state_of_charge());
-        printf("battery health: %d%%\n", BQ27220->get_state_of_health());
+        printf("battery level: %d%%\n", BQ27220->get_status_of_health());
+        printf("battery health: %d%%\n", BQ27220->get_status_of_health());
         printf("--------------------------------------------------------------------------\n");
         printf("voltage: %dmv\n", BQ27220->get_voltage());
         int16_t current = BQ27220->get_current();
