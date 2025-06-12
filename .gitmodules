@@ -1,0 +1,3 @@
+[submodule "examples/aw86224/components/cpp-bus-driver"]
+	path = examples/aw86224/components/cpp-bus-driver
+	url = https://github.com/Llgok/cpp-bus-driver.git
