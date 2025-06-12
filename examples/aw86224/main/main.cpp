@@ -1,3 +1,10 @@
+/*
+ * @Description: aw86224
+ * @Author: LILYGO_L
+ * @Date: 2024-12-25 10:33:25
+ * @LastEditTime: 2025-06-12 15:54:44
+ * @License: GPL 3.0
+ */
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
