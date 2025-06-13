@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 17:20:32
+ * @LastEditTime: 2025-06-13 17:57:37
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -147,51 +147,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 ### 示例支持
 
-<!-- if(CONFIG_EXAMPLE_BUILD_AW86224)
-    set(project_path "examples/aw86224/")
-elseif(CONFIG_EXAMPLE_BUILD_BQ27220)
-    set(project_path "examples/bq27220/")
-elseif(CONFIG_EXAMPLE_BUILD_DEEP_SLEEP)
-    set(project_path "examples/deep_sleep/")
-elseif(CONFIG_EXAMPLE_BUILD_ES8311)
-    set(project_path "examples/es8311/")
-elseif(CONFIG_EXAMPLE_BUILD_ES8311_SD_WAV)
-    set(project_path "examples/es8311_sd_wav/")
-elseif(CONFIG_EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART)
-    set(project_path "examples/esp32c6_at_host_sdio_uart/")
-elseif(CONFIG_EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI)
-    set(project_path "examples/esp32c6_at_host_sdio_wifi/")
-elseif(CONFIG_EXAMPLE_BUILD_HI8561_CAMERA)
-    set(project_path "examples/hi8561_camera/")
-elseif(CONFIG_EXAMPLE_BUILD_HI8561_LVGL)
-    set(project_path "examples/hi8561_lvgl/")
-elseif(CONFIG_EXAMPLE_BUILD_HI8561_LVGL_TOUCH_DRAW)
-    set(project_path "examples/hi8561_lvgl_touch_draw/")
-elseif(CONFIG_EXAMPLE_BUILD_ICM20948)
-    set(project_path "examples/icm20948/")
-elseif(CONFIG_EXAMPLE_BUILD_IIC_SCAN)
-    set(project_path "examples/iic_scan/")
-elseif(CONFIG_EXAMPLE_BUILD_L76K)
-    set(project_path "examples/l76k/")
-elseif(CONFIG_EXAMPLE_BUILD_LVGL_9_UI)
-    set(project_path "examples/lvgl_9_ui/")
-elseif(CONFIG_EXAMPLE_BUILD_PCF8563)
-    set(project_path "examples/pcf8563/")
-elseif(CONFIG_EXAMPLE_BUILD_SGM38121)
-    set(project_path "examples/sgm38121/")
-elseif(CONFIG_EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE)
-    set(project_path "examples/sx1262_gfsk_send_receive/")
-elseif(CONFIG_EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE)
-    set(project_path "examples/sx1262_lora_send_receive/")
-elseif(CONFIG_EEXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE)
-    set(project_path "examples/sx1262_tx_continuous_wave/")
-elseif(CONFIG_EXAMPLE_BUILD_TUSB_SERIAL_DEVICE)
-    set(project_path "examples/tusb_serial_device/")
-elseif(CONFIG_EXAMPLE_BUILD_XL9535)
-    set(project_path "examples/xl9535/")
-endif() -->
-
-| example | `[vscode][esp-idf-v6.5.0]` | Description | Picture |
+| example | `[vscode][esp-idf-v5.4.0]` | Description | Picture |
 | ------  | ------ | ------ | ------ | 
 | [aw86224](./main/examples/aw86224) |  <p align="center">![alt text][supported] | | |
 | [bq27220](./main/examples/bq27220) |  <p align="center">![alt text][supported] | | |
@@ -217,7 +173,7 @@ endif() -->
 
 [supported]: https://img.shields.io/badge/-supported-green "example"
 
-| Firmware | Description | Picture |
+| firmware | description | picture |
 | ------  | ------  | ------ |
 | [lvgl_9_ui(ov2710)](./firmware/[T-Display-P4][lvgl_9_ui][ov2710]_firmware_202505301532.bin) | OV2710摄像头版本出厂程序 |  |
 
@@ -259,49 +215,20 @@ endif() -->
 
 ## 引脚总览
 
-| 扬声器引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| BCLK         | IO4       |
-| LRCLK         | IO15       |
-| DATA         | IO11       |
-| SD_MODE         | IO41       |
-
-| 麦克风引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| LRCLK         | IO1       |
-| DATA         | IO2       |
-| EN         | IO3       |
-
-| 振动马达引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| DATA         | IO45       |
-
-| RT9080电源引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| EN         | IO42       |
-
-| RTC引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| SDA         | IO5       |
-| SCL         | IO6       |
-| INT         | IO21       |
-
-| LR1121引脚  | ESP32S3引脚|
-| :------------------: | :------------------:|
-| BUSY         | IO46       |
-| INT         | IO40       |
-| SCLK         | IO18       |
-| MOSI         | IO17       |
-| MISO         | IO8       |
-| CS         | IO7       |
-| RST         | IO10       |
+引脚定义请参考引脚配置文件：[pin_config.h](./components/private_library/pin_config.h)
 
 ## 相关测试
 
 ### 功耗
-| Firmware | Program| Description | Picture |
+| firmware | program | description | picture |
 | ------  | ------  | ------ | ------ | 
-| [Deep_Sleep_Wake_Up](./firmware/[T-Display-S3-Pro-MVSRLora_V1.0][Deep_Sleep_Wake_Up]_firmware_202502061152.bin) | [Deep_Sleep_Wake_Up](./main/examples/Deep_Sleep_Wake_Up) | 静态电流: 29.99 μA 更多信息请查看 [功耗测试日志](./relevant_test/PowerConsumptionTestLog_[T-Display-S3-Pro-MVSRLora_V1.0]_20241214.pdf) | |
+| [deep_sleep(single_board)](./firmware/sleep/[T-Display-P4][deep_sleep][single_board]_firmware_202505301450.bin) |[deep_sleep](./main/examples/deep_sleep/)| 平均电流消耗: 1.2mA 更多信息请查看 [功耗测试日志](./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf) | |
+
+### 摄像头
+| program | description | picture |
+| ------  | ------ | ------ | 
+| [uvc_sc2336](./debug/examples/uvc_sc2336/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/2.jpg" alt="example" width="50%"> </p> |
+| [uvc_ov2710](./debug/examples/uvc_ov2710/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/3.jpg" alt="example" width="50%"> </p> |
 
 ## 常见问题
 
@@ -310,18 +237,8 @@ endif() -->
 
 <br />
 
-* Q. 为什么打开Arduino IDE时他会提醒我是否要升级库文件？我应该升级还是不升级？
-* A. 选择不升级库文件，不同版本的库文件可能不会相互兼容所以不建议升级库文件。
-
-<br />
-
-* Q. 为什么我的板子上“Uart”接口没有输出串口数据，是不是坏了用不了啊？
-* A. 因为项目文件默认配置将USB接口作为Uart0串口输出作为调试，“Uart”接口连接的是Uart0，不经配置自然是不会输出任何数据的。<br />PlatformIO用户请打开项目文件“platformio.ini”，将“build_flags = xxx”下的选项“-DARDUINO_USB_CDC_ON_BOOT=true”修改成“-DARDUINO_USB_CDC_ON_BOOT=false”即可正常使用外部“Uart”接口。<br />Arduino用户打开菜单“工具”栏，选择USB CDC On Boot: “Disabled”即可正常使用外部“Uart”接口。
-
-<br />
-
 * Q. 为什么我的板子一直烧录失败呢？
 * A. 请按住“BOOT-0”按键重新下载程序。
 
 ## 项目
-* [T-Display-S3-Pro-MVSRLora_V1.0](./project/T-Display-S3-Pro-MVSRLora_V1.0.pdf)
+* []()
