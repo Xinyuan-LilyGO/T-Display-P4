@@ -82,23 +82,90 @@ menu "Example Configuration"
         range 2 3
 
     choice
-        prompt "Choose the color format of the LCD"
+        prompt "Select the color format of the LCD"
         default LCD_PIXEL_FORMAT_RGB565
             config LCD_PIXEL_FORMAT_RGB565
                 bool "RGB565"
-
             config LCD_PIXEL_FORMAT_RGB888
                 bool "RGB888"
     endchoice
 
     choice
-        prompt "Choose the camera type"
+        prompt "Select the camera type"
         default CAMERA_TYPE_OV2710
             config CAMERA_TYPE_SC2336
                 bool "SC2336"
-
             config CAMERA_TYPE_OV2710
                 bool "OV2710"
+    endchoice
+
+        # "examples/aw86224/"
+    # "examples/bq27220/"
+    # "examples/deep_sleep/"
+    # "examples/es8311/"
+    # "examples/es8311_sd_wav/"
+    # "examples/esp32c6_at_host_sdio_uart/"
+    # "examples/esp32c6_at_host_sdio_wifi/"
+    # "examples/hi8561_camera/"
+    # "examples/hi8561_lvgl/"
+    # "examples/hi8561_lvgl_touch_draw/"
+    # "examples/icm20948/"
+    # "examples/iic_scan/"
+    # "examples/l76k/"
+    # "examples/lvgl_9_ui/"
+    # "examples/pcf8563/"
+    # "examples/sgm38121/"
+    # "examples/sx1262_gfsk_send_receive/"
+    # "examples/sx1262_lora_send_receive/"
+    # "examples/sx1262_tx_continuous_wave/"
+    # "examples/tusb_serial_device/"
+    # "examples/xl9535/"
+
+    choice
+        prompt "Select the example to build"
+        default EXAMPLE_BUILD_LVGL_9_UI
+            config EXAMPLE_BUILD_AW86224
+                bool "aw86224"
+            config EXAMPLE_BUILD_BQ27220
+                bool "bq27220"
+            config EXAMPLE_BUILD_DEEP_SLEEP
+                bool "deep_sleep"
+            config EXAMPLE_BUILD_ES8311
+                bool "es8311"
+            config EXAMPLE_BUILD_ES8311_SD_WAV
+                bool "es8311_sd_wav"
+            config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART
+                bool "esp32c6_at_host_sdio_uart"
+            config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI
+                bool "esp32c6_at_host_sdio_wifi"
+            config EXAMPLE_BUILD_HI8561_CAMERA
+                bool "hi8561_camera"
+            config EXAMPLE_BUILD_HI8561_LVGL
+                bool "hi8561_lvgl"
+            config EXAMPLE_BUILD_HI8561_LVGL_TOUCH_DRAW
+                bool "hi8561_lvgl_touch_draw"
+            config EXAMPLE_BUILD_ICM20948
+                bool "icm20948"
+            config EXAMPLE_BUILD_IIC_SCAN
+                bool "iic_scan"
+            config EXAMPLE_BUILD_L76K
+                bool "l76k"
+            config EXAMPLE_BUILD_LVGL_9_UI
+                bool "lvgl_9_ui"
+            config EXAMPLE_BUILD_PCF8563
+                bool "pcf8563"
+            config EXAMPLE_BUILD_SGM38121
+                bool "sgm38121"
+            config EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE
+                bool "sx1262_gfsk_send_receive"
+            config EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE
+                bool "sx1262_lora_send_receive"
+            config EXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE
+                bool "sx1262_tx_continuous_wave"
+            config EXAMPLE_BUILD_TUSB_SERIAL_DEVICE
+                bool "tusb_serial_device"
+            config EXAMPLE_BUILD_XL9535
+                bool "xl9535"
     endchoice
 
 endmenu

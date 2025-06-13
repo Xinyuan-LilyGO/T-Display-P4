@@ -1,26 +1,47 @@
 #这里选择你需要编译的项目
-set(project_path 
-    # "examples/aw86224/"
-    # "examples/bq27220/"
-    # "examples/deep_sleep/"
-    # "examples/es8311/"
-    # "examples/es8311_sd_wav/"
-    # "examples/esp32c6_at_host_sdio_uart/"
-    # "examples/esp32c6_at_host_sdio_wifi/"
-    # "examples/hi8561_camera/"
-    # "examples/hi8561_lvgl/"
-    # "examples/hi8561_lvgl_touch_draw/"
-    # "examples/icm20948/"
-    # "examples/iic_scan/"
-    # "examples/l76k/"
-    # "examples/lvgl_9_ui/"
-    # "examples/pcf8563/"
-    # "examples/sgm38121/"
-    # "examples/sx1262_gfsk_send_receive/"
-    # "examples/sx1262_lora_send_receive/"
-    # "examples/sx1262_tx_continuous_wave/"
-    "examples/tusb_serial_device/"
-    )
+if(CONFIG_EXAMPLE_BUILD_AW86224)
+    set(project_path "examples/aw86224/")
+elseif(CONFIG_EXAMPLE_BUILD_BQ27220)
+    set(project_path "examples/bq27220/")
+elseif(CONFIG_EXAMPLE_BUILD_DEEP_SLEEP)
+    set(project_path "examples/deep_sleep/")
+elseif(CONFIG_EXAMPLE_BUILD_ES8311)
+    set(project_path "examples/es8311/")
+elseif(CONFIG_EXAMPLE_BUILD_ES8311_SD_WAV)
+    set(project_path "examples/es8311_sd_wav/")
+elseif(CONFIG_EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART)
+    set(project_path "examples/esp32c6_at_host_sdio_uart/")
+elseif(CONFIG_EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI)
+    set(project_path "examples/esp32c6_at_host_sdio_wifi/")
+elseif(CONFIG_EXAMPLE_BUILD_HI8561_CAMERA)
+    set(project_path "examples/hi8561_camera/")
+elseif(CONFIG_EXAMPLE_BUILD_HI8561_LVGL)
+    set(project_path "examples/hi8561_lvgl/")
+elseif(CONFIG_EXAMPLE_BUILD_HI8561_LVGL_TOUCH_DRAW)
+    set(project_path "examples/hi8561_lvgl_touch_draw/")
+elseif(CONFIG_EXAMPLE_BUILD_ICM20948)
+    set(project_path "examples/icm20948/")
+elseif(CONFIG_EXAMPLE_BUILD_IIC_SCAN)
+    set(project_path "examples/iic_scan/")
+elseif(CONFIG_EXAMPLE_BUILD_L76K)
+    set(project_path "examples/l76k/")
+elseif(CONFIG_EXAMPLE_BUILD_LVGL_9_UI)
+    set(project_path "examples/lvgl_9_ui/")
+elseif(CONFIG_EXAMPLE_BUILD_PCF8563)
+    set(project_path "examples/pcf8563/")
+elseif(CONFIG_EXAMPLE_BUILD_SGM38121)
+    set(project_path "examples/sgm38121/")
+elseif(CONFIG_EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE)
+    set(project_path "examples/sx1262_gfsk_send_receive/")
+elseif(CONFIG_EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE)
+    set(project_path "examples/sx1262_lora_send_receive/")
+elseif(CONFIG_EEXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE)
+    set(project_path "examples/sx1262_tx_continuous_wave/")
+elseif(CONFIG_EXAMPLE_BUILD_TUSB_SERIAL_DEVICE)
+    set(project_path "examples/tusb_serial_device/")
+elseif(CONFIG_EXAMPLE_BUILD_XL9535)
+    set(project_path "examples/xl9535/")
+endif()
         
 idf_component_register(SRC_DIRS ${project_path} 
                         INCLUDE_DIRS ${project_path})
