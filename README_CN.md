@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 17:57:37
+ * @LastEditTime: 2025-06-13 17:58:54
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -227,8 +227,8 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 ### 摄像头
 | program | description | picture |
 | ------  | ------ | ------ | 
-| [uvc_sc2336](./debug/examples/uvc_sc2336/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/2.jpg" alt="example" width="50%"> </p> |
-| [uvc_ov2710](./debug/examples/uvc_ov2710/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/3.jpg" alt="example" width="50%"> </p> |
+| [uvc_sc2336](./debug/examples/uvc_sc2336/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/2.jpg" alt="example" width="100%"> </p> |
+| [uvc_ov2710](./debug/examples/uvc_ov2710/)| 原图和拍摄屏幕图片截图效果 | <p align="center"> <img src="image/3.jpg" alt="example" width="100%"> </p> |
 
 ## 常见问题
 
