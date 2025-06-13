@@ -10,8 +10,16 @@ set(project_path
     # "examples/hi8561_camera/"
     # "examples/hi8561_lvgl/"
     # "examples/hi8561_lvgl_touch_draw/"
-    "examples/icm20948/"
-
+    # "examples/icm20948/"
+    # "examples/iic_scan/"
+    # "examples/l76k/"
+    # "examples/lvgl_9_ui/"
+    # "examples/pcf8563/"
+    # "examples/sgm38121/"
+    # "examples/sx1262_gfsk_send_receive/"
+    # "examples/sx1262_lora_send_receive/"
+    # "examples/sx1262_tx_continuous_wave/"
+    "examples/tusb_serial_device/"
     )
         
 idf_component_register(SRC_DIRS ${project_path} 

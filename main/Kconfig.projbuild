@@ -93,7 +93,7 @@ menu "Example Configuration"
 
     choice
         prompt "Choose the camera type"
-        default CAMERA_TYPE_SC2336
+        default CAMERA_TYPE_OV2710
             config CAMERA_TYPE_SC2336
                 bool "SC2336"
 

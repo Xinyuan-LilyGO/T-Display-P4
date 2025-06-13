@@ -2,7 +2,7 @@
  * @Description: icm20948
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:59:51
- * @LastEditTime: 2025-06-13 12:02:10
+ * @LastEditTime: 2025-06-13 13:47:15
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -33,7 +33,7 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     while (ICM20948->begin() == false)
     {
