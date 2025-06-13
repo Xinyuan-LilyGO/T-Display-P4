@@ -1,9 +1,6 @@
-[submodule "examples/aw86224/components/cpp_bus_driver"]
-	path = examples/aw86224/components/cpp_bus_driver
+[submodule "components/cpp_bus_driver"]
+	path = components/cpp_bus_driver
 	url = https://github.com/Llgok/cpp_bus_driver.git
-[submodule "examples/bq27220/components/cpp_bus_driver"]
-	path = examples/bq27220/components/cpp_bus_driver
-	url = https://github.com/Llgok/cpp_bus_driver.git
-[submodule "examples/deep_sleep/components/cpp_bus_driver"]
-	path = examples/deep_sleep/components/cpp_bus_driver
-	url = https://github.com/Llgok/cpp_bus_driver.git
+[submodule "main/examples/esp-at"]
+	path = main/examples/esp-at
+	url = https://github.com/espressif/esp-at.git
