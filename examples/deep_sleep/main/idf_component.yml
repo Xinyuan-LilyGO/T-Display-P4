@@ -1,5 +1,0 @@
-dependencies:
-
-  esp_video:
-    version: "0.9.*"
-    public: true

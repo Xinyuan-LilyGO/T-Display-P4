@@ -1,0 +1,94 @@
+menu "Example Configuration"
+    config LV_DPI_DEF
+        string "Default Dots Per Inch (in px/inch)"
+        default "300"
+
+    config LV_DEF_REFR_PERIOD
+        string "Default refresh period (ms)"
+        default "30"
+
+    config LV_MEM_SIZE_KILOBYTES
+        string "Size of the memory used by `lv_malloc()` in kilobytes (>= 2kB)"
+        default "300"
+
+    config LV_FS_STDIO_LETTER
+        string "Set an upper cased letter on which the drive will accessible (e.g. 65 for 'A')"
+        default "65"
+
+    # 外部解码图片缓冲空间设置大小为：宽度 × 高度 × 4
+    config LV_CACHE_DEF_SIZE
+        string "Default image cache size. 0 to disable caching"
+        default "2522880"
+
+    # config LV_USE_MEM_MONITOR
+    #     bool "LV_USE_MEM_MONITOR"
+    #     default y
+
+    # config LV_MEM_MONITOR_ALIGN_BOTTOM_LEFT
+    #     bool "LV_MEM_MONITOR_ALIGN_BOTTOM_LEFT"
+    #     default y
+
+    config EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
+        bool "Enable MIPI CSI Camera Sensor"
+        default y
+        depends on SOC_MIPI_CSI_SUPPORTED
+
+    if EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
+        config EXAMPLE_MIPI_CSI_SCCB_I2C_PORT
+            int "MIPI CSI SCCB I2C Port Number"
+            default 1
+            range 0 1
+
+        config EXAMPLE_MIPI_CSI_SCCB_I2C_SCL_PIN
+            int "MIPI CSI SCCB I2C SCL Pin"
+            default 21
+            range -1 56
+
+        config EXAMPLE_MIPI_CSI_SCCB_I2C_SDA_PIN
+            int "MIPI CSI SCCB I2C SDA Pin"
+            default 20
+            range -1 56
+
+        config EXAMPLE_MIPI_CSI_SCCB_I2C_FREQ
+            int "MIPI CSI SCCB I2C Frequency"
+            default 100000
+            range 50000 400000
+            help
+                Increasing this value can reduce the initialization time of the camera sensor.
+                Please refer to the relevant instructions of the camera sensor to adjust the value.
+
+        config EXAMPLE_MIPI_CSI_CAM_SENSOR_RESET_PIN
+            int "MIPI CSI Camera Sensor Reset Pin"
+            default -1
+            range -1 56
+
+        config EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN
+            int "MIPI CSI Camera Sensor Power Down Pin"
+            default -1
+            range -1 56
+    endif
+
+    config EXAMPLE_USE_MEMORY_MAPPING
+        bool "Use Memory Mapping for Buffer Allocation"
+        default n
+        help
+        Enable this option if you want to allocate memory using memory mapping.
+        This is typically useful for performance optimization or when working
+        with hardware that requires mapped memory access
+
+    config EXAMPLE_CAM_BUF_COUNT
+        int "Camera Buffer Count"
+        default 2
+        range 2 3
+
+    choice
+        prompt "Choose the color format of the LCD"
+        default LCD_PIXEL_FORMAT_RGB565
+            config LCD_PIXEL_FORMAT_RGB565
+                bool "RGB565"
+
+            config LCD_PIXEL_FORMAT_RGB888
+                bool "RGB888"
+    endchoice
+
+endmenu

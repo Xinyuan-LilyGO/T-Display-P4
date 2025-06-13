@@ -1,0 +1,14 @@
+dependencies:
+  lvgl/lvgl:
+    version: "9.2.2"
+    
+  # esp_lcd_usb_display:
+  #   version: "1.0.0"
+
+  espressif/esp_tinyusb: "^1"
+
+  esp_video:
+    version: "0.9.*"
+    public: true
+
+
