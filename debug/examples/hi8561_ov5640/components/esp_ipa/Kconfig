@@ -1,0 +1,38 @@
+menu "Espressif Image Process Algorithm Configuration"
+
+    config ESP_IPA_CONFIG_PARAM_VERSION
+        int
+        default 1
+
+    config ESP_IPA_IAN_ALGORITHM
+        bool "Image Analyze Algorithm"
+        default y
+
+    config ESP_IPA_ADN_ALGORITHM
+        bool "Auto Denoising Algorithm"
+        default y
+
+    config ESP_IPA_AWB_ALGORITHM
+        bool "Auto White Balance Algorithm"
+        default y
+
+    config ESP_IPA_ACC_ALGORITHM
+        bool "Auto Color Correction Algorithm"
+        default y
+
+    config ESP_IPA_AGC_ALGORITHM
+        bool "Auto Gain Control Algorithm"
+        default y
+
+    config ESP_IPA_AEN_ALGORITHM
+        bool "Auto Enhancement Algorithm"
+        default y
+
+    config ESP_IPA_ATC_ALGORITHM
+        bool "Auto Sensor AE Target Level Control Algorithm"
+        default y
+
+    config ESP_IPA_EXT_CONFIG
+        bool "Extended Configuration"
+        default y
+endmenu

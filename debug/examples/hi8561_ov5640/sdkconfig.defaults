@@ -1,0 +1,12 @@
+# This file was generated using idf.py save-defconfig. It can be edited manually.
+# Espressif IoT Development Framework (ESP-IDF) 5.4.0 Project Minimal Configuration
+#
+CONFIG_IDF_TARGET="esp32p4"
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_200M=y
+CONFIG_FREERTOS_HZ=1000
+CONFIG_LWIP_HOOK_IP6_INPUT_NONE=y
+CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+
+CONFIG_CAMERA_OV5640=y
+CONFIG_CAMERA_OV5640_MIPI_RGB565_1280X720_14FPS=y

@@ -99,28 +99,6 @@ menu "Example Configuration"
                 bool "OV2710"
     endchoice
 
-        # "examples/aw86224/"
-    # "examples/bq27220/"
-    # "examples/deep_sleep/"
-    # "examples/es8311/"
-    # "examples/es8311_sd_wav/"
-    # "examples/esp32c6_at_host_sdio_uart/"
-    # "examples/esp32c6_at_host_sdio_wifi/"
-    # "examples/hi8561_camera/"
-    # "examples/hi8561_lvgl/"
-    # "examples/hi8561_lvgl_touch_draw/"
-    # "examples/icm20948/"
-    # "examples/iic_scan/"
-    # "examples/l76k/"
-    # "examples/lvgl_9_ui/"
-    # "examples/pcf8563/"
-    # "examples/sgm38121/"
-    # "examples/sx1262_gfsk_send_receive/"
-    # "examples/sx1262_lora_send_receive/"
-    # "examples/sx1262_tx_continuous_wave/"
-    # "examples/tusb_serial_device/"
-    # "examples/xl9535/"
-
     choice
         prompt "Select the example to build"
         default EXAMPLE_BUILD_LVGL_9_UI

@@ -1,0 +1,26 @@
+屏幕出现故障蓝屏看门狗溢出的espidf修改
+在\Espressif\frameworks\esp-idf-master\esp-idf\components\hal\mipi_dsi_hal.c文件下的第157行添加如下代码    
+
+    // write the packet header
+    // while (mipi_dsi_host_ll_gen_is_cmd_fifo_full(hal->host));
+    // mipi_dsi_host_ll_gen_set_packet_header(hal->host, vc, dt, pkt_hdr_msb, pkt_hdr_lsb);
+    // uint32_t timeout = 0; // 设置一个合理的超时值
+    // while (mipi_dsi_host_ll_gen_is_cmd_fifo_full(hal->host))
+    // {
+    //     // 等待
+    //     HAL_LOGE("HAL_LOGE", "mipi_dsi_host_ll_gen_is_cmd_fifo_full waiting");
+
+    //     if (timeout == 10)
+    //     {
+    //         HAL_LOGE("HAL_LOGE", "Command FIFO full timeout");
+    //         break;
+    //         // return ESP_ERR_TIMEOUT;
+    //     }
+    //     timeout++;
+    // }
+
+    if (mipi_dsi_host_ll_gen_is_cmd_fifo_full(hal->host))
+    {
+        // 等待
+        HAL_LOGE("HAL_LOGE", "mipi_dsi_host_ll_gen_is_cmd_fifo_full waiting");
+    }

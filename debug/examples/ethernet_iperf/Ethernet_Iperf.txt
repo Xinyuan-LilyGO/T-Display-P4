@@ -1,0 +1,19 @@
+sta LilyGo-AABB xinyuandianzi
+
+
+Test UDP uplink bandwidth
+PC: iperf -u -s -p5003 -i3 -t30 -b100
+ESP32: iperf  -u -c 192.168.36.98 -p5003 -i3 -t30 -b100
+
+Test UDP downlink bandwidth
+PC: iperf -u -c192.168.36.69 -p5001 -i3 -t30 -b100M
+ESP32: iperf -u -s -p5001 -i3 -t30 -b100
+
+
+Test TCP downlink bandwidth
+PC: iperf -c192.168.36.69 -p5001 -i3 -t30 -b100M
+ESP32: iperf -s -p5001 -i3 -t30 -b100
+
+Test TCP uplink  bandwidth
+PC: iperf -s -p5001 -i3 -t30 -b100M
+ESP32: iperf -c192.168.36.98 -p5001 -i3 -t30 -b100

@@ -1,0 +1,6 @@
+dependencies:
+  esp_cam_sensor:
+    version: 1.0.*
+  
+  idf:
+    version: ">=5.3.0"
