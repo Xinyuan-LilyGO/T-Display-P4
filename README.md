@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 18:07:58
+ * @LastEditTime: 2025-06-13 18:09:11
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -44,9 +44,6 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 ### Actual Product Image
 
 ## Module
-Here is the format-preserved English translation of your text:  
-
----  
 
 ### 1. Core Processor  
 
