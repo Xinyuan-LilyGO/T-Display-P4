@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 15:13:48
+ * @LastEditTime: 2025-06-13 18:03:48
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -32,65 +32,120 @@
 
 ## Describe
 
-The T-Display-S3-Pro-MVSRLora is the backplate design for the [T-Display-S3-Pro](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro) motherboard. It includes onboard speaker and microphone expansion, featuring extremely low static current. Additionally, it offers functionalities such as vibration, RTC (Real-Time Clock), and LoRa.
+The T-Display-P4 is a versatile development board based on the ESP32-P4 core. Its features include:  
+
+1. **High Processing Power**: Equipped with the high-performance ESP32-P4 core processor, it can handle more complex graphics and video tasks, delivering smoother display performance.  
+2. **Low Power Design**: Offers multiple selectable power modes to effectively reduce energy consumption and extend battery life.  
+3. **High-Resolution Display**: Supports high resolution (default with a large MIPI interface screen at 540x1168px), providing sharp and clear visuals.  
+4. **Rich Peripheral Support**: Onboard peripherals include an HD MIPI touchscreen, ESP32-C6 module, speaker, microphone, LoRa module, GPS module, Ethernet, a linear vibration motor, an independent battery gauge for monitoring battery health and percentage, and an MIPI camera. Multiple GPIOs of both the ESP32-P4 and ESP32-C6 are exposed, enhancing the device's expandability.  
 
 ## Preview
 
 ### Actual Product Image
 
 ## Module
+Here is the format-preserved English translation of your text:  
 
-### 1. Speaker
+---  
 
-* Chip: MAX98357A
-* Bus communication protocol: IIS
-* Other: Default using 9dB gain
-* Related documentation: 
-    >[MAX98357A](./information/MAX98357AETE+T.pdf)
-* Dependent libraries: 
-    >[Arduino_DriveBus-1.1.16](https://github.com/Xk-w/Arduino_DriveBus)
+### 1. Core Processor  
 
-### 2. Microphone
+* **Chip**: ESP32-P4  
+* **FLASH**: 32M  
+* **Related Documents**:  
+    >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)  
 
-> #### T-Display-S3-Pro-MVSRLora_V1.0 version
-> * Chip: MSM261S4030H0R
-> * Bus communication protocol: IIS
-> * Related documentation: 
->    >[MSM261S4030H0R](./information/MEMSensing-MSM261S4030H0R.pdf)
-> * Dependent libraries: 
->     >[Arduino_DriveBus-1.1.16](https://github.com/Xk-w/Arduino_DriveBus)
+### 2. Display & Touch  
 
-> #### T-Display-S3-Pro-MVSRLora_V1.1 version
-> * Chip: MP34DT05-A
-> * Bus communication protocol: PDM
-> * Related documentation: 
->    >[MP34DT05-A](./information/mp34dt05-a.pdf)
-> * Dependent libraries: 
->    >[Arduino_DriveBus-1.1.16](https://github.com/Xk-w/Arduino_DriveBus)
+> #### Model: H0405S002T002-V0  
+> * **Display Size (Diagonal)**: 4.05 inch  
+> * **LCD Type**: α-Si TFT  
+> * **Resolution**: 540(H) × 1168(V) px  
+> * **Active Area**: 41.9904(W) × 91.1040(H) mm  
+> * **Module Dimensions**: 44(H) × 95.5(V) × 1.46(T) mm  
+> * **Display Colors**: 16.7M  
+> * **Display Interface**: MIPI  
+> * **Touch Interface**: I²C  
+> * **Display & Touch Driver IC**: HI8561  
+> * **Related Documents**:  
+>    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
 
-### 3. Vibration
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
-* Bus communication protocol: PWM
+### 3. Speaker & Microphone  
 
-### 4. RTC
+* **DAC Chip**: ES8311  
+* **Amplifier Chip**: NS4150B  
+* **Microphone**: Electret Condenser Mic  
+* **Communication Protocol**: I²S  
+* **Related Documents**:  
+    >[ES8311](./information/ES8311.pdf)  
+    >[NS4150B](./information/NS4150B.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
-* Chip: PCF85063ATL
-* Bus communication protocol: IIC
-* Related documentation: 
-    >[PCF85063ATL](./information/PCF85063ATL-1,118.pdf)
-* Dependent libraries: 
-    >[Arduino_DriveBus-1.1.16](https://github.com/Xk-w/Arduino_DriveBus)
+### 4. Vibration  
 
-### 5. Lora
+* **Driver IC**: AW86224AFCR  
+* **Communication Protocol**: I²C  
+* **Related Documents**:  
+    >[AW86224](./information/AW86224AFCR.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
-* Module: HPD16E
-* Chip: LR1121
-* Bus communication protocol: Standard SPI
-* Related documentation: 
-    >[HPD16E_V0.1](./information/HPD16E_Series_V0.1_20230913.pdf)  <br /> 
-    >[LR1121_V2.0](./information/LR1121_H2_DS_v2_0.pdf)
-* Dependent libraries: 
-    >[RadioLib-7.0.2](https://github.com/jgromes/RadioLib)
+### 5. LoRa  
+
+* **Module**: HPD16A  
+* **Chip**: SX1262  
+* **Communication Protocol**: Standard SPI  
+* **Related Documents**:  
+    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br />  
+    >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+
+### 6. GPS  
+
+* **Module**: L76K  
+* **Communication Protocol**: UART  
+* **Related Documents**:  
+    >[L76K](./information/L76KB-A58.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+
+### 7. RTC  
+
+* **Chip**: PCF8563  
+* **Communication Protocol**: I²C  
+* **Related Documents**:  
+    >[PCF8563](./information/PCF8563.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+
+### 8. Charging IC  
+
+* **Chip**: LGS4056H  
+* **Additional Notes**: The NTC pin of the 3-wire battery is connected to the LGS4056H charging IC. Over-temperature protection during charging is automatically controlled by the chip.  
+* **Related Documents**:  
+    >[LGS4056H](./information/LGS4056H.pdf)  
+
+### 9. Battery Gauge  
+
+* **Chip**: BQ27220  
+* **Communication Protocol**: I²C  
+* **Related Documents**:  
+    >[BQ27220](./information/bq27220_en.pdf)  
+* **Dependent Libraries**:  
+    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+
+### 10. Camera  
+
+> #### Model: OV2710  
+> * **Interface**: MIPI  
+> * **Related Documents**:  
+>    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
+
 
 ## SoftwareDeployment
 
