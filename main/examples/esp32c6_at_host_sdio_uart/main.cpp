@@ -1,3 +1,10 @@
+/*
+ * @Description: esp32c6_at_host_sdio_uart
+ * @Author: LILYGO_L
+ * @Date: 2025-03-14 17:45:03
+ * @LastEditTime: 2025-06-13 10:56:09
+ * @License: GPL 3.0
+ */
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

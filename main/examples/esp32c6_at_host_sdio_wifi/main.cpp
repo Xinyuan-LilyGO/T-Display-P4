@@ -1,3 +1,10 @@
+/*
+ * @Description: esp32c6_at_host_sdio_wifi
+ * @Author: LILYGO_L
+ * @Date: 2025-06-13 10:40:19
+ * @LastEditTime: 2025-06-13 10:56:24
+ * @License: GPL 3.0
+ */
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

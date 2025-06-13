@@ -91,4 +91,14 @@ menu "Example Configuration"
                 bool "RGB888"
     endchoice
 
+    choice
+        prompt "Choose the camera type"
+        default CAMERA_TYPE_SC2336
+            config CAMERA_TYPE_SC2336
+                bool "SC2336"
+
+            config CAMERA_TYPE_OV2710
+                bool "OV2710"
+    endchoice
+
 endmenu
