@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 18:09:11
+ * @LastEditTime: 2025-06-13 18:10:20
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -97,7 +97,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Chip: SX1262  
 * Communication Protocol: Standard SPI  
 * Related Documents:  
-    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br />  
+    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br /> 
     >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)  
 * Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
