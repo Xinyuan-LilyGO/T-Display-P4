@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 18:03:48
+ * @LastEditTime: 2025-06-13 18:07:58
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -50,100 +50,100 @@ Here is the format-preserved English translation of your text:
 
 ### 1. Core Processor  
 
-* **Chip**: ESP32-P4  
-* **FLASH**: 32M  
-* **Related Documents**:  
+* Chip: ESP32-P4  
+* FLASH: 32M  
+* Related Documents:  
     >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)  
 
 ### 2. Display & Touch  
 
 > #### Model: H0405S002T002-V0  
-> * **Display Size (Diagonal)**: 4.05 inch  
-> * **LCD Type**: α-Si TFT  
-> * **Resolution**: 540(H) × 1168(V) px  
-> * **Active Area**: 41.9904(W) × 91.1040(H) mm  
-> * **Module Dimensions**: 44(H) × 95.5(V) × 1.46(T) mm  
-> * **Display Colors**: 16.7M  
-> * **Display Interface**: MIPI  
-> * **Touch Interface**: I²C  
-> * **Display & Touch Driver IC**: HI8561  
-> * **Related Documents**:  
+> * Display Size (Diagonal): 4.05 inch  
+> * LCD Type: α-Si TFT  
+> * Resolution: 540(H) × 1168(V) px  
+> * Active Area: 41.9904(W) × 91.1040(H) mm  
+> * Module Dimensions: 44(H) × 95.5(V) × 1.46(T) mm  
+> * Display Colors: 16.7M  
+> * Display Interface: MIPI  
+> * Touch Interface: IIC
+> * Display & Touch Driver IC: HI8561  
+> * Related Documents:  
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
 
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 3. Speaker & Microphone  
 
-* **DAC Chip**: ES8311  
-* **Amplifier Chip**: NS4150B  
-* **Microphone**: Electret Condenser Mic  
-* **Communication Protocol**: I²S  
-* **Related Documents**:  
+* DAC Chip: ES8311  
+* Amplifier Chip: NS4150B  
+* Microphone: Electret Condenser Mic  
+* Communication Protocol: IIS
+* Related Documents:  
     >[ES8311](./information/ES8311.pdf)  
     >[NS4150B](./information/NS4150B.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 4. Vibration  
 
-* **Driver IC**: AW86224AFCR  
-* **Communication Protocol**: I²C  
-* **Related Documents**:  
+* Driver IC: AW86224AFCR  
+* Communication Protocol: IIC
+* Related Documents:  
     >[AW86224](./information/AW86224AFCR.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 5. LoRa  
 
-* **Module**: HPD16A  
-* **Chip**: SX1262  
-* **Communication Protocol**: Standard SPI  
-* **Related Documents**:  
+* Module: HPD16A  
+* Chip: SX1262  
+* Communication Protocol: Standard SPI  
+* Related Documents:  
     >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br />  
     >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 6. GPS  
 
-* **Module**: L76K  
-* **Communication Protocol**: UART  
-* **Related Documents**:  
+* Module: L76K  
+* Communication Protocol: Uart
+* Related Documents:  
     >[L76K](./information/L76KB-A58.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 7. RTC  
 
-* **Chip**: PCF8563  
-* **Communication Protocol**: I²C  
-* **Related Documents**:  
+* Chip: PCF8563  
+* Communication Protocol: IIC
+* Related Documents:  
     >[PCF8563](./information/PCF8563.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 8. Charging IC  
 
-* **Chip**: LGS4056H  
-* **Additional Notes**: The NTC pin of the 3-wire battery is connected to the LGS4056H charging IC. Over-temperature protection during charging is automatically controlled by the chip.  
-* **Related Documents**:  
+* Chip: LGS4056H  
+* Additional Notes: The NTC pin of the 3-wire battery is connected to the LGS4056H charging IC. Over-temperature protection during charging is automatically controlled by the chip.  
+* Related Documents:  
     >[LGS4056H](./information/LGS4056H.pdf)  
 
 ### 9. Battery Gauge  
 
-* **Chip**: BQ27220  
-* **Communication Protocol**: I²C  
-* **Related Documents**:  
+* Chip: BQ27220  
+* Communication Protocol: IIC
+* Related Documents:  
     >[BQ27220](./information/bq27220_en.pdf)  
-* **Dependent Libraries**:  
+* Dependent Libraries:  
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 10. Camera  
 
 > #### Model: OV2710  
-> * **Interface**: MIPI  
-> * **Related Documents**:  
+> * Interface: MIPI  
+> * Related Documents:  
 >    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
 
 

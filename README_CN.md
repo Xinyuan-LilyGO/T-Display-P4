@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 18:04:33
+ * @LastEditTime: 2025-06-13 18:07:23
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -47,9 +47,9 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 ### 1. 核心处理器
 
-* **芯片**：ESP32-P4
-* **FLASH**：32M
-* **相关资料**：
+* 芯片：ESP32-P4
+* FLASH：32M
+* 相关资料：
     >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)
 
 ### 2. 屏幕和触摸
@@ -91,7 +91,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 依赖库：
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
 
-### 5. Lora
+### 5. LoRa
 
 * 模块：HPD16A
 * 芯片：SX1262
@@ -102,7 +102,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 依赖库：
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
 
-### 6. Gps
+### 6. GPS
 
 * 模块：L76k
 * 通信协议：Uart
@@ -111,7 +111,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 依赖库：
     >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
 
-### 7. Rtc
+### 7. RTC
 
 * 芯片：PCF8563
 * 通信协议：IIC
