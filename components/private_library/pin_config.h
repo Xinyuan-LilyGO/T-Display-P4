@@ -2,7 +2,7 @@
  * @Description: T-Display-P4 pin config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-06-13 17:32:20
+ * @LastEditTime: 2025-06-16 16:57:08
  */
 #pragma once
 
@@ -44,8 +44,8 @@
 #define ES8311_SDA IIC_2_SDA
 #define ES8311_SCL IIC_2_SCL
 // ES8311 IIS
-#define ES8311_ADC_DATA_IN 11
-#define ES8311_DAC_DATA_OUT 10
+#define ES8311_ADC_DATA 11
+#define ES8311_DAC_DATA 10
 #define ES8311_BCLK 12
 #define ES8311_MCLK 13
 #define ES8311_WS_LRCK 9
