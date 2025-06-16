@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-13 18:10:20
+ * @LastEditTime: 2025-06-16 09:30:14
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -143,89 +143,65 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Related Documents:  
 >    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
 
-
 ## SoftwareDeployment
 
 ### Examples Support
 
-| Example | `[Platformio IDE][espressif32-v6.5.0]`<br />`[Arduino IDE][esp32_v2.0.14]` | Description | Picture |
+| example | `[vscode][esp-idf-v5.4.0]` | Description | Picture |
 | ------  | ------ | ------ | ------ | 
-| [CST226SE](./examples/CST226SE) |  <p align="center">![alt text][supported] | | |
-| [Deep_Sleep_Wake_Up](./examples/Deep_Sleep_Wake_Up) |  <p align="center">![alt text][supported] | | |
-| [DMIC_ReadData](./examples/DMIC_ReadData) |  <p align="center">![alt text][supported] | | |
-| [DMIC_SD](./examples/DMIC_SD) |  <p align="center">![alt text][supported] | | |
-| [Get_HTTP_Response_Time](./examples/Get_HTTP_Response_Time) |  <p align="center">![alt text][supported] | | |
-| [GFX](./examples/GFX) |  <p align="center">![alt text][supported] | | |
-| [IIC_Scan_2](./examples/IIC_Scan_2) |  <p align="center">![alt text][supported] | | |
-| [LR1121_PingPong](./examples/LR1121_PingPong) |  <p align="center">![alt text][supported] | | |
-| [LR1121_PingPong_2](./examples/LR1121_PingPong_2) |  <p align="center">![alt text][supported] | | |
-| [LR1121_Walkie_Talkie](./examples/LR1121_Walkie_Talkie) |  <p align="center">![alt text][supported] | | |
-| [Original_Test](./examples/Original_Test) |  <p align="center">![alt text][supported] | Original factory program | |
-| [PCF85063](./examples/PCF85063) |  <p align="center">![alt text][supported] | | |
-| [PCF85063_Scheduled_INT](./examples/PCF85063_Scheduled_INT) |  <p align="center">![alt text][supported] | | |
-| [PCF85063_Timer_INT](./examples/PCF85063_Timer_INT) |  <p align="center">![alt text][supported] | | |
-| [RT9080](./examples/RT9080) |  <p align="center">![alt text][supported] | | |
-| [SD_Explorer_Music](./examples/SD_Explorer_Music) |  <p align="center">![alt text][supported] | | |
-| [SD_Music](./examples/SD_Music) |  <p align="center">![alt text][supported] | | |
-| [SY6970](./examples/SY6970) |  <p align="center">![alt text][supported] | | |
-| [SY6970_OTG](./examples/SY6970_OTG) |  <p align="center">![alt text][supported] | | |
-| [USB_Host_Camera_Screen](./examples/USB_Host_Camera_Screen) |  <p align="center">![alt text][supported] | | |
-| [Vibration_Motor](./examples/Vibration_Motor) |  <p align="center">![alt text][supported] | | |
-| [Voice_Codec2_Speaker](./examples/Voice_Codec2_Speaker) |  <p align="center">![alt text][supported] | | |
-| [Voice_Speaker](./examples/Voice_Speaker) |  <p align="center">![alt text][supported] | | |
-| [WIFI_HTTP_Download_File](./examples/WIFI_HTTP_Download_File) |  <p align="center">![alt text][supported] | | |
-| [WIFI_HTTP_Download_SD_file](./examples/WIFI_HTTP_Download_SD_file) |  <p align="center">![alt text][supported] | | |
-| [Wifi_Music](./examples/Wifi_Music) |  <p align="center">![alt text][supported] | | |
+| [aw86224](./main/examples/aw86224) |  <p align="center">![alt text][supported] | | |
+| [bq27220](./main/examples/bq27220) |  <p align="center">![alt text][supported] | | |
+| [deep_sleep](./main/examples/deep_sleep) |  <p align="center">![alt text][supported] | | |
+| [es8311](./main/examples/es8311) |  <p align="center">![alt text][supported] | | |
+| [es8311_sd_wav](./main/examples/es8311_sd_wav) |  <p align="center">![alt text][supported] | | |
+| [esp32c6_at_host_sdio_uart](./main/examples/esp32c6_at_host_sdio_uart) |  <p align="center">![alt text][supported] | | |
+| [esp32c6_at_host_sdio_wifi](./main/examples/esp32c6_at_host_sdio_wifi) |  <p align="center">![alt text][supported] | | |
+| [hi8561_camera](./main/examples/hi8561_camera) |  <p align="center">![alt text][supported] | | |
+| [hi8561_lvgl](./main/examples/hi8561_lvgl) |  <p align="center">![alt text][supported] | | |
+| [hi8561_lvgl_touch_draw](./main/examples/hi8561_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
+| [icm20948](./main/examples/icm20948) |  <p align="center">![alt text][supported] | | |
+| [iic_scan](./main/examples/iic_scan) |  <p align="center">![alt text][supported] | | |
+| [l76k](./main/examples/l76k) |  <p align="center">![alt text][supported] | | |
+| [lvgl_9_ui](./main/examples/lvgl_9_ui) |  <p align="center">![alt text][supported] |factory example | |
+| [pcf8563](./main/examples/pcf8563) |  <p align="center">![alt text][supported] | | |
+| [sgm38121](./main/examples/sgm38121) |  <p align="center">![alt text][supported] | | |
+| [sx1262_gfsk_send_receive](./main/examples/sx1262_gfsk_send_receive) |  <p align="center">![alt text][supported] | | |
+| [sx1262_lora_send_receive](./main/examples/sx1262_lora_send_receive) |  <p align="center">![alt text][supported] | | |
+| [sx1262_tx_continuous_wave](./main/examples/sx1262_tx_continuous_wave) |  <p align="center">![alt text][supported] | | |
+| [tusb_serial_device](./main/examples/tusb_serial_device) |  <p align="center">![alt text][supported] | | |
+| [xl9535](./main/examples/Vibration_Motor) |  <p align="center">![alt text][supported] | | |
 
 [supported]: https://img.shields.io/badge/-supported-green "example"
 
-| Firmware | Description | Picture |
+| firmware | description | picture |
 | ------  | ------  | ------ |
-| [Original_Test](./firmware/[T-Display-S3-Pro-MVSRLora_V1.0][Original_Test]_firmware_202412131703.bin) | Original factory program |  |
+| [lvgl_9_ui(ov2710)](./firmware/[T-Display-P4][lvgl_9_ui][ov2710]_firmware_202505301532.bin) | OV2710 camera version factory program |  |
 
-### PlatformIO
-1. Install [VisualStudioCode](https://code.visualstudio.com/Download) ,Choose installation based on your system type.
+### ESP-IDF Visual Studio Code  
+1. Install [Visual Studio Code](https://code.visualstudio.com/Download) by selecting the appropriate version for your operating system.  
 
-2. Open the "Extension" section of the Visual Studio Code software sidebar(Alternatively, use "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>" to open the extension),Search for the "PlatformIO IDE" extension and download it.
+2. Open the "Extensions" sidebar in Visual Studio Code (or use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> to open extensions), search for the "ESP-IDF" extension, and install it.  
 
-3. During the installation of the extension, you can go to GitHub to download the program. You can download the main branch by clicking on the "<> Code" with green text, or you can download the program versions from the "Releases" section in the sidebar.
+3. While the extension is installing, use the git command to clone the repository:  
 
-4. After the installation of the extension is completed, open the Explorer in the sidebar(Alternatively, use "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>" go open it),Click on "Open Folder," locate the project code you just downloaded (the entire folder), and click "Add." At this point, the project files will be added to your workspace.
+        git clone --recursive https://github.com/Xinyuan-LilyGO/T-Display-P4.git  
 
-5. Open the "platformio.ini" file in the project folder (PlatformIO will automatically open the "platformio.ini" file corresponding to the added folder). Under the "[platformio]" section, uncomment and select the example program you want to burn (it should start with "default_envs = xxx") Then click "<kbd>[√](image/4.png)</kbd>" in the bottom left corner to compile,If the compilation is correct, connect the microcontroller to the computer and click "<kbd>[→](image/5.png)</kbd>" in the bottom left corner to download the program.
+    Ensure you include the `--recursive` flag during cloning. If you forget to include it, you will need to initialize the submodules later by running:  
 
-### Arduino
-1. Install [Arduino](https://www.arduino.cc/en/software) ,Choose installation based on your system type.
+        git submodule update --init --recursive  
 
-2. Open the "example" directory within the project folder, select the example project folder, and open the file ending with ".ino" to open the Arduino IDE project workspace.
+4. Download and install [ESP-IDF v5.4.1](https://dl.espressif.cn/dl/esp-idf/?idf=4.4). Take note of the installation path. Open the previously installed "ESP-IDF" extension and select "Configure ESP-IDF Extension." Choose the "USE EXISTING SETUP" menu, then select "Search ESP-IDF in system." Correctly configure the installation path you noted earlier:  
+   - **Enter ESP-IDF directory (IDF_PATH):** `Your installation path xxx\Espressif\frameworks\esp-idf-v5.4`
+   - **Enter ESP-IDF Tools directory (IDF_TOOLS_PATH):** `Your installation path xxx\Espressif`
+    Click the "Install" button at the bottom right to proceed with the framework installation.  
 
-3. Open the "Tools" menu at the top right -> Select "Board" -> "Board Manager." Find or search for "esp32" and download the board files from the author named "Espressif Systems." Then, go back to the "Board" menu and select the development board type under "ESP32 Arduino." The selected development board type should match the one specified in the "platformio.ini" file under the [env] section with the header "board = xxx." If there is no corresponding development board, you may need to manually add the development board from the "board" directory within your project folder.
+5. Click the "SDK Configuration Editor" in the ESP-IDF extension menu at the bottom of Visual Studio Code. In the search bar, look for the field "Select the example to build" and choose the project you want to compile. Then, search for "Select the camera type" and select the camera model integrated on your board. Save the settings.  
 
-4. Open menu bar "[File](image/6.png)" -> "[Preferences](image/6.png)" ,Find "[Sketchbook location](image/7.png)"  here,copy and paste all library files and folders from the "libraries" folder in the project directory into the "libraries" folder in this directory.
+6. Click "Set Espressif Device Target" in the bottom menu bar of Visual Studio Code and select **ESP32P4**. Next, click "Build Project" in the bottom menu bar and wait for the build to complete. Then, click "Select Port to Use," followed by "Flash Project" to upload the program.  
 
-5. Select the correct settings in the Tools menu, as shown in the table below.
-
-#### ESP32-S3
-| Setting                               | Value                                 |
-| :-------------------------------: | :-------------------------------: |
-| Board                                 | ESP32S3 Dev Module           |
-| Upload Speed                     | 921600                               |
-| USB Mode                           | Hardware CDC and JTAG     |
-| USB CDC On Boot                | Enabled                              |
-| USB Firmware MSC On Boot | Disabled                             |
-| USB DFU On Boot                | Disabled                             |
-| CPU Frequency                   | 240MHz (WiFi)                    |
-| Flash Mode                         | QIO 80MHz                         |
-| Flash Size                           | 16MB (128Mb)                    |
-| Core Debug Level                | None                                 |
-| Partition Scheme                | 16M Flash (3MB APP/9.9MB FATFS) |
-| PSRAM                                | OPI PSRAM                         |
-| Arduino Runs On                  | Core 1                               |
-| Events Run On                     | Core 1                               |           
-
-6. Select the correct port.
-
-7. Click "<kbd>[√](image/8.png)</kbd>" in the upper right corner to compile,If the compilation is correct, connect the microcontroller to the computer,Click "<kbd>[→](image/9.png)</kbd>" in the upper right corner to download.
+<p align="center" width="100%">
+    <img src="image/1.jpg" alt="example">
+</p>
 
 ### firmware download
 1. Open the project file "tools" and locate the ESP32 burning tool. Open it.
@@ -242,49 +218,20 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 
 ## PinOverview
 
-| Speaker pins  | ESP32S3 pins|
-| :------------------: | :------------------:|
-| BCLK         | IO4       |
-| LRCLK         | IO15       |
-| DATA         | IO11       |
-| SD_MODE         | IO41       |
-
-| Microphone pins  | ESP32S3 pins|
-| :------------------: | :------------------:|
-| LRCLK         | IO1       |
-| DATA         | IO2       |
-| EN         | IO3       |
-
-| Vibration motor pins  | ESP32S3 pins|
-| :------------------: | :------------------:|
-| DATA         | IO45       |
-
-| RT9080 power pins  | ESP32S3 pins|
-| :------------------: | :------------------:|
-| EN         | IO42       |
-
-| RTC pins  | ESP32S3 pins|
-| :------------------: | :------------------:|
-| SDA         | IO5       |
-| SCL         | IO6       |
-| INT         | IO21       |
-
-| LR1121 pins | ESP32S3 pins|
-| :------------------: | :------------------:|
-| BUSY         | IO46       |
-| INT         | IO40       |
-| SCLK         | IO18       |
-| MOSI         | IO17       |
-| MISO         | IO8       |
-| CS         | IO7       |
-| RST         | IO10       |
+For pin definitions, please refer to the pin configuration file: [pin_config.h](./components/private_library/pin_config.h)
 
 ## RelatedTests
 
-### Power Dissipation
-| Firmware | Program| Description | Picture |
+### Power Consumption
+| firmware | program | description | picture |
 | ------  | ------  | ------ | ------ | 
-| [Deep_Sleep_Wake_Up](./firmware/[T-Display-S3-Pro-MVSRLora_V1.0][Deep_Sleep_Wake_Up]_firmware_202502061152.bin) | [Deep_Sleep_Wake_Up](./examples/Deep_Sleep_Wake_Up) | Static current: 29.99 μA for more information please refer to [Power Consumption Test Log](./relevant_test/PowerConsumptionTestLog_[T-Display-S3-Pro-MVSRLora_V1.0]_20241214.pdf) | |
+| [deep_sleep(single_board)](./firmware/sleep/[T-Display-P4][deep_sleep][single_board]_firmware_202505301450.bin) |[deep_sleep](./main/examples/deep_sleep/)| Average current consumption: 1.2mA. For more details, please refer to the [Power Consumption Test Log](./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf).| |
+
+### Camera
+| program | description | picture |
+| ------  | ------ | ------ | 
+| [uvc_sc2336](./debug/examples/uvc_sc2336/)| Original image and screenshot effect of taking a picture on the screen. | <p align="center"> <img src="image/2.jpg" alt="example" width="100%"> </p> |
+| [uvc_ov2710](./debug/examples/uvc_ov2710/)| Original image and screenshot effect of taking a picture on the screen. | <p align="center"> <img src="image/3.jpg" alt="example" width="100%"> </p> |
 
 ## FAQ
 
@@ -293,19 +240,9 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 
 <br />
 
-* Q. Why does Arduino IDE prompt me to update library files when I open it? Should I update them or not?
-* A. Choose not to update library files. Different versions of library files may not be mutually compatible, so it is not recommended to update library files.
-
-<br />
-
-* Q. Why is there no serial data output on the "Uart" interface on my board? Is it defective and unusable?
-* A. The default project configuration uses the USB interface as Uart0 serial output for debugging purposes. The "Uart" interface is connected to Uart0, so it won't output any data without configuration.<br />For PlatformIO users, please open the project file "platformio.ini" and modify the option under "build_flags = xxx" from "-D ARDUINO_USB_CDC_ON_BOOT=true" to "-D ARDUINO_USB_CDC_ON_BOOT=false" to enable external "Uart" interface.<br />For Arduino users, open the "Tools" menu and select "USB CDC On Boot: Disabled" to enable the external "Uart" interface.
-
-<br />
-
 * Q. Why is my board continuously failing to download the program?
 * A. Please hold down the "BOOT-0" button and try downloading the program again.
 
 ## Project
-* [T-Display-S3-Pro-MVSRLora_V1.0](./project/T-Display-S3-Pro-MVSRLora_V1.0.pdf)
+* []()
 
