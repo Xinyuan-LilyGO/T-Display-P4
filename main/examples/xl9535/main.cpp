@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-06-13 14:20:59
+ * @LastEditTime: 2025-06-16 16:20:13
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -52,9 +52,9 @@ extern "C" void app_main(void)
 
         XL9535->pin_write(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         printf("XL9535 IO3: %d\n", XL9535->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO3));
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
         XL9535->pin_write(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         printf("XL9535 IO3: %d\n", XL9535->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO3));
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

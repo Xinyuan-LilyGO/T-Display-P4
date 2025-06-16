@@ -48,7 +48,7 @@ static void sdio_recv_task(void *pvParameters)
 {
     while (1)
     {
-        // esp_err_t ret = sdio_host_wait_int(1000 / portTICK_PERIOD_MS);
+        // esp_err_t ret = sdio_host_wait_int(pdMS_TO_TICKS(1000));
 
         // if (ret != SUCCESS)
         // {
@@ -116,7 +116,7 @@ static void sdio_task(void *pvParameters)
     int at_uart_len;
     printf("Start SDIO test\r\n");
     // Make sure SDIO slave has been inited
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     SDIO_LOGI(TAG, "host ready, start initializing slave...");
     err = sdio_init();

@@ -144,7 +144,7 @@ static void i2s_music(void *args)
             abort();
         }
         data_ptr = (uint8_t *)music_pcm_start;
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL);
 }

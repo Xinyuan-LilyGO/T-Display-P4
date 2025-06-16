@@ -702,13 +702,13 @@ extern "C" void app_main(void)
     XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Value::HIGH);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::LOW);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
 
     SGM38121->begin();
@@ -720,7 +720,7 @@ extern "C" void app_main(void)
     SGM38121->set_channel_state(Cpp_Bus_Driver::SGM38121::Channel::AVDD_1, Cpp_Bus_Driver::SGM38121::State::ON);
     SGM38121->set_channel_state(Cpp_Bus_Driver::SGM38121::Channel::AVDD_2, Cpp_Bus_Driver::SGM38121::State::ON);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     example_bsp_enable_dsi_phy_power();
 
@@ -786,6 +786,6 @@ extern "C" void app_main(void)
         //     }
         //     CycleTime = esp_timer_get_time() + 1000;
         // }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

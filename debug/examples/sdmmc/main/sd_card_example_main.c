@@ -302,6 +302,6 @@ void app_main(void)
     while (1)
     {
         SD_Test();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

@@ -153,7 +153,7 @@ static void i2s_music(void *args)
             abort();
         }
         data_ptr = (uint8_t *)music_pcm_start;
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL);
 }
@@ -471,7 +471,7 @@ extern "C" void app_main(void)
     XL9535->pin_mode(XL9535_IO6_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_IO6_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(500));
 
     /* Initialize i2s peripheral */
     if (i2s_driver_init() != ESP_OK)

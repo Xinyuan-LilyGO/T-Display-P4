@@ -110,7 +110,7 @@ static void deep_sleep_task(void *args)
             printf("Not a deep sleep reset\n");
     }
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
 #if CONFIG_IDF_TARGET_ESP32
     // Isolate GPIO12 pin from external circuits. This is needed for modules

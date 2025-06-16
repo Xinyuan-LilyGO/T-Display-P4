@@ -164,13 +164,13 @@ extern "C" void app_main(void)
     XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Value::HIGH);
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::LOW);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(100));
     XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
 
 #if CONFIG_EXAMPLE_MONITOR_REFRESH_BY_GPIO

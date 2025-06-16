@@ -57,9 +57,9 @@ extern "C" void app_main(void)
             Interrupt_Trigger = false;
 
             printf("Boot pin interrupt trigger!\n");
-            vTaskDelay(100 / portTICK_PERIOD_MS);
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
         printf("6\n");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

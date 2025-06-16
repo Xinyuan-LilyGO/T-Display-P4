@@ -443,7 +443,7 @@ extern "C" void app_main(void)
     while (1)
     {
         IIC_Scan();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-12-18 10:22:46
- * @LastEditTime: 2024-12-25 15:15:38
+ * @LastEditTime: 2025-06-16 16:24:57
  * @License: GPL 3.0
  */
 #include "tool.h"
@@ -150,6 +150,6 @@ namespace Cpp_Bus_Driver
 
     void Tool::delay_ms(uint32_t value)
     {
-        vTaskDelay(value / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(value));
     }
 }

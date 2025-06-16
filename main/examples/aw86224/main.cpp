@@ -2,7 +2,7 @@
  * @Description: aw86224
  * @Author: LILYGO_L
  * @Date: 2024-12-25 10:33:25
- * @LastEditTime: 2025-06-13 09:17:06
+ * @LastEditTime: 2025-06-16 16:21:20
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -80,10 +80,10 @@ extern "C" void app_main(void)
         //          AW86224->run_rtp_playback_waveform(Cpp_Bus_Driver::haptic_waveform_ordinary, sizeof(Cpp_Bus_Driver::haptic_waveform_ordinary));
         //          printf("AW86224 rtp_playback_waveform \n");
 
-        //         vTaskDelay(100 / portTICK_PERIOD_MS);
+        //         vTaskDelay(pdMS_TO_TICKS(100));
         //     }
         // }
-        // vTaskDelay(10 / portTICK_PERIOD_MS);
+        // vTaskDelay(pdMS_TO_TICKS(10));
 
         // RAM播放
         AW86224->run_ram_playback_waveform(1, 15, 255);

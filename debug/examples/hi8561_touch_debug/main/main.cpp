@@ -187,6 +187,6 @@ extern "C" void app_main(void)
             printf("buffer_4 data[%d]: %#X\n", i, buffer_4[i]);
         }
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

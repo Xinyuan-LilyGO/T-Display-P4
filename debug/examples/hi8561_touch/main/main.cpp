@@ -67,11 +67,11 @@ extern "C" void app_main(void)
             }
         }
 
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(10));
 
         // HI8561_T->get_single_touch_point(tp);
         // printf("Touch finger: %d edge_touch: %#X\nX: %d Y: %d P: %d\n",
         //        tp.finger_count, tp.edge_touch_flag,tp.x, tp.y, tp.p);
-        // vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

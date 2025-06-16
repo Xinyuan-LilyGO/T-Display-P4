@@ -61,7 +61,7 @@ sdio_err_t sdio_driver_init(void)
             break;
         }
         SDIO_LOGW(TAG, "slave init failed, retry...");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     sdmmc_card_print_info(stdout, card);
