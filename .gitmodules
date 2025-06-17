@@ -4,3 +4,6 @@
 [submodule "main/examples/esp-at"]
 	path = main/examples/esp-at
 	url = https://github.com/espressif/esp-at.git
+[submodule "components/ICM20948_WE"]
+	path = components/ICM20948_WE
+	url = https://github.com/Llgok/ICM20948_WE.git
