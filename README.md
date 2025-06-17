@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-16 09:34:02
+ * @LastEditTime: 2025-06-17 11:25:21
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -68,7 +68,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
 
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 3. Speaker & Microphone  
 
@@ -80,7 +80,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
     >[ES8311](./information/ES8311.pdf)  
     >[NS4150B](./information/NS4150B.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 4. Vibration  
 
@@ -89,7 +89,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Related Documents:  
     >[AW86224](./information/AW86224AFCR.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 5. LoRa  
 
@@ -97,10 +97,10 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Chip: SX1262  
 * Communication Protocol: Standard SPI  
 * Related Documents:  
-    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br /> 
+    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  
     >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 6. GPS  
 
@@ -109,7 +109,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Related Documents:  
     >[L76K](./information/L76KB-A58.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 7. RTC  
 
@@ -118,7 +118,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Related Documents:  
     >[PCF8563](./information/PCF8563.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 8. Charging IC  
 
@@ -134,7 +134,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Related Documents:  
     >[BQ27220](./information/bq27220_en.pdf)  
 * Dependent Libraries:  
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
 ### 10. Camera  
 
@@ -142,6 +142,16 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Interface: MIPI  
 > * Related Documents:  
 >    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
+
+### 11. IMU
+
+* Chip: ICM20948
+* Communication Protocol: IIC
+* Related Documents:  
+    >[ICM20948](./information/ICM20948.pdf)
+* Dependent Libraries:  
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
+    >[ICM20948_WE](https://github.com/Llgok/ICM20948_WE)
 
 ## SoftwareDeployment
 

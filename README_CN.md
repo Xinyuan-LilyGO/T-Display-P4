@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-16 09:33:12
+ * @LastEditTime: 2025-06-17 11:23:50
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -68,7 +68,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)
 
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 3. 扬声器和麦克风
 
@@ -80,7 +80,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
     >[ES8311](./information/ES8311.pdf)
     >[NS4150B](./information/NS4150B.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 4. 振动
 
@@ -89,7 +89,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 相关资料：
     >[AW86224](./information/AW86224AFCR.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 5. LoRa
 
@@ -97,10 +97,10 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 芯片：SX1262
 * 通信协议：标准SPI
 * 相关资料：
-    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  <br /> 
+    >[HPD16A](./information/HPDTEK_HPD16A_TCXO_V1.1.pdf)  
     >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 6. GPS
 
@@ -109,7 +109,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 相关资料：
     >[L76K](./information/L76KB-A58.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 7. RTC
 
@@ -118,7 +118,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 相关资料：
     >[PCF8563](./information/PCF8563.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 8. 充电芯片
 
@@ -134,7 +134,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 相关资料：
     >[BQ27220](./information/bq27220_en.pdf)
 * 依赖库：
-    >[cpp_bus_driver-v1.0.0](https://github.com/Llgok/cpp_bus_driver)
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
 ### 10. 摄像头
 
@@ -142,6 +142,16 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 通讯接口：MIPI
 > * 相关资料：
 >    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)
+
+### 11. 惯性传感器
+
+* 芯片：ICM20948
+* 通信协议：IIC
+* 相关资料：
+    >[ICM20948](./information/ICM20948.pdf)
+* 依赖库：
+    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
+    >[ICM20948_WE](https://github.com/Llgok/ICM20948_WE)
 
 ## 软件部署
 
