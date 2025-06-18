@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 11:05:10
+ * @LastEditTime: 2025-06-18 13:34:59
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -77,7 +77,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Touch Interface: IIC
 > * Display & Touch Driver IC: HI8561  
 > * Maximum touch points: 10-point touch
-> * Luminance on surface: 550 cd/mm
+> * Luminance on surface: 550 cd/m²
 > * View Direction: All
 > * Contrast ratio: 1200:1
 > * Color gamut: 70%

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 11:06:34
+ * @LastEditTime: 2025-06-18 13:35:06
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -77,7 +77,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 触摸通讯接口：IIC
 > * 屏幕和触摸驱动芯片：HI8561
 > * 触摸最大点数：10点触控
-> * 亮度：550 cd/mm
+> * 亮度：550 cd/m²
 > * 视角方向：All
 > * 对比度：1200:1
 > * 色域：70%
