@@ -12,7 +12,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
 auto Iic_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);

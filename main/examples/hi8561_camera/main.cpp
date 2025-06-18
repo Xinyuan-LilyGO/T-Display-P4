@@ -14,7 +14,7 @@
 #include "esp_timer.h"
 #include "driver/ppa.h"
 #include "esp_ldo_regulator.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 #include "hi8561_driver.h"
 #include "app_video.h"

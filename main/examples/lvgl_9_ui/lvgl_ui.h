@@ -9,7 +9,7 @@
 
 #include "lvgl.h"
 #include "cpp_bus_driver_library.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 
 extern const lv_image_dsc_t win_home_app_icon_cit_110x110px_rgb565a8;
 extern const lv_image_dsc_t win_home_app_icon_camera_110x110px_rgb565a8;

@@ -26,7 +26,7 @@
 #include "example_sensor_init.h"
 #include "example_config.h"
 #include "esp_timer.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 #include "lvgl.h"
 

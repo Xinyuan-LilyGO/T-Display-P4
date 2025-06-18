@@ -18,7 +18,7 @@
 #include "esp_video_device.h"
 #include "usb_device_uvc.h"
 #include "uvc_frame_config.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
 #if CONFIG_EXAMPLE_CAM_SENSOR_MIPI_CSI

@@ -20,7 +20,7 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "hi8561_driver.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 #include "esp_lcd_usb_display.h"
 

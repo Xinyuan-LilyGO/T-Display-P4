@@ -12,7 +12,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
 uint8_t Receive_Package[255] = {0};

@@ -14,7 +14,7 @@
 #include "esp_check.h"
 #include "es8311.h"
 #include "example_config.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
 static const char *TAG = "i2s_es8311";

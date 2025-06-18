@@ -14,7 +14,7 @@
 #include "esp_cam_ctlr_csi.h"
 #include "esp_cam_ctlr.h"
 #include "esp_timer.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 #include "hi8561_driver.h"
 

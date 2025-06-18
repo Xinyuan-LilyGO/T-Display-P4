@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 13:35:06
+ * @LastEditTime: 2025-06-18 16:44:18
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -250,7 +250,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 ## 引脚总览
 
-引脚定义请参考引脚配置文件：[pin_config.h](./components/private_library/pin_config.h)
+引脚定义请参考配置文件：[t_display_p4_config.h](./components/private_library/t_display_p4_config.h)
 
 ## 相关测试
 

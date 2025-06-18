@@ -20,7 +20,7 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "rm69a10_driver.h"
-#include "pin_config.h"
+#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
 static const char *TAG = "example";
