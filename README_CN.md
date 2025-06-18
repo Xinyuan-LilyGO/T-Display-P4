@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 09:24:14
+ * @LastEditTime: 2025-06-18 11:03:35
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -40,6 +40,18 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 4.  **丰富的外设支持**：板载高清MIPI触摸屏、ESP32-C6模块、扬声器、麦克风、Lora模块、Gps模块、以太网、线性振动马达、独立的电池电量监测计可监测电池健康度和电量百分比、MIPI摄像头等，引出了ESP32-P4和ESP32-C6的多个IO口，提高了设备的可扩展性。
 
 ## 预览
+#### 预览版测试图片
+
+<p align="center" width="100%">
+    <img src="image/4.jpg" alt="">
+</p>
+
+---
+
+<p align="center" width="100%">
+    <img src="image/5.jpg" alt="">
+</p>
+
 
 ### 实物图
 

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 09:24:33
+ * @LastEditTime: 2025-06-18 11:05:10
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -40,6 +40,18 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 4. **Rich Peripheral Support**: Onboard peripherals include an HD MIPI touchscreen, ESP32-C6 module, speaker, microphone, LoRa module, GPS module, Ethernet, a linear vibration motor, an independent battery gauge for monitoring battery health and percentage, and an MIPI camera. Multiple GPIOs of both the ESP32-P4 and ESP32-C6 are exposed, enhancing the device's expandability.  
 
 ## Preview
+#### Beta version test images
+
+<p align="center" width="100%">
+    <img src="image/4.jpg" alt="">
+</p>
+
+---
+
+<p align="center" width="100%">
+    <img src="image/5.jpg" alt="">
+</p>
+
 
 ### Actual Product Image
 
