@@ -1,8 +1,8 @@
 /*
- * @Description: T-Display-P4 pin config
+ * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-06-18 16:42:17
+ * @LastEditTime: 2025-06-18 16:49:54
  */
 #pragma once
 
