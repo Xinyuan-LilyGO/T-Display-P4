@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-17 11:23:50
+ * @LastEditTime: 2025-06-18 09:24:14
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -64,6 +64,16 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 屏幕通讯接口：MIPI
 > * 触摸通讯接口：IIC
 > * 屏幕和触摸驱动芯片：HI8561
+> * 触摸最大点数：10点触控
+> * 亮度：550 cd/mm
+> * 视角方向：All
+> * 对比度：1200:1
+> * 色域：70%
+> * 图像点密集度：326
+> * 视窗效果：无一体黑
+> * 盖板表面效果：无 AF/AG
+> * 工作温度：-20～70  ºC
+> * 储存温度：-30～80 ºC
 > * 相关资料：
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)
 

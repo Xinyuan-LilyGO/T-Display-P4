@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-17 11:25:21
+ * @LastEditTime: 2025-06-18 09:24:33
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -64,6 +64,16 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Display Interface: MIPI  
 > * Touch Interface: IIC
 > * Display & Touch Driver IC: HI8561  
+> * Maximum touch points: 10-point touch
+> * Luminance on surface: 550 cd/mm
+> * View Direction: All
+> * Contrast ratio: 1200:1
+> * Color gamut: 70%
+> * PPI: 326
+> * Window effect: No all-black  
+> * Cover plate surface effect: No AF/AG
+> * Operating Temperature: -20～70  ºC
+> * Storage Temperature: -30～80 ºC
 > * Related Documents:  
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
 
