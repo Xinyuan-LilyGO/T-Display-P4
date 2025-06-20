@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-06-20 18:08:19
+ * @LastEditTime: 2025-06-20 18:12:28
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -63,7 +63,7 @@ extern "C" void app_main(void)
     SX1262->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 
     SX1262->begin(10000000);
-    SX1262->config_gfsk_params(850.0, 200.0, Cpp_Bus_Driver::Sx126x::Gfsk_Bw::BW_467000Hz, 140, 22);
+    SX1262->config_gfsk_params(850.0, 200.0, Cpp_Bus_Driver::Sx126x::Gfsk_Bw::BW_467000HZ, 140, 22);
     SX1262->clear_buffer();
 
     SX1262->start_gfsk_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);

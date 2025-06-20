@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2025-06-20 17:24:05
+ * @LastEditTime: 2025-06-20 18:12:35
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -63,7 +63,7 @@ extern "C" void app_main(void)
     SX1262->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 
     SX1262->begin(10000000);
-    SX1262->config_lora_params(920.0, Cpp_Bus_Driver::Sx126x::Lora_Bw::BW_125000Hz, 140, 22);
+    SX1262->config_lora_params(920.0, Cpp_Bus_Driver::Sx126x::Lora_Bw::BW_125000HZ, 140, 22);
     SX1262->clear_buffer();
 
     SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
