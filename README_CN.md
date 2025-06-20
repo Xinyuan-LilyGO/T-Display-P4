@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-18 16:44:18
+ * @LastEditTime: 2025-06-20 11:50:37
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -207,7 +207,8 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 | firmware | description | picture |
 | ------  | ------  | ------ |
-| [lvgl_9_ui(ov2710)](./firmware/[T-Display-P4][lvgl_9_ui][ov2710]_firmware_202505301532.bin) | OV2710摄像头版本出厂程序 |  |
+| [lvgl_9_ui(ov2710)](./firmware/[T-Display-P4][lvgl_9_ui][ov2710]/) | OV2710摄像头版本出厂程序 |  |
+| [esp32c6_at_slave_v4.1.0.0_dev(sdio)](./firmware/[T-Display-P4][esp32c6_at_slave_v4.1.0.0_dev][sdio]_firmware_202503260916.bin) | esp32c6-at 出厂程序 |  |
 
 ### ESP-IDF Visual Studio Code
 1. 安装 [Visual Studio Code](https://code.visualstudio.com/Download) ，根据你的系统类型选择安装。

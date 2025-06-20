@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-06-13 13:50:41
+ * @LastEditTime: 2025-06-20 11:25:37
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -184,6 +184,9 @@ Music_File_Read_Speed_Enum Music_File_Read_Speed = Music_File_Read_Speed_Enum::H
 Imu_Mode ICM20948_Imu_Mode = Imu_Mode::TEST;
 
 Gps_Mode L76k_Gps_Mode = Gps_Mode::TEST;
+
+bool L76k_Gps_Positioning_Flag = false;
+size_t L76k_Gps_Positioning_Time = 0;
 
 Ethernet_Mode Ip101gri_Ethernet_Mode = Ethernet_Mode::TEST;
 
@@ -1039,9 +1042,19 @@ void device_gps_task(void *arg)
 
                     if (L76K->parse_rmc_info(buffer, buffer_length, rmc) == true)
                     {
-                        std::string rmc_data_str = "gps data:\nrmc data:\n";
+                        std::string rmc_data_str = "";
+                        if (L76k_Gps_Positioning_Flag == false)
+                        {
+                            L76k_Gps_Positioning_Time++;
 
-                        rmc_data_str += "location status: " + rmc.location_status + "\n\n";
+                            rmc_data_str = "getting location time: " + std::to_string(L76k_Gps_Positioning_Time) + " s\n\n";
+                        }
+                        else
+                        {
+                            rmc_data_str = "location found time: " + std::to_string(L76k_Gps_Positioning_Time) + " s\n\n";
+                        }
+
+                        rmc_data_str += "gps data:\nrmc data:\nlocation status: " + rmc.location_status + "\n\n";
 
                         if (rmc.data.update_flag == true)
                         {
@@ -1058,6 +1071,8 @@ void device_gps_task(void *arg)
 
                         if ((rmc.location.lat.update_flag == true) && (rmc.location.lat.direction_update_flag == true))
                         {
+                            L76k_Gps_Positioning_Flag = true;
+
                             rmc_data_str += "lat degrees: " + std::to_string(rmc.location.lat.degrees) + "\n";
                             rmc_data_str += "lat minutes: " + std::to_string(rmc.location.lat.minutes) + "\n";
                             rmc_data_str += "lat degrees_minutes: " + std::to_string(rmc.location.lat.degrees_minutes) + "\n";
@@ -1070,6 +1085,8 @@ void device_gps_task(void *arg)
 
                         if ((rmc.location.lon.update_flag == true) && (rmc.location.lon.direction_update_flag == true))
                         {
+                            L76k_Gps_Positioning_Flag = true;
+
                             rmc_data_str += "lon degrees: " + std::to_string(rmc.location.lon.degrees) + "\n";
                             rmc_data_str += "lon minutes: " + std::to_string(rmc.location.lon.minutes) + "\n";
                             rmc_data_str += "lon degrees_minutes: " + std::to_string(rmc.location.lon.degrees_minutes) + "\n";
@@ -1083,10 +1100,19 @@ void device_gps_task(void *arg)
                         lv_label_set_text(System_Ui->_registry.win.cit.gps_test.data_label, rmc_data_str.c_str());
                         _lock_release(&lvgl_api_lock);
                     }
+                    else
+                    {
+                        std::string rmc_data_str = "gps data:\nread fail";
+
+                        // 更新数据的标签
+                        _lock_acquire(&lvgl_api_lock);
+                        lv_label_set_text(System_Ui->_registry.win.cit.gps_test.data_label, rmc_data_str.c_str());
+                        _lock_release(&lvgl_api_lock);
+                    }
                 }
                 else
                 {
-                    std::string rmc_data_str = "gps data:\nread fail";
+                    std::string rmc_data_str = "gps data:\nread null";
 
                     // 更新数据的标签
                     _lock_acquire(&lvgl_api_lock);
@@ -1094,7 +1120,7 @@ void device_gps_task(void *arg)
                     _lock_release(&lvgl_api_lock);
                 }
 
-                cycle_time = esp_log_timestamp() + 100;
+                cycle_time = esp_log_timestamp() + 1000;
             }
         }
         break;
@@ -2212,11 +2238,17 @@ void Lvgl_Init(void)
             L76k_Gps_Mode = Gps_Mode::TEST;
             L76K->clear_rx_buffer_data();
 
+            L76K->sleep(false);
+            L76k_Gps_Positioning_Time = 0;
+            L76k_Gps_Positioning_Flag = false;
+
             vTaskResume(Gps_Task_Handle);
         }
         else
         {
             vTaskSuspend(Gps_Task_Handle);
+
+            L76K->sleep(true);
         }
     };
 
@@ -3366,6 +3398,7 @@ extern "C" void app_main(void)
     printf("set_baud_rate:%ld\n", L76K->get_baud_rate());
     L76K->set_update_frequency(Cpp_Bus_Driver::L76k::Update_Freq::FREQ_5HZ);
     L76K->clear_rx_buffer_data();
+    L76K->sleep(true);
 
     _lock_acquire(&lvgl_api_lock);
     Set_Lvgl_Startup_Progress_Bar(90);

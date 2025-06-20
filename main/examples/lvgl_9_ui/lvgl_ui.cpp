@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-06-03 10:21:31
+ * @LastEditTime: 2025-06-20 11:35:36
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -55,15 +55,15 @@ namespace Lvgl_Ui
             {"company: ", "lilygo"},
             {"board name: ", "t-display-p4"},
             {"software name: ", "lvgl_9_ui"},
-#if defined CONFIG_CAMERA_SC2336
+#if defined CONFIG_CAMERA_TYPE_SC2336
             {"camera model: ", "sc2333"},
-#elif defined CONFIG_CAMERA_OV2710
+#elif defined CONFIG_CAMERA_TYPE_OV2710
             {"camera model: ", "ov2710"},
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202505301532"},
+            {"firmware build date:\n     ", "202506201012"},
     };
 
     void System::begin()
