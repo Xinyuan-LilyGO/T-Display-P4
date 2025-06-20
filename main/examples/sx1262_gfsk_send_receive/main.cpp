@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-06-13 14:02:39
+ * @LastEditTime: 2025-06-20 18:08:19
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -192,7 +192,7 @@ extern "C" void app_main(void)
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
         }
 
-        if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 发送完成中断
+        if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 接收完成中断
         {
             // 检查中断
             Cpp_Bus_Driver::Sx126x::Irq_Status is;

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-05-27 16:05:32
+ * @LastEditTime: 2025-06-20 17:07:17
  * @License: GPL 3.0
  */
 #pragma once
@@ -85,6 +85,7 @@ namespace Lvgl_Ui
             CIT_TOUCH_TEST,
             CAMERA,
             LORA,
+            LORA_SETINGS,
             MUSIC,
         };
 

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-06-20 11:35:36
+ * @LastEditTime: 2025-06-20 17:07:59
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -63,7 +63,7 @@ namespace Lvgl_Ui
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202506201012"},
+            {"firmware build date:\n     ", "202506201452"},
     };
 
     void System::begin()
@@ -3147,6 +3147,8 @@ namespace Lvgl_Ui
         init_status_bar(_registry.win.lora.setings.root);
 
         lv_obj_update_layout(_registry.win.lora.setings.root);
+
+        _current_win = Current_Win::LORA_SETINGS;
     }
 
     void System::init_win_lora_setings_config_lora_params_message_box(void)
@@ -3425,7 +3427,7 @@ namespace Lvgl_Ui
         lv_dropdown_set_options(_registry.win.lora.setings.config_lora_params.dropdown.bandwidth, "BW_7810\n"
                                                                                                   "BW_15630\n"
                                                                                                   "BW_31250\n"
-                                                                                                  "BW_625000\n"
+                                                                                                  "BW_62500\n"
                                                                                                   "BW_125000\n"
                                                                                                   "BW_250000\n"
                                                                                                   "BW_500000\n"

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-06-20 11:25:37
+ * @LastEditTime: 2025-06-20 17:40:43
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -204,6 +204,8 @@ bool Camera_Init_Status = false;
 
 bool Lora_Send_falg = false;
 uint8_t Lora_Send_Package[255] = {0};
+
+bool Device_Lora_Task_Stop_Flag = false;
 
 QueueHandle_t app_queue;
 
@@ -1462,10 +1464,13 @@ void device_lora_task(void *arg)
                         };
                     System_Ui->_registry.win.lora.chat_message_data.push_back(wlcm);
 
-                    // 更新聊天容器
-                    _lock_acquire(&lvgl_api_lock);
-                    System_Ui->win_lora_chat_message_data_update(System_Ui->_registry.win.lora.chat_message_data);
-                    _lock_release(&lvgl_api_lock);
+                    if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::LORA)
+                    {
+                        // 更新聊天容器
+                        _lock_acquire(&lvgl_api_lock);
+                        System_Ui->win_lora_chat_message_data_update(System_Ui->_registry.win.lora.chat_message_data);
+                        _lock_release(&lvgl_api_lock);
+                    }
 
                     Lora_Send_falg = true;
 
@@ -1481,10 +1486,11 @@ void device_lora_task(void *arg)
             SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Flag::TX_DONE);
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::TX_DONE);
 
-            if (SX1262->send_data(Lora_Send_Package, sizeof(Lora_Send_Package)) == true)
+            if (SX1262->send_data(Lora_Send_Package, strlen(reinterpret_cast<const char *>(Lora_Send_Package))) == true)
             {
                 uint16_t timeout_count = 0;
                 printf("SX1262 send start\n");
+                printf("SX1262 send data size: %d\n", strlen(reinterpret_cast<const char *>(Lora_Send_Package)));
 
                 while (1) // 等待发送完成
                 {
@@ -1540,7 +1546,7 @@ void device_lora_task(void *arg)
             Lora_Send_falg = false;
         }
 
-        if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 发送完成中断
+        if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 接收完成中断
         {
             // 检查中断
             Cpp_Bus_Driver::Sx126x::Irq_Status is;
@@ -1612,15 +1618,26 @@ void device_lora_task(void *arg)
                             };
                         System_Ui->_registry.win.lora.chat_message_data.push_back(wlcm);
 
-                        // 更新聊天容器
-                        _lock_acquire(&lvgl_api_lock);
-                        System_Ui->win_lora_chat_message_data_update(System_Ui->_registry.win.lora.chat_message_data);
-                        _lock_release(&lvgl_api_lock);
+                        if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::LORA)
+                        {
+                            // 更新聊天容器
+                            _lock_acquire(&lvgl_api_lock);
+                            System_Ui->win_lora_chat_message_data_update(System_Ui->_registry.win.lora.chat_message_data);
+                            _lock_release(&lvgl_api_lock);
+                        }
                     }
                 }
             }
 
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
+        }
+
+        // 如果有触发停止标志就等待lora一次发送或接收过程完成后再停止
+        // 这样做为了防止spi意外终止导致的iic的0x107错误
+        // 多任务处理spi和iic不能同时工作，spi工作的时候有概率会导致iic死机
+        if (Device_Lora_Task_Stop_Flag == true)
+        {
+            vTaskSuspend(Lora_Task_Handle);
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
@@ -2373,11 +2390,12 @@ void Lvgl_Init(void)
     {
         if (status == true)
         {
+            Device_Lora_Task_Stop_Flag = false;
             vTaskResume(Lora_Task_Handle);
         }
         else
         {
-            vTaskSuspend(Lora_Task_Handle);
+            Device_Lora_Task_Stop_Flag = true;
         }
     };
 
