@@ -2,7 +2,7 @@
  * @Description: iic_scan
  * @Author: LILYGO_L
  * @Date: 2025-06-13 12:06:14
- * @LastEditTime: 2025-06-13 13:47:24
+ * @LastEditTime: 2025-06-23 17:40:08
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -23,7 +23,7 @@ void IIC_Scan(void)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("Discovered IIC devices[%u]: %#X\n", i, address[i]);
         }
     }
 }
