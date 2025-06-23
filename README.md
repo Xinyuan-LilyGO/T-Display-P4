@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-20 12:02:06
+ * @LastEditTime: 2025-06-23 18:08:54
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -179,7 +179,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 
 ### Examples Support
 
-| example | `[vscode][esp-idf-v5.4.0]` | Description | Picture |
+| example | `[vscode][esp-idf-v5.4.0]` | description | picture |
 | ------  | ------ | ------ | ------ | 
 | [aw86224](./main/examples/aw86224) |  <p align="center">![alt text][supported] | | |
 | [bq27220](./main/examples/bq27220) |  <p align="center">![alt text][supported] | | |
