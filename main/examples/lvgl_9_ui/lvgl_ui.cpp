@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-06-20 17:07:59
+ * @LastEditTime: 2025-06-24 13:54:14
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -63,7 +63,7 @@ namespace Lvgl_Ui
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202506201452"},
+            {"firmware build date:\n     ", "202506241354"},
     };
 
     void System::begin()

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-06-20 17:40:43
+ * @LastEditTime: 2025-06-24 13:48:33
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -2957,7 +2957,7 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             .rotation_angle = PPA_SRM_ROTATION_ANGLE_0,
             .scale_x = 1,
             .scale_y = 1,
-            .mirror_x = true,
+            .mirror_x = false,
             .mirror_y = true,
             .rgb_swap = false,
             .byte_swap = false,
