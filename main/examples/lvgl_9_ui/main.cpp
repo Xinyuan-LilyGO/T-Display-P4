@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-06-26 14:44:25
+ * @LastEditTime: 2025-06-26 16:24:13
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -2357,14 +2357,11 @@ void Lvgl_Init(void)
     // set color depth
     lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB565);
     // create draw buffer
-    void *buf1 = NULL;
-    void *buf2 = NULL;
     printf("allocate separate lvgl draw buffers\n");
-
     size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
-    buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(buf1);
-    buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(buf2);
     // initialize LVGL draw buffers
     lv_display_set_buffers(display, buf1, buf2, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
@@ -3324,15 +3321,15 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    // if (Sdmmc_Init(SD_BASE_PATH) == false)
-    // {
-    //     printf("Sdmmc_Init fail\n");
-    // }
-
-    if (Sdspi_Init(SD_BASE_PATH) == false)
+    if (Sdmmc_Init(SD_BASE_PATH) == false)
     {
-        printf("Sdspi_Init fail\n");
+        printf("Sdmmc_Init fail\n");
     }
+
+    // if (Sdspi_Init(SD_BASE_PATH) == false)
+    // {
+    //     printf("Sdspi_Init fail\n");
+    // }
 
     Lvgl_Init();
     Lvgl_Startup();
