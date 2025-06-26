@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-06-24 13:48:33
+ * @LastEditTime: 2025-06-26 14:44:25
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -664,23 +664,6 @@ bool Play_Wav_File(const char *file_path)
     _lock_release(&lvgl_api_lock);
 
     return true;
-}
-
-void lvgl_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
-{
-    esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
-    int offsetx1 = area->x1;
-    int offsetx2 = area->x2;
-    int offsety1 = area->y1;
-    int offsety2 = area->y2;
-    // pass the draw buffer to the driver
-    esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
-}
-
-void increase_lvgl_tick(void *arg)
-{
-    /* Tell LVGL how many milliseconds has elapsed */
-    lv_tick_inc(LVGL_TICK_PERIOD_MS);
 }
 
 void lvgl_ui_task(void *arg)
@@ -1799,22 +1782,6 @@ void iis_transmission_data_stream_task(void *arg)
     }
 }
 
-bool notify_lvgl_flush_ready(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx)
-{
-    lv_display_t *disp = (lv_display_t *)user_ctx;
-    lv_display_flush_ready(disp);
-    return false;
-}
-
-bool monitor_refresh_rate(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx)
-{
-    // static int io_level = 0;
-    // // please note, the real refresh rate should be 2*frequency of this GPIO toggling
-    // gpio_set_level(EXAMPLE_PIN_NUM_REFRESH_MONITOR, io_level);
-    // io_level = !io_level;
-    return false;
-}
-
 void bsp_enable_dsi_phy_power(void)
 {
     // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
@@ -2148,52 +2115,8 @@ bool Sdspi_Init(const char *base_path)
     return true;
 }
 
-void Lvgl_Init(void)
+void System_Ui_Callback_Init(void)
 {
-    printf("initialize lvgl\n");
-
-    lv_init();
-
-    // create a lvgl display
-    lv_display_t *display = lv_display_create(HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT);
-    // associate the mipi panel handle to the display
-    lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
-    // set color depth
-    lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB565);
-    // create draw buffer
-    void *buf1 = NULL;
-    void *buf2 = NULL;
-    printf("allocate separate lvgl draw buffers\n");
-
-    size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
-    buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    assert(buf1);
-    buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    assert(buf2);
-    // initialize LVGL draw buffers
-    lv_display_set_buffers(display, buf1, buf2, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
-    // set the callback which can copy the rendered image to an area of the display
-    lv_display_set_flush_cb(display, lvgl_flush_cb);
-
-    lv_indev_t *indev = lv_indev_create();
-    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
-    lv_indev_set_read_cb(indev, my_touchpad_read);
-
-    printf("register dpi panel event callback for lvgl flush ready notification\n");
-    esp_lcd_dpi_panel_event_callbacks_t cbs = {
-        .on_color_trans_done = notify_lvgl_flush_ready,
-        .on_refresh_done = monitor_refresh_rate,
-    };
-    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Dpi_Panel, &cbs, display));
-
-    printf("use esp_timer as lvgl tick timer\n");
-    const esp_timer_create_args_t lvgl_tick_timer_args = {
-        .callback = &increase_lvgl_tick,
-        .name = "lvgl_tick"};
-    esp_timer_handle_t lvgl_tick_timer = NULL;
-    ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_TICK_PERIOD_MS * 1000));
-
     System_Ui->_device_vibration_callback = [](uint8_t vibration_count)
     {
         AW86224_Vibration_Play_Count = vibration_count;
@@ -2419,6 +2342,77 @@ void Lvgl_Init(void)
 
         Set_Music_Current_Time_S_Flag = true;
     };
+}
+
+void Lvgl_Init(void)
+{
+    printf("initialize lvgl\n");
+
+    lv_init();
+
+    // create a lvgl display
+    lv_display_t *display = lv_display_create(HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT);
+    // associate the mipi panel handle to the display
+    lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
+    // set color depth
+    lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB565);
+    // create draw buffer
+    void *buf1 = NULL;
+    void *buf2 = NULL;
+    printf("allocate separate lvgl draw buffers\n");
+
+    size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
+    buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    assert(buf1);
+    buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    assert(buf2);
+    // initialize LVGL draw buffers
+    lv_display_set_buffers(display, buf1, buf2, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    // set the callback which can copy the rendered image to an area of the display
+
+    lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
+                            {
+                                esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
+                                int offsetx1 = area->x1;
+                                int offsetx2 = area->x2;
+                                int offsety1 = area->y1;
+                                int offsety2 = area->y2;
+                                // pass the draw buffer to the driver
+                                esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map); });
+
+    lv_indev_t *indev = lv_indev_create();
+    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
+    lv_indev_set_read_cb(indev, my_touchpad_read);
+
+    printf("register dpi panel event callback for lvgl flush ready notification\n");
+    esp_lcd_dpi_panel_event_callbacks_t cbs = {
+        .on_color_trans_done = [](esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx) -> bool
+        {
+            lv_display_t *disp = (lv_display_t *)user_ctx;
+            lv_display_flush_ready(disp);
+            return false; },
+        .on_refresh_done = [](esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx) -> bool
+        {
+            // static int io_level = 0;
+            // // please note, the real refresh rate should be 2*frequency of this GPIO toggling
+            // gpio_set_level(EXAMPLE_PIN_NUM_REFRESH_MONITOR, io_level);
+            // io_level = !io_level;
+            return false; },
+    };
+    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Dpi_Panel, &cbs, display));
+
+    printf("use esp_timer as lvgl tick timer\n");
+    const esp_timer_create_args_t lvgl_tick_timer_args = {
+        .callback = [](void *arg)
+        {
+            lv_tick_inc(LVGL_TICK_PERIOD_MS);
+        },
+        .name = "lvgl_tick"};
+    esp_timer_handle_t lvgl_tick_timer = NULL;
+    ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_TICK_PERIOD_MS * 1000));
+
+    System_Ui_Callback_Init();
 }
 
 void Lvgl_Startup(void)
@@ -3330,15 +3324,15 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    if (Sdmmc_Init(SD_BASE_PATH) == false)
-    {
-        printf("Sdmmc_Init fail\n");
-    }
-
-    // if (Sdspi_Init(SD_BASE_PATH) == false)
+    // if (Sdmmc_Init(SD_BASE_PATH) == false)
     // {
-    //     printf("Sdspi_Init fail\n");
+    //     printf("Sdmmc_Init fail\n");
     // }
+
+    if (Sdspi_Init(SD_BASE_PATH) == false)
+    {
+        printf("Sdspi_Init fail\n");
+    }
 
     Lvgl_Init();
     Lvgl_Startup();
