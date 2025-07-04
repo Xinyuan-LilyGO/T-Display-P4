@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-04 17:51:15
+ * @LastEditTime: 2025-07-04 17:53:29
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -2970,10 +2970,10 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
         if (System_Ui->get_current_win() == Lvgl_Ui::System::Current_Win::CAMERA)
         {
 #if defined CONFIG_CAMERA_TYPE_SC2336 || defined CONFIG_CAMERA_TYPE_OV2710
-            assert = esp_lcd_panel_draw_bitmap(screen_mipi_dpi_panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
+            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
                                                srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
 #elif defined CONFIG_CAMERA_TYPE_OV5645
-            assert = esp_lcd_panel_draw_bitmap(screen_mipi_dpi_panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 150,
+            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 150,
                                                srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 150, lcd_buffer[camera_buf_index]);
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
