@@ -27,7 +27,7 @@ auto L76K = std::make_unique<Cpp_Bus_Driver::L76k>(Uart_Bus_1, [](bool Value) ->
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    
+
     XL9535->begin();
     XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);

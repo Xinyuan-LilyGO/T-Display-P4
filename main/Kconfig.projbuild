@@ -97,6 +97,8 @@ menu "Example Configuration"
                 bool "SC2336"
             config CAMERA_TYPE_OV2710
                 bool "OV2710"
+            config CAMERA_TYPE_OV5645
+                bool "OV5645"
     endchoice
 
     choice

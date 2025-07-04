@@ -2,7 +2,7 @@
  * @Description: hi8561_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2025-06-13 12:01:55
+ * @LastEditTime: 2025-07-04 15:45:21
  * @License: GPL 3.0
  */
 #include "esp_video_init.h"
@@ -210,8 +210,16 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             printf("ppa_do_scale_rotate_mirror fail (error code: %#X)\n", assert);
         }
 
+#if defined CONFIG_CAMERA_TYPE_SC2336 || defined CONFIG_CAMERA_TYPE_OV2710
         assert = esp_lcd_panel_draw_bitmap(screen_mipi_dpi_panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
                                            srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+        assert = esp_lcd_panel_draw_bitmap(screen_mipi_dpi_panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 150,
+                                           srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 150, lcd_buffer[camera_buf_index]);
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
         if (assert != ESP_OK)
         {
             printf("esp_lcd_panel_draw_bitmap fail (error code: %#X)\n", assert);
@@ -367,6 +375,15 @@ extern "C" void app_main(void)
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 3100);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+    XL9535->pin_mode(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 打开摄像头
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 2800);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
