@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-06-24 13:54:14
+ * @LastEditTime: 2025-07-05 13:52:25
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -59,11 +59,13 @@ namespace Lvgl_Ui
             {"camera model: ", "sc2333"},
 #elif defined CONFIG_CAMERA_TYPE_OV2710
             {"camera model: ", "ov2710"},
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+            {"camera model: ", "ov5645"},
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202506241354"},
+            {"firmware build date:\n     ", "202507051352"},
     };
 
     void System::begin()
@@ -3224,7 +3226,7 @@ namespace Lvgl_Ui
                                 const char* freq_text = lv_textarea_get_text(self->_registry.win.lora.setings.config_lora_params.textarea.freq);
                                 if (freq_text != nullptr && freq_text[0] != '\0') // 同时检查NULL和空字符串
                                 {  
-                                    float buffer = std::strtof(freq_text, nullptr);  
+                                    float buffer = std::stof(freq_text, nullptr);  
 
                                     // 限制范围
                                     if((buffer >= 150.0) && (buffer <= 960.0))
@@ -3244,7 +3246,7 @@ namespace Lvgl_Ui
                                 const char* current_limit_text = lv_textarea_get_text(self->_registry.win.lora.setings.config_lora_params.textarea.current_limit);
                                 if (current_limit_text != nullptr && current_limit_text[0] != '\0') // 同时检查NULL和空字符串
                                 {  
-                                    float buffer = std::strtof(current_limit_text, nullptr);  
+                                    float buffer = std::stof(current_limit_text, nullptr);  
 
                                     // 限制范围
                                     if((buffer >= 0) && (buffer <= 140.0))

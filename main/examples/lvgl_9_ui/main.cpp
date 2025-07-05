@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-04 17:53:29
+ * @LastEditTime: 2025-07-04 18:20:36
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -1047,7 +1047,8 @@ void device_gps_task(void *arg)
                         }
                         if (rmc.utc.update_flag == true)
                         {
-                            rmc_data_str += "utc china time: " + std::to_string((rmc.utc.hour + 8 + 24) % 24) + ":" + std::to_string(rmc.utc.minute) + ":" + std::to_string(static_cast<uint8_t>(rmc.utc.second)) + "\n";
+                            rmc_data_str += "utc time: " + std::to_string(rmc.utc.hour) + ":" + std::to_string(rmc.utc.minute) + ":" + std::to_string(static_cast<uint8_t>(rmc.utc.second)) + "\n";
+                            rmc_data_str += "china time: " + std::to_string((rmc.utc.hour + 8 + 24) % 24) + ":" + std::to_string(rmc.utc.minute) + ":" + std::to_string(static_cast<uint8_t>(rmc.utc.second)) + "\n";
                             rmc.utc.update_flag = false;
                         }
 
@@ -3280,7 +3281,6 @@ extern "C" void app_main(void)
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
-#else
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif

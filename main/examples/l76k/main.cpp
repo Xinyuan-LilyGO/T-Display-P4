@@ -2,7 +2,7 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2025-06-13 13:46:34
+ * @LastEditTime: 2025-07-05 11:02:30
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -90,6 +90,7 @@ extern "C" void app_main(void)
                 if (rmc.utc.update_flag == true)
                 {
                     printf("utc hour: %d minute: %d second: %f\n", rmc.utc.hour, rmc.utc.minute, rmc.utc.second);
+                    printf("china hour: %d minute: %d second: %f\n", (rmc.utc.hour + 8 + 24) % 24, rmc.utc.minute, rmc.utc.second);
                     rmc.utc.update_flag = false;
                 }
 
