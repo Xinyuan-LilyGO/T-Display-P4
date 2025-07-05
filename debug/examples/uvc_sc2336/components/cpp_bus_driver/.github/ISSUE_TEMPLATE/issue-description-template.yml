@@ -1,0 +1,70 @@
+name: Issue description template
+description: Report any problem here
+labels: ["help wanted"]
+assignees:
+  - Llgok
+body:
+  - type: markdown
+    attributes:
+      value: |
+        * Before reporting a new issue, please check and search the list of frequently asked questions in the `README.md` file.
+        * If still experiencing the issue, please provide as many details as possible below about your hardware, computer setup and code.
+  - type: input
+    id: Operating_System
+    attributes:
+      label: Operating System
+      description: On which OS does this issue occur?
+      placeholder: e.g. Windows 10,macOS 12.1...
+    validations:
+      required: true
+  - type: input
+    id: IDE
+    attributes:
+      label: IDE
+      description: The IDE you use to compile the program.
+      placeholder: e.g. Arduino,PlatformIO...
+    validations:
+      required: true
+  - type: input
+    id: Software_Package_Version
+    attributes:
+      label: Software Package Version
+      description: Version of the software package used for compiling the program.
+      placeholder: e.g. arduino-esp32-libs_v3.0.1,espressif32 @6.5.0...
+    validations:
+      required: true
+  - type: textarea
+    id: Description
+    attributes:
+      label: Description
+      description: Please describe your problem here and expected behaviour,you can also indicate here which example programs or example firmwares in the project have issues.
+      placeholder: e.g. Can't connect/weird behaviour/wrong function/missing parameter...
+    validations:
+      required: true
+  - type: textarea
+    id: Sketch
+    attributes:
+      label: Sketch
+      description: Please provide full minimal sketch/code which can be run to reproduce your issue
+      placeholder: e.g. Related part of the code to replicate the issue
+      render: cpp
+    validations:
+     required: true
+  - type: textarea
+    id: Debug_Message
+    attributes:
+      label: Debug Message
+      description: Please provide a debug message or error message. 
+      placeholder: Enable Core debug level - Debug on tools menu of IDE, then put the serial output here.
+      render: plain
+    validations:
+      required: true      
+  - type: textarea
+    id: Other_steps_to_reproduce 
+    attributes:
+      label: Other steps to Reproduce 
+      description: Is there any other information you can think of which will help us reproduce this problem? Any additional info can be added as well.
+      placeholder: e.g. I also tried on other OS, HW...it works correctly on that setup.
+
+
+
