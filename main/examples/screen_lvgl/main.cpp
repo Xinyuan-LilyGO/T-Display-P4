@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2025-07-07 16:47:50
+ * @LastEditTime: 2025-07-07 17:38:20
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -154,7 +154,7 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
     XL9535->begin();
-    
+
     XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
@@ -193,7 +193,6 @@ extern "C" void app_main(void)
     ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
-
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
@@ -226,6 +225,11 @@ extern "C" void app_main(void)
     ESP32P4->start_pwm_gradient_time(100, 500);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
+    for (uint8_t i = 0; i < 255; i += 5)
+    {
+        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
 
 #else
 #error "Unknown macro definition. Please select the correct macro definition."

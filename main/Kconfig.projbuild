@@ -131,8 +131,8 @@ menu "Example Configuration"
                 bool "hi8561_camera"
             config EXAMPLE_BUILD_SCREEN_LVGL
                 bool "screen_lvgl"
-            config EXAMPLE_BUILD_HI8561_LVGL_TOUCH_DRAW
-                bool "hi8561_lvgl_touch_draw"
+            config EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW
+                bool "screen_lvgl_touch_draw"
             config EXAMPLE_BUILD_ICM20948
                 bool "icm20948"
             config EXAMPLE_BUILD_IIC_SCAN

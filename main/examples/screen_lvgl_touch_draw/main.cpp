@@ -2,7 +2,7 @@
  * @Description: hi8561_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2025-06-13 12:00:41
+ * @LastEditTime: 2025-07-07 18:07:01
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -20,17 +20,15 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "hi8561_driver.h"
+#include "t_display_p4_driver.h"
 #include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
-#define LVGL_TICK_PERIOD_MS 2
-
-static const char *TAG = "example";
+#define LVGL_TICK_PERIOD_MS 1
 
 size_t Cycle_Time = 0;
 
-esp_lcd_panel_handle_t screen_mipi_dpi_panel = NULL;
+esp_lcd_panel_handle_t Screen_Mipi_Dpi_Panel = NULL;
 
 std::vector<uint16_t> Lvgl_Draw_X_Data;
 std::vector<uint16_t> Lvgl_Draw_Y_Data;
@@ -51,34 +49,25 @@ static lv_layer_t layer;
 lv_point_t point;
 
 auto XL9535_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto HI8561_T_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_Bus, HI8561_TOUCH_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
-void example_lvgl_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
-{
-    esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
-    int offsetx1 = area->x1;
-    int offsetx2 = area->x2;
-    int offsety1 = area->y1;
-    int offsety2 = area->y2;
-    // pass the draw buffer to the driver
-    esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
-}
+#if defined CONFIG_SCREEN_TYPE_HI8561
+auto HI8561_T_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 
-void example_increase_lvgl_tick(void *arg)
-{
-    /* Tell LVGL how many milliseconds has elapsed */
-    lv_tick_inc(LVGL_TICK_PERIOD_MS);
-}
+auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_Bus, HI8561_TOUCH_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-void example_lvgl_port_task(void *arg)
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
+void lvgl_port_task(void *arg)
 {
-    ESP_LOGI(TAG, "Starting LVGL task");
+    printf("lvgl_ui_task start\n");
+
     while (1)
     {
         // _lock_acquire(&lvgl_api_lock);
@@ -106,23 +95,7 @@ void example_lvgl_port_task(void *arg)
     }
 }
 
-bool example_notify_lvgl_flush_ready(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx)
-{
-    lv_display_t *disp = (lv_display_t *)user_ctx;
-    lv_display_flush_ready(disp);
-    return false;
-}
-
-bool example_monitor_refresh_rate(esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx)
-{
-    // static int io_level = 0;
-    // // please note, the real refresh rate should be 2*frequency of this GPIO toggling
-    // gpio_set_level(EXAMPLE_PIN_NUM_REFRESH_MONITOR, io_level);
-    // io_level = !io_level;
-    return false;
-}
-
-void example_bsp_enable_dsi_phy_power(void)
+void bsp_enable_dsi_phy_power(void)
 {
     // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
     esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
@@ -134,19 +107,12 @@ void example_bsp_enable_dsi_phy_power(void)
     printf("mipi dsi phy powered on\n");
 }
 
-void example_bsp_init_refresh_monitor_io(void)
-{
-    // gpio_config_t monitor_io_conf = {
-    //     .pin_bit_mask = 1ULL << EXAMPLE_PIN_NUM_REFRESH_MONITOR,
-    //     .mode = GPIO_MODE_OUTPUT,
-    // };
-    // ESP_ERROR_CHECK(gpio_config(&monitor_io_conf));
-}
-
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
+
     // if (XL9535->pin_read(XL9535_TOUCH_INT) == 0)
     // {
+#if defined CONFIG_SCREEN_TYPE_HI8561
     Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
     if (HI8561_T->get_single_touch_point(tp) == true)
@@ -162,6 +128,12 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
     {
         data->state = LV_INDEV_STATE_REL;
     }
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
     // }
 }
 
@@ -259,140 +231,66 @@ void lv_example_canvas_7(void)
     lv_obj_add_event_cb(lv_screen_active(), draw_point, LV_EVENT_ALL, NULL);
 }
 
-bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t dpi_clock_freq_mhz, lcd_color_rgb_pixel_format_t color_rgb_pixel_format, uint8_t num_fbs, uint32_t width, uint32_t height,
-                   uint32_t mipi_dsi_hsync, uint32_t mipi_dsi_hbp, uint32_t mipi_dsi_hfp, uint32_t mipi_dsi_vsync, uint32_t mipi_dsi_vbp, uint32_t mipi_dsi_vfp,
-                   uint32_t bits_per_pixel, esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    esp_lcd_dsi_bus_handle_t mipi_dsi_bus;
-    esp_lcd_panel_io_handle_t mipi_dbi_io;
-
-    auto cpp_assert = std::make_unique<Cpp_Bus_Driver::Tool>();
-
-    // create MIPI DSI bus first, it will initialize the DSI PHY as well
-    esp_lcd_dsi_bus_config_t bus_config = {
-        .bus_id = 0,
-        .num_data_lanes = num_data_lanes,
-        .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
-        .lane_bit_rate_mbps = lane_bit_rate_mbps,
-    };
-
-    esp_err_t assert = esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_dsi_bus fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    // we use DBI interface to send LCD commands and parameters
-    esp_lcd_dbi_io_config_t dbi_io_config = {
-        .virtual_channel = 0,
-        .lcd_cmd_bits = 8,   // according to the LCD spec
-        .lcd_param_bits = 8, // according to the LCD spec
-    };
-    assert = esp_lcd_new_panel_io_dbi(mipi_dsi_bus, &dbi_io_config, &mipi_dbi_io);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_io_dbi fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    esp_lcd_dpi_panel_config_t dpi_config = {
-        .virtual_channel = 0,
-        .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = dpi_clock_freq_mhz,
-        .pixel_format = color_rgb_pixel_format,
-        .num_fbs = num_fbs,
-        .video_timing = {
-            .h_size = width,
-            .v_size = height,
-            .hsync_pulse_width = mipi_dsi_hsync,
-            .hsync_back_porch = mipi_dsi_hbp,
-            .hsync_front_porch = mipi_dsi_hfp,
-            .vsync_pulse_width = mipi_dsi_vsync,
-            .vsync_back_porch = mipi_dsi_vbp,
-            .vsync_front_porch = mipi_dsi_vfp,
-        },
-        .flags = {
-            .use_dma2d = true, // use DMA2D to copy draw buffer into frame buffer
-        }};
-
-    hi8561_vendor_config_t vendor_config = {
-        .mipi_config = {
-            .dsi_bus = mipi_dsi_bus,
-            .dpi_config = &dpi_config,
-        },
-    };
-    esp_lcd_panel_dev_config_t dev_config = {
-        .reset_gpio_num = -1,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
-        .bits_per_pixel = bits_per_pixel,
-        .vendor_config = &vendor_config,
-    };
-    assert = esp_lcd_new_panel_hi8561(mipi_dbi_io, &dev_config, mipi_dpi_panel);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_hi8561 fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    return true;
-}
-
-bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    if (Mipi_Dsi_Init(HI8561_SCREEN_DATA_LANE_NUM, HI8561_SCREEN_LANE_BIT_RATE_MBPS, HI8561_SCREEN_MIPI_DSI_DPI_CLK_MHZ, LCD_COLOR_PIXEL_FORMAT_RGB565,
-                      0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, HI8561_SCREEN_MIPI_DSI_HSYNC, HI8561_SCREEN_MIPI_DSI_HBP,
-                      HI8561_SCREEN_MIPI_DSI_HFP, HI8561_SCREEN_MIPI_DSI_VSYNC, HI8561_SCREEN_MIPI_DSI_VBP, HI8561_SCREEN_MIPI_DSI_VFP,
-                      HI8561_SCREEN_BITS_PER_PIXEL_RGB565, mipi_dpi_panel) == false)
-    {
-        printf("Mipi_Dsi_Init fail\n");
-        return false;
-    }
-
-    return true;
-}
-
 void Lvgl_Init(void)
 {
-    ESP_LOGI(TAG, "Initialize LVGL library");
+    printf("initialize lvgl\n");
+
     lv_init();
+
     // create a lvgl display
-    lv_display_t *display = lv_display_create(HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT);
+    lv_display_t *display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     // associate the mipi panel handle to the display
-    lv_display_set_user_data(display, screen_mipi_dpi_panel);
+    lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
     // set color depth
-    lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB888);
+    lv_display_set_color_format(display, LVGL_COLOR_FORMAT);
     // create draw buffer
-    void *buf1 = NULL;
-    void *buf2 = NULL;
-    ESP_LOGI(TAG, "Allocate separate LVGL draw buffers");
-    // Note:
-    // Keep the display buffer in **internal** RAM can speed up the UI because LVGL uses it a lot and it should have a fast access time
-    // This example allocate the buffer from PSRAM mainly because we want to save the internal RAM
-    size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
-    buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
+    printf("allocate separate lvgl draw buffers\n");
+    size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
+    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(buf1);
-    buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
+    void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     assert(buf2);
     // initialize LVGL draw buffers
     lv_display_set_buffers(display, buf1, buf2, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
     // set the callback which can copy the rendered image to an area of the display
-    lv_display_set_flush_cb(display, example_lvgl_flush_cb);
+
+    lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
+                            {
+                                esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
+                                int offsetx1 = area->x1;
+                                int offsetx2 = area->x2;
+                                int offsety1 = area->y1;
+                                int offsety2 = area->y2;
+                                // pass the draw buffer to the driver
+                                esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map); });
 
     lv_indev_t *indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
     lv_indev_set_read_cb(indev, my_touchpad_read);
 
-    ESP_LOGI(TAG, "Register DPI panel event callback for LVGL flush ready notification");
+    printf("register dpi panel event callback for lvgl flush ready notification\n");
     esp_lcd_dpi_panel_event_callbacks_t cbs = {
-        .on_color_trans_done = example_notify_lvgl_flush_ready,
-        .on_refresh_done = example_monitor_refresh_rate,
+        .on_color_trans_done = [](esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx) -> bool
+        {
+            lv_display_t *disp = (lv_display_t *)user_ctx;
+            lv_display_flush_ready(disp);
+            return false; },
+        .on_refresh_done = [](esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx) -> bool
+        {
+            // static int io_level = 0;
+            // // please note, the real refresh rate should be 2*frequency of this GPIO toggling
+            // gpio_set_level(EXAMPLE_PIN_NUM_REFRESH_MONITOR, io_level);
+            // io_level = !io_level;
+            return false; },
     };
-    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(screen_mipi_dpi_panel, &cbs, display));
+    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Dpi_Panel, &cbs, display));
 
-    ESP_LOGI(TAG, "Use esp_timer as LVGL tick timer");
+    printf("use esp_timer as lvgl tick timer\n");
     const esp_timer_create_args_t lvgl_tick_timer_args = {
-        .callback = &example_increase_lvgl_tick,
+        .callback = [](void *arg)
+        {
+            lv_tick_inc(LVGL_TICK_PERIOD_MS);
+        },
         .name = "lvgl_tick"};
     esp_timer_handle_t lvgl_tick_timer = NULL;
     ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
@@ -403,35 +301,50 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
     XL9535->begin();
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    vTaskDelay(pdMS_TO_TICKS(100));
-
     XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-    // example_bsp_init_refresh_monitor_io();
+    XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    // 开关3.3v电压时候必须先将GPS断电
+    XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    // 开关3.3v电压时候必须先将ESP32C6断电
+    XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    example_bsp_enable_dsi_phy_power();
+    XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-    Screen_Init(&screen_mipi_dpi_panel);
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-    esp_err_t assert = esp_lcd_panel_reset(screen_mipi_dpi_panel);
+    bsp_enable_dsi_phy_power();
+
+    Screen_Init(&Screen_Mipi_Dpi_Panel);
+
+    esp_err_t assert = esp_lcd_panel_reset(Screen_Mipi_Dpi_Panel);
     if (assert != ESP_OK)
     {
         printf("esp_lcd_panel_reset fail (error code: %#X)\n", assert);
     }
-    assert = esp_lcd_panel_init(screen_mipi_dpi_panel);
+    assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
     if (assert != ESP_OK)
     {
         printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
@@ -444,27 +357,42 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(100));
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
     ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
-
-    vTaskDelay(pdMS_TO_TICKS(300));
 
     HI8561_T_Bus->_iic_bus_handle = XL9535_Bus->_iic_bus_handle;
 
     HI8561_T->begin();
 
-    Lvgl_Init();
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
-    ESP_LOGI(TAG, "Create LVGL task");
-    xTaskCreate(example_lvgl_port_task, "LVGL", 4 * 1024, NULL, 2, NULL);
+    Lvgl_Init();
+    xTaskCreate(lvgl_port_task, "LVGL", 4 * 1024, NULL, 2, NULL);
 
     lv_example_canvas_7();
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
     ESP32P4->start_pwm_gradient_time(100, 500);
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+    for (uint8_t i = 0; i < 255; i += 5)
+    {
+        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
     while (1)
     {
         if (esp_log_timestamp() > Cycle_Time)
         {
+#if defined CONFIG_SCREEN_TYPE_HI8561
             Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
             if (HI8561_T->get_multiple_touch_point(tp) == true)
@@ -476,6 +404,10 @@ extern "C" void app_main(void)
                     printf("touch num [%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
                 }
             }
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
             Cycle_Time = esp_log_timestamp() + 1000;
         }

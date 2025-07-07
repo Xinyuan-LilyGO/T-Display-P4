@@ -39,7 +39,8 @@ static const rm69a10_lcd_init_cmd_t vendor_specific_init_default[] = {
     {0x30, (uint8_t[]){0x00, 0x00, 0x04, 0xCF}, 4, 0},
     {0x12, (uint8_t[]){0x00}, 1, 0},
     {0x35, (uint8_t[]){0x00}, 1, 0},
-    {0x51, (uint8_t[]){0xFE}, 1, 0},
+    // {0x51, (uint8_t[]){0xFE}, 1, 0},
+    {0x51, (uint8_t[]){0x00}, 1, 0}, // 设置屏幕亮度为0
     {0x11, (uint8_t[]){0x00}, 0, 120},
     {0x29, (uint8_t[]){0x00}, 0, 0},
     //============ Gamma END===========
@@ -358,4 +359,15 @@ static esp_err_t panel_rm69a10_invert_color(esp_lcd_panel_t *panel, bool invert_
 
     return ESP_OK;
 }
+
+static esp_err_t set_rm69a10_brightness(esp_lcd_panel_t *panel, uint8_t brightness)
+{
+    rm69a10_panel_t *rm69a10 = (rm69a10_panel_t *)panel->user_data;
+    esp_lcd_panel_io_handle_t io = rm69a10->io;
+
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0x51, &brightness, 1), TAG, "esp_lcd_panel_io_tx_param fail");
+
+    return ESP_OK;
+}
+
 #endif
