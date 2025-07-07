@@ -67,11 +67,11 @@ static const char *TAG = "example";
 // LVGL library is not thread-safe, this example will call LVGL APIs from different tasks, so use a mutex to protect it
 static _lock_t lvgl_api_lock;
 
-auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::HWIIC>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
 
 // auto IIC_Bus_1 = std::make_shared<Cpp_Bus_Driver::HWIIC>(SGM38121_SDA, SGM38121_SCL, I2C_NUM_1);
 
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::XL95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 // auto SGM38121 = std::make_unique<Cpp_Bus_Driver::SGM38121>(IIC_Bus_1, SGM38121_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
@@ -160,18 +160,40 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
     XL9535->begin();
-    printf("XL9535 ID: %#X\n", XL9535->iic_device_id());
-    XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
-    XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO6_POWER_EN, Cpp_Bus_Driver::XL95x5::Value::HIGH);
+    
+    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    // 开关3.3v电压时候必须先将GPS断电
+    XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    // 开关3.3v电压时候必须先将ESP32C6断电
+    XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    XL9535->pin_mode((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Mode::OUTPUT);
-    XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->digital_write((Cpp_Bus_Driver::XL95x5::Pin)XL9535_IO2_SCREEN_RST, Cpp_Bus_Driver::XL95x5::Value::HIGH);
+    XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
 #if CONFIG_EXAMPLE_MONITOR_REFRESH_BY_GPIO
     example_bsp_init_refresh_monitor_io();

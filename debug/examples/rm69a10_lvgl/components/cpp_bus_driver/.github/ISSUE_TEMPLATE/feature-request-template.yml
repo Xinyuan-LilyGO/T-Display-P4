@@ -1,0 +1,23 @@
+name: Feature request template
+description: Suggest an idea for this project.
+labels: ["enhancement"]
+assignees:
+  - Llgok
+body:
+  - type: markdown
+    attributes:
+      value: |
+        * We welcome any ideas or feature requests! It’s helpful if you can explain exactly why the feature would be useful.
+        * If you have created this request, we will try our best to add support for it in subsequent updates.
+  - type: textarea
+    id: problem-related
+    attributes:
+      label: What features or library support or other would you like to add?
+      description: Please describe the new feature or other additions you would like to add..
+      placeholder: ex. I would like to add xxx functionality or support for xxx libraries ...
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context.
+      description: Please add any other context or screenshots about the feature request here.
+      placeholder: ex. Here is the link to the library I want to add ...

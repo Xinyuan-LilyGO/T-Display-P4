@@ -102,6 +102,15 @@ menu "Example Configuration"
     endchoice
 
     choice
+        prompt "Select the screen type"
+        default SCREEN_TYPE_HI8561
+            config SCREEN_TYPE_HI8561
+                bool "HI8561"
+            config SCREEN_TYPE_RM69A10
+                bool "RM69A10"
+    endchoice
+
+    choice
         prompt "Select the example to build"
         default EXAMPLE_BUILD_LVGL_9_UI
             config EXAMPLE_BUILD_AW86224
@@ -120,8 +129,8 @@ menu "Example Configuration"
                 bool "esp32c6_at_host_sdio_wifi"
             config EXAMPLE_BUILD_HI8561_CAMERA
                 bool "hi8561_camera"
-            config EXAMPLE_BUILD_HI8561_LVGL
-                bool "hi8561_lvgl"
+            config EXAMPLE_BUILD_SCREEN_LVGL
+                bool "screen_lvgl"
             config EXAMPLE_BUILD_HI8561_LVGL_TOUCH_DRAW
                 bool "hi8561_lvgl_touch_draw"
             config EXAMPLE_BUILD_ICM20948
