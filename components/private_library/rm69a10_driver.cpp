@@ -71,6 +71,8 @@ static esp_err_t panel_rm69a10_init(esp_lcd_panel_t *panel);
 static esp_err_t panel_rm69a10_reset(esp_lcd_panel_t *panel);
 static esp_err_t panel_rm69a10_mirror(esp_lcd_panel_t *panel, bool mirror_x, bool mirror_y);
 static esp_err_t panel_rm69a10_invert_color(esp_lcd_panel_t *panel, bool invert_color_data);
+static esp_err_t panel_rm69a10_sleep(esp_lcd_panel_t *panel, bool sleep);
+static esp_err_t panel_rm69a10_on_off(esp_lcd_panel_t *panel, bool on_off);
 
 esp_err_t esp_lcd_new_panel_rm69a10(const esp_lcd_panel_io_handle_t io, const esp_lcd_panel_dev_config_t *panel_dev_config,
                                     esp_lcd_panel_handle_t *ret_panel)
@@ -117,6 +119,8 @@ esp_err_t esp_lcd_new_panel_rm69a10(const esp_lcd_panel_io_handle_t io, const es
     (*ret_panel)->reset = panel_rm69a10_reset;
     (*ret_panel)->mirror = panel_rm69a10_mirror;
     (*ret_panel)->invert_color = panel_rm69a10_invert_color;
+    (*ret_panel)->disp_sleep = panel_rm69a10_sleep;
+    (*ret_panel)->disp_on_off = panel_rm69a10_on_off;
     (*ret_panel)->user_data = rm69a10;
     ESP_LOGD(TAG, "new rm69a10 panel @%p", rm69a10);
 
@@ -256,6 +260,48 @@ static esp_err_t panel_rm69a10_reset(esp_lcd_panel_t *panel)
         ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, LCD_CMD_SWRESET, NULL, 0), TAG, "send command failed");
         vTaskDelay(pdMS_TO_TICKS(20));
     }
+
+    return ESP_OK;
+}
+
+static esp_err_t panel_rm69a10_sleep(esp_lcd_panel_t *panel, bool sleep)
+{
+    rm69a10_panel_t *rm69a10 = (rm69a10_panel_t *)panel->user_data;
+    esp_lcd_panel_io_handle_t io = rm69a10->io;
+
+    if (sleep == true)
+    {
+        ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0x10, 0x00, 0), TAG, "esp_lcd_panel_io_tx_param fail");
+        ESP_LOGI(TAG, "panel_rm69a10 sleep on");
+    }
+    else
+    {
+        ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0x11, 0x00, 0), TAG, "esp_lcd_panel_io_tx_param fail");
+        ESP_LOGI(TAG, "panel_rm69a10 sleep off");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(120));
+
+    return ESP_OK;
+}
+
+static esp_err_t panel_rm69a10_on_off(esp_lcd_panel_t *panel, bool on_off)
+{
+    rm69a10_panel_t *rm69a10 = (rm69a10_panel_t *)panel->user_data;
+    esp_lcd_panel_io_handle_t io = rm69a10->io;
+
+    if (on_off == true)
+    {
+        ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0x29, 0x00, 0), TAG, "esp_lcd_panel_io_tx_param fail");
+        ESP_LOGI(TAG, "panel_rm69a10 display on");
+    }
+    else
+    {
+        ESP_RETURN_ON_ERROR(esp_lcd_panel_io_tx_param(io, 0x28, 0x00, 0), TAG, "esp_lcd_panel_io_tx_param fail");
+        ESP_LOGI(TAG, "panel_rm69a10 display off");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(120));
 
     return ESP_OK;
 }
