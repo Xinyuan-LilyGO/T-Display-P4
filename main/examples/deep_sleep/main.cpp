@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2025-06-12 17:24:08
+ * @LastEditTime: 2025-07-05 16:58:04
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -246,8 +246,8 @@ void Device_Sleep_Status(bool status)
         // XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         XL9535->pin_mode(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        // XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        // XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         // XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
@@ -980,18 +980,18 @@ extern "C" void app_main(void)
         printf("App_Video_Init fail\n");
     }
 
-    // Screen_Init(&Screen_Mipi_Dpi_Panel);
+    Screen_Init(&Screen_Mipi_Dpi_Panel);
 
-    // esp_err_t assert = esp_lcd_panel_reset(Screen_Mipi_Dpi_Panel);
-    // if (assert != ESP_OK)
-    // {
-    //     printf("esp_lcd_panel_reset fail (error code: %#X)\n", assert);
-    // }
-    // assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
-    // if (assert != ESP_OK)
-    // {
-    //     printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
-    // }
+    esp_err_t assert = esp_lcd_panel_reset(Screen_Mipi_Dpi_Panel);
+    if (assert != ESP_OK)
+    {
+        printf("esp_lcd_panel_reset fail (error code: %#X)\n", assert);
+    }
+    assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
+    if (assert != ESP_OK)
+    {
+        printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
+    }
 
     XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
@@ -1078,23 +1078,23 @@ extern "C" void app_main(void)
     // SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
 
     // 设置整个屏幕为白色
-    // size_t screen_size = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * 2; // RGB565: 2 bytes per pixel
-    // size_t data_cache_line_size = 16;                                    // 通常16或32，具体可查芯片手册
-    // void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
-    // if (white_buf)
-    // {
-    //     uint16_t *p = (uint16_t *)white_buf;
-    //     for (size_t i = 0; i < HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT; ++i)
-    //     {
-    //         p[i] = 0xFFFF; // RGB565白色
-    //     }
-    //     esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, white_buf);
-    //     if (err != ESP_OK)
-    //     {
-    //         printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
-    //     }
-    //     heap_caps_free(white_buf);
-    // }
+    size_t screen_size = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * 2; // RGB565: 2 bytes per pixel
+    size_t data_cache_line_size = 16;                                    // 通常16或32，具体可查芯片手册
+    void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
+    if (white_buf)
+    {
+        uint16_t *p = (uint16_t *)white_buf;
+        for (size_t i = 0; i < HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT; ++i)
+        {
+            p[i] = 0xFFFF; // RGB565白色
+        }
+        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, white_buf);
+        if (err != ESP_OK)
+        {
+            printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
+        }
+        heap_caps_free(white_buf);
+    }
 
     // Start PWM backlight after LVGL refresh is complete
     ESP32P4->start_pwm_gradient_time(100, 500);
