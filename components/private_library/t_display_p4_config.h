@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-04 15:39:06
+ * @LastEditTime: 2025-07-07 13:51:43
  */
 #pragma once
 
@@ -22,14 +22,13 @@
 #define XL9535_SCL IIC_1_SCL
 #define XL9535_INT 5
 // XL9535引脚功能
-#define XL9535_VIBRATION_MOTOR_INT static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(0)
+#define XL9535_3_3_V_POWER_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(0)
 #define XL9535_CAMERA_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(1)
 #define XL9535_SCREEN_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(2)
 #define XL9535_TOUCH_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(3)
 #define XL9535_TOUCH_INT static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(4)
 #define XL9535_ETHERNET_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(5)
 #define XL9535_5_0_V_POWER_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(6)
-#define XL9535_3_3_V_POWER_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(0)
 #define XL9535_EXTERNAL_SENSOR_INT static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(7)
 #define XL9535_ESP32P4_VCCA_POWER_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(10)
 #define XL9535_GPS_WAKE_UP static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(11)
