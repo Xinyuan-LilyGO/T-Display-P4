@@ -2,7 +2,7 @@
  * @Description: hi8561_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2025-07-07 18:07:01
+ * @LastEditTime: 2025-07-08 14:48:24
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -57,9 +57,14 @@ auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 #if defined CONFIG_SCREEN_TYPE_HI8561
 auto HI8561_T_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_Bus, HI8561_TOUCH_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+auto GT9895_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+
+auto GT9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(GT9895_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
@@ -109,7 +114,6 @@ void bsp_enable_dsi_phy_power(void)
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
-
     // if (XL9535->pin_read(XL9535_TOUCH_INT) == 0)
     // {
 #if defined CONFIG_SCREEN_TYPE_HI8561
@@ -117,7 +121,7 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 
     if (HI8561_T->get_single_touch_point(tp) == true)
     {
-        // printf("touch finger: %d edge touch flag: %d\nx: %d y: %d p: %d\n", tp.finger_count, tp.edge_touch_flag, tp.num_info[0].x, tp.num_info[0].y, tp.num_info[0].p);
+        printf("touch finger: %d edge touch flag: %d\nx: %d y: %d p: %d\n", tp.finger_count, tp.edge_touch_flag, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
         data->state = LV_INDEV_STATE_PR;
 
         /*Set the coordinates*/
@@ -201,13 +205,13 @@ void draw_point(lv_event_t *e)
 void lv_example_canvas_7(void)
 {
     void *draw_buf = NULL;
-    size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
+    size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
     draw_buf = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
 
     /*Create a canvas and initialize its palette*/
     canvas = lv_canvas_create(lv_screen_active());
     // lv_canvas_set_draw_buf(canvas, (lv_draw_buf_t *)draw_buf);
-    lv_canvas_set_buffer(canvas, draw_buf, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, LV_COLOR_FORMAT_RGB888);
+    lv_canvas_set_buffer(canvas, draw_buf, SCREEN_WIDTH, SCREEN_HEIGHT, LV_COLOR_FORMAT_RGB888);
     lv_canvas_fill_bg(canvas, lv_color_hex3(0xCCC), LV_OPA_COVER);
     lv_obj_center(canvas);
 
@@ -352,10 +356,11 @@ extern "C" void app_main(void)
 
     XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
     ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
@@ -365,12 +370,51 @@ extern "C" void app_main(void)
     HI8561_T->begin();
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+    GT9895_Bus->_iic_bus_handle = XL9535_Bus->_iic_bus_handle;
+
+    // GT9895_Bus->begin(-1, GT9895_TOUCH_ADDRESS);
+    // while (1)
+    // {
+
+    //     uint8_t buffer[4] = {0x00, 0x01, 0x03, 0x08};
+    //     uint8_t buffer_2[90]; // 足够大的缓冲区
+
+    //     // 读取原始数据
+    //     GT9895_Bus->write_read(buffer, 4, buffer_2, 90);
+
+    //     // 打印前10字节调试信息
+    //     printf("----- Raw Touch Data -----\n");
+    //     for (int i = 0; i < 20; i++)
+    //     {
+    //         printf("touch data[%d]: 0x%02X (%d)\n", i, buffer_2[i], buffer_2[i]);
+    //     }
+
+    //     // 解析并打印有效触摸点
+    //     int valid_point = buffer_2[2] & 0x0F;
+    //     printf("Valid touch points: %d\n", valid_point);
+
+    //     int offset = 8;
+    //     for (int i = 0; i < valid_point; i++)
+    //     {
+    //         uint16_t x = buffer_2[offset + 2] | (buffer_2[offset + 3] << 8);
+    //         uint16_t y = buffer_2[offset + 4] | (buffer_2[offset + 5] << 8);
+    //         uint16_t p = buffer_2[offset + 6];
+
+    //         printf("point %d: x=%d, y=%d, p=%d, id=%d\n", i, x, y, p, (buffer_2[offset] >> 4) & 0x0F);
+
+    //         offset += 8;
+    //     }
+
+    //     vTaskDelay(pdMS_TO_TICKS(1000));
+    // }
+
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
     Lvgl_Init();
-    xTaskCreate(lvgl_port_task, "LVGL", 4 * 1024, NULL, 2, NULL);
+    xTaskCreate(lvgl_port_task, "lvgl_port_task", 4 * 1024, NULL, 2, NULL);
 
     lv_example_canvas_7();
 
@@ -390,27 +434,28 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        if (esp_log_timestamp() > Cycle_Time)
-        {
-#if defined CONFIG_SCREEN_TYPE_HI8561
-            Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
+        //         if (esp_log_timestamp() > Cycle_Time)
+        //         {
+        // #if defined CONFIG_SCREEN_TYPE_HI8561
+        //             Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
-            if (HI8561_T->get_multiple_touch_point(tp) == true)
-            {
-                printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+        //             if (HI8561_T->get_multiple_touch_point(tp) == true)
+        //             {
+        //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
 
-                for (uint8_t i = 0; i < tp.info.size(); i++)
-                {
-                    printf("touch num [%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-                }
-            }
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-#else
-#error "Unknown macro definition. Please select the correct macro definition."
-#endif
+        //                 for (uint8_t i = 0; i < tp.info.size(); i++)
+        //                 {
+        //                     printf("touch num [%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+        //                 }
+        //             }
+        // #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-            Cycle_Time = esp_log_timestamp() + 1000;
-        }
+        // #else
+        // #error "Unknown macro definition. Please select the correct macro definition."
+        // #endif
+
+        //             Cycle_Time = esp_log_timestamp() + 1000;
+        //         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }

@@ -9,7 +9,7 @@
 
 auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::HWIIC>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
 
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(IIC_Bus, HI8561_TOUCH_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 volatile bool HI8561_T_Interrupt_Flag = false;
 

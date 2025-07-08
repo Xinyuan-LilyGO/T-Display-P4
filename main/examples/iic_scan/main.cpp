@@ -2,7 +2,7 @@
  * @Description: iic_scan
  * @Author: LILYGO_L
  * @Date: 2025-06-13 12:06:14
- * @LastEditTime: 2025-06-23 17:40:08
+ * @LastEditTime: 2025-07-08 09:55:22
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -14,7 +14,9 @@
 #include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
-auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_2_SDA, IIC_2_SCL, I2C_NUM_0);
+auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
+
+auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 void IIC_Scan(void)
 {
@@ -31,7 +33,7 @@ void IIC_Scan(void)
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-
+    XL9535->begin();
     XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
@@ -40,7 +42,10 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    IIC_Bus->begin();
+    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     while (1)
     {
