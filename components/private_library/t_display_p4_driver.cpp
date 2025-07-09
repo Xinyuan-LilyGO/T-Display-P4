@@ -118,3 +118,15 @@ bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
 
     return true;
 }
+
+bool Camera_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
+{
+    if (Mipi_Dsi_Init(CAMERA_DATA_LANE_NUM, CAMERA_LANE_BIT_RATE_MBPS, CAMERA_MIPI_DSI_DPI_CLK_MHZ, CAMERA_COLOR_RGB_PIXEL_FORMAT,
+                      CONFIG_EXAMPLE_CAM_BUF_COUNT, CAMERA_WIDTH, CAMERA_HEIGHT, 0, 0, 0, 0, 0, 0, CAMERA_BITS_PER_PIXEL, mipi_dpi_panel) == false)
+    {
+        printf("Mipi_Dsi_Init fail\n");
+        return false;
+    }
+
+    return true;
+}

@@ -127,8 +127,8 @@ menu "Example Configuration"
                 bool "esp32c6_at_host_sdio_uart"
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI
                 bool "esp32c6_at_host_sdio_wifi"
-            config EXAMPLE_BUILD_HI8561_CAMERA
-                bool "hi8561_camera"
+            config EXAMPLE_BUILD_SCREEN_CAMERA
+                bool "screen_camera"
             config EXAMPLE_BUILD_SCREEN_LVGL
                 bool "screen_lvgl"
             config EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW

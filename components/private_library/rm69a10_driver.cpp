@@ -39,6 +39,11 @@ static const rm69a10_lcd_init_cmd_t vendor_specific_init_default[] = {
     {0x30, (uint8_t[]){0x00, 0x00, 0x04, 0xCF}, 4, 0},
     {0x12, (uint8_t[]){0x00}, 1, 0},
     {0x35, (uint8_t[]){0x00}, 1, 0},
+#if CONFIG_LCD_PIXEL_FORMAT_RGB565
+    {0x3A, (uint8_t[]){0x75}, 1, 0}, // interface pixel format 16bit/pixel
+#elif CONFIG_LCD_PIXEL_FORMAT_RGB888
+    {0x3A, (uint8_t[]){0x77}, 1, 0}, // interface pixel format 24bit/pixel
+#endif
     // {0x51, (uint8_t[]){0xFE}, 1, 0},
     {0x51, (uint8_t[]){0x00}, 1, 0}, // 设置屏幕亮度为0
     {0x11, (uint8_t[]){0x00}, 0, 120},
