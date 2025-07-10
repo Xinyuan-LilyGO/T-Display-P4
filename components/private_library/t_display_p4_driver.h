@@ -16,6 +16,8 @@
 #define CAMERA_BITS_PER_PIXEL 24
 #define CAMERA_COLOR_RGB_PIXEL_FORMAT LCD_COLOR_PIXEL_FORMAT_RGB888
 #define LVGL_COLOR_FORMAT LV_COLOR_FORMAT_RGB888
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
 // SCREEN

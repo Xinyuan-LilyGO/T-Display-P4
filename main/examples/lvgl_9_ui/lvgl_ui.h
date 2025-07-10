@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-06-20 18:12:11
+ * @LastEditTime: 2025-07-09 15:11:28
  * @License: GPL 3.0
  */
 #pragma once
@@ -412,7 +412,13 @@ namespace Lvgl_Ui
 
         Current_Win _current_win = Current_Win::UNKNOWN;
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
         Hi8561_Touch::Touch_Point _touch_point;
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+        Gt9895::Touch_Point _touch_point;
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
         bool _edge_touch_flag = false;
 

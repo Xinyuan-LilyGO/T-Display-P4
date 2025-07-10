@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-06-23 18:08:35
+ * @LastEditTime: 2025-07-09 15:02:52
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -207,7 +207,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 | firmware | description | picture |
 | ------  | ------  | ------ |
-| [lvgl_9_ui(ov2710)](./firmware/[T-Display-P4][lvgl_9_ui][ov2710]/) | ov2710摄像头版本出厂程序 |  |
+| [lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]/) | ov2710摄像头版本出厂程序 |  |
 | [esp32c6_at_slave_v4.1.0.0_dev(sdio)](./firmware/[T-Display-P4][esp32c6_at_slave_v4.1.0.0_dev][sdio]_firmware_202503260916.bin) | esp32c6-at 出厂程序 |  |
 
 ### ESP-IDF Visual Studio Code

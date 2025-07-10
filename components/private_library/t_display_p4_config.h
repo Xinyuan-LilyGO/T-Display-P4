@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-09 11:21:21
+ * @LastEditTime: 2025-07-09 16:02:41
  */
 #pragma once
 
@@ -193,6 +193,10 @@
 
 // GT9895
 #define GT9895_IIC_ADDRESS 0x5D
+#define GT9895_MAX_X_SIZE 1060
+#define GT9895_MAX_Y_SIZE 2400
+#define GT9895_X_SCALE_FACTOR static_cast<float> (RM69A10_SCREEN_WIDTH) / static_cast<float> (GT9895_MAX_X_SIZE)
+#define GT9895_Y_SCALE_FACTOR static_cast<float> (RM69A10_SCREEN_HEIGHT) / static_cast<float> (GT9895_MAX_Y_SIZE)
 
 // CAMERA
 #define CAMERA_WIDTH 1920

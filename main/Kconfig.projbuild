@@ -18,7 +18,10 @@ menu "Example Configuration"
     # 外部解码图片缓冲空间设置大小为：宽度 × 高度 × 4
     config LV_CACHE_DEF_SIZE
         string "Default image cache size. 0 to disable caching"
-        default "2522880"
+        # # H0405S002T002 V0
+        # default "2522880"
+        # H0410S001AM
+        default "2799104"
 
     # config LV_USE_MEM_MONITOR
     #     bool "LV_USE_MEM_MONITOR"

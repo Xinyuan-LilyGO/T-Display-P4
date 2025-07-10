@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-07 16:48:18
+ * @LastEditTime: 2025-07-10 10:35:36
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -20,7 +20,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "lvgl.h"
-#include "hi8561_driver.h"
+#include "t_display_p4_driver.h"
 #include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 #include "lvgl_ui.h"
@@ -213,7 +213,6 @@ esp_lcd_panel_handle_t Screen_Mipi_Dpi_Panel = NULL;
 
 // IIC 1
 auto XL9535_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto HI8561_T_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 auto BQ27220_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
 auto PCF8563_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_SDA, PCF8563_SCL, I2C_NUM_0);
 
@@ -240,7 +239,6 @@ auto SX1262_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(LORA_MOSI, 
 
 // IIC 1
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto BQ27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(BQ27220_IIC_Bus, BQ27220_IIC_ADDRESS);
 auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(PCF8563_IIC_Bus, PCF8563_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
@@ -269,6 +267,21 @@ auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SX1262_SPI_Bus, Cpp_Bus_D
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 auto System_Ui = std::make_unique<Lvgl_Ui::System>(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+auto HI8561_T_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
+
+auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+auto GT9895_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+
+auto GT9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(GT9895_IIC_Bus, GT9895_IIC_ADDRESS, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR,
+                                                       DEFAULT_CPP_BUS_DRIVER_VALUE);
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
 // esp_err_t register_gpio_wakeup(void)
 // {
@@ -1817,8 +1830,10 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
         }
     }
 
-    // if (XL9535->pin_read(XL9535_TOUCH_INT) == 0)
-    // {
+// if (XL9535->pin_read(XL9535_TOUCH_INT) == 0)
+// {
+#if defined CONFIG_SCREEN_TYPE_HI8561
+
     Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
     if (HI8561_T->get_multiple_touch_point(tp) == true)
@@ -1873,106 +1888,66 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
     {
         data->state = LV_INDEV_STATE_REL;
     }
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+    Cpp_Bus_Driver::Gt9895::Touch_Point tp;
+
+    if (GT9895->get_multiple_touch_point(tp) == true)
+    {
+        if (System_Ui->get_current_win() == Lvgl_Ui::System::Current_Win::CIT_TOUCH_TEST)
+        {
+            /*Set the coordinates*/
+            data->point.x = tp.info[0].x;
+            data->point.y = tp.info[0].y;
+
+            data->state = LV_INDEV_STATE_PR;
+        }
+        else
+        {
+            if ((tp.finger_count == 1) && (tp.info[0].x != static_cast<uint16_t>(-1)) && (tp.info[0].y != static_cast<uint16_t>(-1)) && (tp.info[0].pressure_value != 0))
+            {
+                /*Set the coordinates*/
+                data->point.x = tp.info[0].x;
+                data->point.y = tp.info[0].y;
+
+                data->state = LV_INDEV_STATE_PR;
+            }
+            else
+            {
+                data->state = LV_INDEV_STATE_REL;
+            }
+        }
+
+        System_Ui->_touch_point = tp;
+
+        if (tp.edge_touch_flag == true)
+        {
+            tp.edge_touch_flag = false;
+            System_Ui->_edge_touch_flag = true;
+
+            edge_touch_scheduled_shutdown_time = esp_log_timestamp() + 100;
+            edge_touch_scheduled_shutdown_lock = true;
+        }
+
+        tp.info.clear();
+    }
+    else
+    {
+        data->state = LV_INDEV_STATE_REL;
+    }
+
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
     // }
-}
-
-bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t dpi_clock_freq_mhz, lcd_color_rgb_pixel_format_t color_rgb_pixel_format, uint8_t num_fbs, uint32_t width, uint32_t height,
-                   uint32_t mipi_dsi_hsync, uint32_t mipi_dsi_hbp, uint32_t mipi_dsi_hfp, uint32_t mipi_dsi_vsync, uint32_t mipi_dsi_vbp, uint32_t mipi_dsi_vfp,
-                   uint32_t bits_per_pixel, esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    esp_lcd_dsi_bus_handle_t mipi_dsi_bus;
-    esp_lcd_panel_io_handle_t mipi_dbi_io;
-
-    auto cpp_assert = std::make_unique<Cpp_Bus_Driver::Tool>();
-
-    // create MIPI DSI bus first, it will initialize the DSI PHY as well
-    esp_lcd_dsi_bus_config_t bus_config = {
-        .bus_id = 0,
-        .num_data_lanes = num_data_lanes,
-        .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
-        .lane_bit_rate_mbps = lane_bit_rate_mbps,
-    };
-
-    esp_err_t assert = esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_dsi_bus fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    // we use DBI interface to send LCD commands and parameters
-    esp_lcd_dbi_io_config_t dbi_io_config = {
-        .virtual_channel = 0,
-        .lcd_cmd_bits = 8,   // according to the LCD spec
-        .lcd_param_bits = 8, // according to the LCD spec
-    };
-    assert = esp_lcd_new_panel_io_dbi(mipi_dsi_bus, &dbi_io_config, &mipi_dbi_io);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_io_dbi fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    esp_lcd_dpi_panel_config_t dpi_config = {
-        .virtual_channel = 0,
-        .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = dpi_clock_freq_mhz,
-        .pixel_format = color_rgb_pixel_format,
-        .num_fbs = num_fbs,
-        .video_timing = {
-            .h_size = width,
-            .v_size = height,
-            .hsync_pulse_width = mipi_dsi_hsync,
-            .hsync_back_porch = mipi_dsi_hbp,
-            .hsync_front_porch = mipi_dsi_hfp,
-            .vsync_pulse_width = mipi_dsi_vsync,
-            .vsync_back_porch = mipi_dsi_vbp,
-            .vsync_front_porch = mipi_dsi_vfp,
-        },
-        .flags = {
-            .use_dma2d = true, // use DMA2D to copy draw buffer into frame buffer
-        }};
-
-    hi8561_vendor_config_t vendor_config = {
-        .mipi_config = {
-            .dsi_bus = mipi_dsi_bus,
-            .dpi_config = &dpi_config,
-        },
-    };
-    esp_lcd_panel_dev_config_t dev_config = {
-        .reset_gpio_num = -1,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
-        .bits_per_pixel = bits_per_pixel,
-        .vendor_config = &vendor_config,
-    };
-    assert = esp_lcd_new_panel_hi8561(mipi_dbi_io, &dev_config, mipi_dpi_panel);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_hi8561 fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    return true;
-}
-
-bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    if (Mipi_Dsi_Init(HI8561_SCREEN_DATA_LANE_NUM, HI8561_SCREEN_LANE_BIT_RATE_MBPS, HI8561_SCREEN_MIPI_DSI_DPI_CLK_MHZ, LCD_COLOR_PIXEL_FORMAT_RGB565,
-                      0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, HI8561_SCREEN_MIPI_DSI_HSYNC, HI8561_SCREEN_MIPI_DSI_HBP,
-                      HI8561_SCREEN_MIPI_DSI_HFP, HI8561_SCREEN_MIPI_DSI_VSYNC, HI8561_SCREEN_MIPI_DSI_VBP, HI8561_SCREEN_MIPI_DSI_VFP,
-                      HI8561_SCREEN_BITS_PER_PIXEL_RGB565, mipi_dpi_panel) == false)
-    {
-        printf("Mipi_Dsi_Init fail\n");
-        return false;
-    }
-
-    return true;
 }
 
 // bool Usb_Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
 // {
-//     usb_display_vendor_config_t vendor_config_usb = DEFAULT_USB_DISPLAY_VENDOR_CONFIG(HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT,
-//                                                                                       HI8561_SCREEN_BITS_PER_PIXEL_RGB565, mipi_dpi_panel);
+//     usb_display_vendor_config_t vendor_config_usb = DEFAULT_USB_DISPLAY_VENDOR_CONFIG(SCREEN_WIDTH, SCREEN_HEIGHT,
+//                                                                                       SCREEN_BITS_PER_PIXEL_RGB565, mipi_dpi_panel);
 
 //     if (esp_lcd_new_panel_usb_display(&vendor_config_usb, &mipi_dpi_panel) != ESP_OK)
 //     {
@@ -2351,20 +2326,20 @@ void Lvgl_Init(void)
     lv_init();
 
     // create a lvgl display
-    lv_display_t *display = lv_display_create(HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT);
+    lv_display_t *display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     // associate the mipi panel handle to the display
     lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
     // set color depth
-    lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB565);
+    lv_display_set_color_format(display, LVGL_COLOR_FORMAT);
     // create draw buffer
     printf("allocate separate lvgl draw buffers\n");
-    size_t draw_buffer_sz = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * sizeof(lv_color_t);
-    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
+    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
     assert(buf1);
-    void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    assert(buf2);
+    // void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+    // assert(buf2);
     // initialize LVGL draw buffers
-    lv_display_set_buffers(display, buf1, buf2, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(display, buf1, NULL, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
     // set the callback which can copy the rendered image to an area of the display
 
     lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
@@ -2929,17 +2904,17 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
                     .pic_h = camera_buf_ves,
                     .block_w = camera_buf_hes,
                     .block_h = camera_buf_ves,
-                    .block_offset_x = (camera_buf_hes > HI8561_SCREEN_WIDTH) ? (camera_buf_hes - HI8561_SCREEN_WIDTH) / 2 : 0,
-                    .block_offset_y = (camera_buf_ves > HI8561_SCREEN_HEIGHT) ? (camera_buf_ves - HI8561_SCREEN_HEIGHT) / 2 : 0,
+                    .block_offset_x = (camera_buf_hes > SCREEN_WIDTH) ? (camera_buf_hes - SCREEN_WIDTH) / 2 : 0,
+                    .block_offset_y = (camera_buf_ves > SCREEN_HEIGHT) ? (camera_buf_ves - SCREEN_HEIGHT) / 2 : 0,
                     .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
                 },
 
             .out =
                 {
                     .buffer = lcd_buffer[camera_buf_index],
-                    .buffer_size = ALIGN_UP(HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * (APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? 2 : 3), data_cache_line_size),
-                    .pic_w = HI8561_SCREEN_WIDTH,
-                    .pic_h = HI8561_SCREEN_HEIGHT,
+                    .buffer_size = ALIGN_UP(SCREEN_WIDTH * SCREEN_HEIGHT * (APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? 2 : 3), data_cache_line_size),
+                    .pic_w = SCREEN_WIDTH,
+                    .pic_h = SCREEN_HEIGHT,
                     .block_offset_x = 0,
                     .block_offset_y = 0,
                     .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
@@ -2955,12 +2930,12 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             .mode = PPA_TRANS_MODE_BLOCKING,
         };
 
-    if (camera_buf_hes > HI8561_SCREEN_WIDTH || camera_buf_ves > HI8561_SCREEN_HEIGHT)
+    if (camera_buf_hes > SCREEN_WIDTH || camera_buf_ves > SCREEN_HEIGHT)
     {
         // The resolution of the camera does not match the LCD resolution. Image processing can be done using PPA, but there will be some frame rate loss
 
-        srm_config.in.block_w = (camera_buf_hes > HI8561_SCREEN_WIDTH) ? HI8561_SCREEN_WIDTH : camera_buf_hes;
-        srm_config.in.block_h = (camera_buf_ves > HI8561_SCREEN_HEIGHT) ? HI8561_SCREEN_HEIGHT : camera_buf_ves;
+        srm_config.in.block_w = (camera_buf_hes > SCREEN_WIDTH) ? SCREEN_WIDTH : camera_buf_hes;
+        srm_config.in.block_h = (camera_buf_ves > SCREEN_HEIGHT) ? SCREEN_HEIGHT : camera_buf_ves;
 
         esp_err_t assert = ppa_do_scale_rotate_mirror(ppa_srm_handle, &srm_config);
         if (assert != ESP_OK)
@@ -2971,11 +2946,11 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
         if (System_Ui->get_current_win() == Lvgl_Ui::System::Current_Win::CAMERA)
         {
 #if defined CONFIG_CAMERA_TYPE_SC2336 || defined CONFIG_CAMERA_TYPE_OV2710
-            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
-                                               srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
+            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 130,
+                                               srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 130, lcd_buffer[camera_buf_index]);
 #elif defined CONFIG_CAMERA_TYPE_OV5645
-            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 150,
-                                               srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 150, lcd_buffer[camera_buf_index]);
+            assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 150,
+                                               srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 150, lcd_buffer[camera_buf_index]);
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
@@ -2986,7 +2961,7 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
 
             // _lock_acquire(&lvgl_api_lock);
             // lv_canvas_set_buffer(System_Ui->_registry.win.camera.canvas, lcd_buffer[camera_buf_index],
-            //                      srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2,
+            //                      srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2,
             //                      LCD_COLOR_PIXEL_FORMAT_RGB565);
             // _lock_release(&lvgl_api_lock);
         }
@@ -3005,10 +2980,9 @@ bool App_Video_Init()
 {
     esp_lcd_panel_handle_t mipi_dpi_panel = NULL;
 
-    if (Mipi_Dsi_Init(CAMERA_DATA_LANE_NUM, CAMERA_LANE_BIT_RATE_MBPS, CAMERA_MIPI_DSI_DPI_CLK_MHZ, LCD_COLOR_PIXEL_FORMAT_RGB565,
-                      CONFIG_EXAMPLE_CAM_BUF_COUNT, CAMERA_WIDTH, CAMERA_HEIGHT, 0, 0, 0, 0, 0, 0, CAMERA_BITS_PER_PIXEL_RGB565, &mipi_dpi_panel) == false)
+    if (Camera_Init(&mipi_dpi_panel) == false)
     {
-        printf("Mipi_Dsi_Init fail\n");
+        printf("Camera_Init fail\n");
         return false;
     }
 
@@ -3257,8 +3231,14 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     Ethernet_Init();
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
     // 这个必须放在以太网后面
     ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
     SGM38121->begin();
 #if defined CONFIG_CAMERA_TYPE_SC2336
@@ -3324,8 +3304,20 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
     HI8561_T_IIC_Bus->_iic_bus_handle = XL9535_IIC_Bus->_iic_bus_handle;
+
     HI8561_T->begin();
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+    GT9895_IIC_Bus->_iic_bus_handle = XL9535_IIC_Bus->_iic_bus_handle;
+
+    GT9895->begin();
+
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
     // SDMMC_HOST_SLOT_1必须要先于SDMMC_HOST_SLOT_0初始化
     ESP32C6_AT->begin();
@@ -3352,8 +3344,17 @@ extern "C" void app_main(void)
     Lvgl_Startup();
     xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
 
-    // Start PWM backlight after LVGL refresh is complete
+#if defined CONFIG_SCREEN_TYPE_HI8561
     ESP32P4->start_pwm_gradient_time(100, 500);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+    for (uint8_t i = 0; i < 255; i += 5)
+    {
+        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
     PCF8563_IIC_Bus->_iic_bus_handle = XL9535_IIC_Bus->_iic_bus_handle;
     PCF8563->begin();
@@ -3488,35 +3489,41 @@ extern "C" void app_main(void)
 
     System_Ui->set_vibration();
 
-    // while (1)
-    // {
-    //     if (esp_log_timestamp() > Cycle_Time)
+    //     while (1)
     //     {
-    //         // Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
+    //         if (esp_log_timestamp() > Cycle_Time)
+    //         {
+    // #if defined CONFIG_SCREEN_TYPE_HI8561
+    //             Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
-    //         // if (HI8561_T->get_multiple_touch_point(tp) == true)
-    //         // {
-    //         //     printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+    //             if (HI8561_T->get_multiple_touch_point(tp) == true)
+    //             {
+    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
 
-    //         //     for (uint8_t i = 0; i < tp.info.size(); i++)
-    //         //     {
-    //         //         printf("touch num [%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-    //         //     }
-    //         // }
+    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
+    //                 {
+    //                     printf("touch num:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+    //                 }
+    //             }
+    // #elif defined CONFIG_SCREEN_TYPE_RM69A10
+    //             Cpp_Bus_Driver::Gt9895::Touch_Point tp;
 
-    //         // lv_indev_data_t data;
-    //         // if (lv_indev_get_read_cb(lv_indev_get_default()) != NULL)
-    //         // {
-    //         //     lv_indev_get_read_cb(lv_indev_get_default())(lv_indev_get_default(), &data);
-    //         //     if (data.state == LV_INDEV_STATE_PR)
-    //         //     {
-    //         //         printf("touch x: %ld, y: %ld\n", data.point.x, data.point.y);
-    //         //     }
-    //         // }
+    //             if (GT9895->get_multiple_touch_point(tp) == true)
+    //             {
+    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
 
-    //         Cycle_Time = esp_log_timestamp() + 1000;
+    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
+    //                 {
+    //                     printf("touch num:[%d] id:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].finger_id, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+    //                 }
+    //             }
+    // #else
+    // #error "Unknown macro definition. Please select the correct macro definition."
+    // #endif
+
+    //             Cycle_Time = esp_log_timestamp() + 1000;
+    //         }
+
+    //         vTaskDelay(pdMS_TO_TICKS(10));
     //     }
-
-    //     vTaskDelay(pdMS_TO_TICKS(10));
-    // }
 }

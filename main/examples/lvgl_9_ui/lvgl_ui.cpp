@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-07-05 13:52:25
+ * @LastEditTime: 2025-07-10 10:38:49
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -55,17 +55,34 @@ namespace Lvgl_Ui
             {"company: ", "lilygo"},
             {"board name: ", "t-display-p4"},
             {"software name: ", "lvgl_9_ui"},
-#if defined CONFIG_CAMERA_TYPE_SC2336
-            {"camera model: ", "sc2333"},
-#elif defined CONFIG_CAMERA_TYPE_OV2710
-            {"camera model: ", "ov2710"},
-#elif defined CONFIG_CAMERA_TYPE_OV5645
-            {"camera model: ", "ov5645"},
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            {"screen type: ", "hi8561"},
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+            {"screen type: ", "rm69a10"},
 #else
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202507051352"},
+#if defined CONFIG_LCD_PIXEL_FORMAT_RGB565
+            {"screen pixel format: ", "rgb565"},
+#elif defined CONFIG_LCD_PIXEL_FORMAT_RGB888
+            {"screen pixel format: ", "rgb888"},
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
+#if defined CONFIG_CAMERA_TYPE_SC2336
+            {"camera type: ", "sc2333"},
+#elif defined CONFIG_CAMERA_TYPE_OV2710
+            {"camera type: ", "ov2710"},
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+            {"camera type: ", "ov5645"},
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
+            {"firmware build date:\n     ", "202507101039"},
     };
 
     void System::begin()
@@ -355,7 +372,13 @@ namespace Lvgl_Ui
         // 主界面
         _registry.win.home.root = lv_obj_create(NULL);
         lv_obj_set_style_bg_color(_registry.win.home.root, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN);
+#if defined CONFIG_SCREEN_TYPE_HI8561
         lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_540x1168px.png"), (lv_style_selector_t)LV_PART_MAIN);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+        lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
         lv_obj_set_size(_registry.win.home.root, _width, _height);
         lv_obj_set_scrollbar_mode(_registry.win.home.root, LV_SCROLLBAR_MODE_OFF);
 
@@ -1342,6 +1365,7 @@ namespace Lvgl_Ui
                                     case 4:
                                         lv_obj_set_style_bg_color(self->_registry.win.cit.screen_color_test.start_color_test,lv_color_hex(0xFFFFFF),(lv_style_selector_t)LV_PART_MAIN);
                                     break;
+#if defined CONFIG_SCREEN_TYPE_HI8561
                                     case 5:
                                     lv_obj_set_style_bg_image_src(self->_registry.win.cit.screen_color_test.start_color_test, GET_WALLPAPER_PATH("wallpaper_2_540x1168px.png"), (lv_style_selector_t)LV_PART_MAIN);
                                     break;
@@ -1351,6 +1375,20 @@ namespace Lvgl_Ui
                                     case 7:
                                     lv_obj_set_style_bg_image_src(self->_registry.win.cit.screen_color_test.start_color_test, GET_WALLPAPER_PATH("wallpaper_4_540x1168px.png"), (lv_style_selector_t)LV_PART_MAIN);
                                     break;
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+                                    case 5:
+                                    lv_obj_set_style_bg_image_src(self->_registry.win.cit.screen_color_test.start_color_test, GET_WALLPAPER_PATH("wallpaper_2_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
+                                    break;
+                                    case 6:
+                                    lv_obj_set_style_bg_image_src(self->_registry.win.cit.screen_color_test.start_color_test, GET_WALLPAPER_PATH("wallpaper_3_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
+                                    break;
+                                    case 7:
+                                    lv_obj_set_style_bg_image_src(self->_registry.win.cit.screen_color_test.start_color_test, GET_WALLPAPER_PATH("wallpaper_4_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
+                                    break;
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
                                     case 8:
                                         self->init_win_cit_screen_color_test();
 
@@ -4247,7 +4285,14 @@ namespace Lvgl_Ui
         // 主界面
         _registry.win.music.root = lv_obj_create(NULL);
         lv_obj_set_style_bg_color(_registry.win.music.root, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN);
-        lv_obj_set_style_bg_image_src(_registry.win.music.root, GET_MUSIC_COVER_PATH("Eagles - Hotel California (Live on MTV, 1994).png"), (lv_style_selector_t)LV_PART_MAIN);
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_set_style_bg_image_src(_registry.win.music.root, GET_MUSIC_COVER_PATH("Eagles - Hotel California (Live on MTV, 1994)_540x1168px.png"), (lv_style_selector_t)LV_PART_MAIN);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+        lv_obj_set_style_bg_image_src(_registry.win.music.root, GET_MUSIC_COVER_PATH("Eagles - Hotel California (Live on MTV, 1994)_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
         lv_obj_set_size(_registry.win.music.root, _width, _height);
         lv_obj_set_scrollbar_mode(_registry.win.music.root, LV_SCROLLBAR_MODE_OFF);
 
