@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2025-07-05 16:58:04
+ * @LastEditTime: 2025-07-10 14:58:49
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -28,7 +28,7 @@
 #include "esp_ldo_regulator.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_mipi_dsi.h"
-#include "hi8561_driver.h"
+#include "t_display_p4_driver.h"
 #include "esp_lcd_panel_io.h"
 #include "app_video.h"
 #include "driver/ppa.h"
@@ -38,6 +38,8 @@
 
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 44100
+
+#define USE_SCREEN
 
 uint8_t eth_port_cnt = 0;
 esp_eth_handle_t *eth_handles;
@@ -55,7 +57,6 @@ int32_t video_cam_fd0;
 
 // IIC 1
 auto XL9535_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto HI8561_T_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 auto BQ27220_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
 auto PCF8563_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_SDA, PCF8563_SCL, I2C_NUM_0);
 
@@ -82,7 +83,6 @@ auto SX1262_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(LORA_MOSI, 
 
 // IIC 1
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto BQ27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(BQ27220_IIC_Bus, BQ27220_IIC_ADDRESS);
 auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(PCF8563_IIC_Bus, PCF8563_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
@@ -109,6 +109,21 @@ auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SX1262_SPI_Bus, Cpp_Bus_D
                                                        LORA_CS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+auto HI8561_T_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
+
+auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+auto GT9895_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+
+auto GT9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(GT9895_IIC_Bus, GT9895_IIC_ADDRESS, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR,
+                                                       DEFAULT_CPP_BUS_DRIVER_VALUE);
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
 /** Event handler for Ethernet events */
 void eth_event_handler(void *arg, esp_event_base_t event_base,
@@ -201,10 +216,10 @@ void Device_Sleep_Status(bool status)
         //     printf("esp32c6-at successfully entered sleep mode\n");
         // }
 
-#if defined CONFIG_CAMERA_SC2336
+#if defined CONFIG_CAMERA_TYPE_SC2336
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
-#elif defined CONFIG_CAMERA_OV2710
+#elif (defined CONFIG_CAMERA_TYPE_OV2710) || (defined CONFIG_CAMERA_TYPE_OV2710)
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
@@ -246,10 +261,12 @@ void Device_Sleep_Status(bool status)
         // XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         XL9535->pin_mode(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+#if defined USE_SCREEN
         XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+#endif
         // XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         // XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -257,8 +274,10 @@ void Device_Sleep_Status(bool status)
 
         // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+#if !defined USE_SCREEN
+        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+#endif
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO4, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO5, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO6, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
@@ -606,99 +625,6 @@ void bsp_enable_dsi_phy_power(void)
     printf("mipi dsi phy powered on\n");
 }
 
-bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t dpi_clock_freq_mhz, lcd_color_rgb_pixel_format_t color_format, uint8_t num_fbs, uint32_t width, uint32_t height,
-                   uint32_t mipi_dsi_hsync, uint32_t mipi_dsi_hbp, uint32_t mipi_dsi_hfp, uint32_t mipi_dsi_vsync, uint32_t mipi_dsi_vbp, uint32_t mipi_dsi_vfp,
-                   uint32_t bits_per_pixel, esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    esp_lcd_dsi_bus_handle_t mipi_dsi_bus;
-    esp_lcd_panel_io_handle_t mipi_dbi_io;
-
-    auto cpp_assert = std::make_unique<Cpp_Bus_Driver::Tool>();
-
-    // create MIPI DSI bus first, it will initialize the DSI PHY as well
-    esp_lcd_dsi_bus_config_t bus_config = {
-        .bus_id = 0,
-        .num_data_lanes = num_data_lanes,
-        .phy_clk_src = MIPI_DSI_PHY_CLK_SRC_DEFAULT,
-        .lane_bit_rate_mbps = lane_bit_rate_mbps,
-    };
-
-    esp_err_t assert = esp_lcd_new_dsi_bus(&bus_config, &mipi_dsi_bus);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_dsi_bus fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    // we use DBI interface to send LCD commands and parameters
-    esp_lcd_dbi_io_config_t dbi_io_config = {
-        .virtual_channel = 0,
-        .lcd_cmd_bits = 8,   // according to the LCD spec
-        .lcd_param_bits = 8, // according to the LCD spec
-    };
-    assert = esp_lcd_new_panel_io_dbi(mipi_dsi_bus, &dbi_io_config, &mipi_dbi_io);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_io_dbi fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    esp_lcd_dpi_panel_config_t dpi_config = {
-        .virtual_channel = 0,
-        .dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT,
-        .dpi_clock_freq_mhz = dpi_clock_freq_mhz,
-        .pixel_format = color_format,
-        .num_fbs = num_fbs,
-        .video_timing = {
-            .h_size = width,
-            .v_size = height,
-            .hsync_pulse_width = mipi_dsi_hsync,
-            .hsync_back_porch = mipi_dsi_hbp,
-            .hsync_front_porch = mipi_dsi_hfp,
-            .vsync_pulse_width = mipi_dsi_vsync,
-            .vsync_back_porch = mipi_dsi_vbp,
-            .vsync_front_porch = mipi_dsi_vfp,
-        },
-        .flags = {
-            .use_dma2d = true, // use DMA2D to copy draw buffer into frame buffer
-        }};
-
-    hi8561_vendor_config_t vendor_config = {
-        .mipi_config = {
-            .dsi_bus = mipi_dsi_bus,
-            .dpi_config = &dpi_config,
-        },
-    };
-    esp_lcd_panel_dev_config_t dev_config = {
-        .reset_gpio_num = -1,
-        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
-        .bits_per_pixel = bits_per_pixel,
-        .vendor_config = &vendor_config,
-    };
-    assert = esp_lcd_new_panel_hi8561(mipi_dbi_io, &dev_config, mipi_dpi_panel);
-    if (assert != ESP_OK)
-    {
-        cpp_assert->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "esp_lcd_new_panel_hi8561 fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    return true;
-}
-
-bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    if (Mipi_Dsi_Init(HI8561_SCREEN_DATA_LANE_NUM, HI8561_SCREEN_LANE_BIT_RATE_MBPS, HI8561_SCREEN_MIPI_DSI_DPI_CLK_MHZ, LCD_COLOR_PIXEL_FORMAT_RGB565,
-                      0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, HI8561_SCREEN_MIPI_DSI_HSYNC, HI8561_SCREEN_MIPI_DSI_HBP,
-                      HI8561_SCREEN_MIPI_DSI_HFP, HI8561_SCREEN_MIPI_DSI_VSYNC, HI8561_SCREEN_MIPI_DSI_VBP, HI8561_SCREEN_MIPI_DSI_VFP,
-                      HI8561_SCREEN_BITS_PER_PIXEL_RGB565, mipi_dpi_panel) == false)
-    {
-        printf("Mipi_Dsi_Init fail\n");
-        return false;
-    }
-
-    return true;
-}
-
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
                                   size_t camera_buf_len, void *user_data)
 {
@@ -722,17 +648,17 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
                     .pic_h = camera_buf_ves,
                     .block_w = camera_buf_hes,
                     .block_h = camera_buf_ves,
-                    .block_offset_x = (camera_buf_hes > HI8561_SCREEN_WIDTH) ? (camera_buf_hes - HI8561_SCREEN_WIDTH) / 2 : 0,
-                    .block_offset_y = (camera_buf_ves > HI8561_SCREEN_HEIGHT) ? (camera_buf_ves - HI8561_SCREEN_HEIGHT) / 2 : 0,
+                    .block_offset_x = (camera_buf_hes > SCREEN_WIDTH) ? (camera_buf_hes - SCREEN_WIDTH) / 2 : 0,
+                    .block_offset_y = (camera_buf_ves > SCREEN_HEIGHT) ? (camera_buf_ves - SCREEN_HEIGHT) / 2 : 0,
                     .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
                 },
 
             .out =
                 {
                     .buffer = lcd_buffer[camera_buf_index],
-                    .buffer_size = ALIGN_UP(HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * (APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? 2 : 3), data_cache_line_size),
-                    .pic_w = HI8561_SCREEN_WIDTH,
-                    .pic_h = HI8561_SCREEN_HEIGHT,
+                    .buffer_size = ALIGN_UP(SCREEN_WIDTH * SCREEN_HEIGHT * (APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? 2 : 3), data_cache_line_size),
+                    .pic_w = SCREEN_WIDTH,
+                    .pic_h = SCREEN_HEIGHT,
                     .block_offset_x = 0,
                     .block_offset_y = 0,
                     .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
@@ -748,12 +674,12 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             .mode = PPA_TRANS_MODE_BLOCKING,
         };
 
-    if (camera_buf_hes > HI8561_SCREEN_WIDTH || camera_buf_ves > HI8561_SCREEN_HEIGHT)
+    if (camera_buf_hes > SCREEN_WIDTH || camera_buf_ves > SCREEN_HEIGHT)
     {
         // The resolution of the camera does not match the LCD resolution. Image processing can be done using PPA, but there will be some frame rate loss
 
-        srm_config.in.block_w = (camera_buf_hes > HI8561_SCREEN_WIDTH) ? HI8561_SCREEN_WIDTH : camera_buf_hes;
-        srm_config.in.block_h = (camera_buf_ves > HI8561_SCREEN_HEIGHT) ? HI8561_SCREEN_HEIGHT : camera_buf_ves;
+        srm_config.in.block_w = (camera_buf_hes > SCREEN_WIDTH) ? SCREEN_WIDTH : camera_buf_hes;
+        srm_config.in.block_h = (camera_buf_ves > SCREEN_HEIGHT) ? SCREEN_HEIGHT : camera_buf_ves;
 
         esp_err_t assert = ppa_do_scale_rotate_mirror(ppa_srm_handle, &srm_config);
         if (assert != ESP_OK)
@@ -761,8 +687,8 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             printf("ppa_do_scale_rotate_mirror fail (error code: %#X)\n", assert);
         }
 
-        assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
-                                           srm_config.in.block_w, srm_config.in.block_h + (HI8561_SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
+        assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
+                                           srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
         if (assert != ESP_OK)
         {
             printf("esp_lcd_panel_draw_bitmap fail (error code: %#X)\n", assert);
@@ -782,10 +708,9 @@ bool App_Video_Init()
 {
     esp_lcd_panel_handle_t mipi_dpi_panel = NULL;
 
-    if (Mipi_Dsi_Init(CAMERA_DATA_LANE_NUM, CAMERA_LANE_BIT_RATE_MBPS, CAMERA_MIPI_DSI_DPI_CLK_MHZ, LCD_COLOR_PIXEL_FORMAT_RGB565,
-                      CONFIG_EXAMPLE_CAM_BUF_COUNT, CAMERA_WIDTH, CAMERA_HEIGHT, 0, 0, 0, 0, 0, 0, CAMERA_BITS_PER_PIXEL_RGB565, &mipi_dpi_panel) == false)
+    if (Camera_Init(&mipi_dpi_panel) == false)
     {
-        printf("Mipi_Dsi_Init fail\n");
+        printf("Camera_Init fail\n");
         return false;
     }
 
@@ -899,7 +824,17 @@ extern "C" void app_main(void)
     // Hardware_Usb_Cdc_Init();
 
     XL9535->begin(500000);
-    printf("XL9535 ID: %#X\n", XL9535->get_device_id());
+
+#if defined USE_SCREEN
+    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+#endif
+
     XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -914,25 +849,25 @@ extern "C" void app_main(void)
 
     XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciallo1\n");
+    printf("XL9535_5_0_V_POWER_EN ON\n");
     XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciall2\n");
+    printf("XL9535_5_0_V_POWER_EN OFF\n");
     XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciall3\n");
+    printf("XL9535_5_0_V_POWER_EN ON\n");
 
     // vTaskDelay(pdMS_TO_TICKS(1000));
 
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciall4\n");
+    printf("XL9535_3_3_V_POWER_EN ON\n");
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciall5\n");
+    printf("XL9535_3_3_V_POWER_EN OFF\n");
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    printf("Ciall6\n");
+    printf("XL9535_3_3_V_POWER_EN ON\n");
 
     XL9535->pin_mode(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
@@ -943,27 +878,36 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     Ethernet_Init();
 
+#if defined USE_SCREEN
+#if defined CONFIG_SCREEN_TYPE_HI8561
     // 这个必须放在以太网后面
     ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
-    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+#endif
 
     SGM38121->begin();
-#if defined CONFIG_CAMERA_SC2336
+#if defined CONFIG_CAMERA_TYPE_SC2336
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
-#elif defined CONFIG_CAMERA_OV2710
+#elif defined CONFIG_CAMERA_TYPE_OV2710
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 3100);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+    XL9535->pin_mode(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 打开摄像头
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 2800);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
@@ -980,6 +924,7 @@ extern "C" void app_main(void)
         printf("App_Video_Init fail\n");
     }
 
+#if defined USE_SCREEN
     Screen_Init(&Screen_Mipi_Dpi_Panel);
 
     esp_err_t assert = esp_lcd_panel_reset(Screen_Mipi_Dpi_Panel);
@@ -1001,8 +946,22 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
+#if defined CONFIG_SCREEN_TYPE_HI8561
     HI8561_T_IIC_Bus->_iic_bus_handle = XL9535_IIC_Bus->_iic_bus_handle;
+
     HI8561_T->begin();
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+
+    GT9895_IIC_Bus->_iic_bus_handle = XL9535_IIC_Bus->_iic_bus_handle;
+
+    GT9895->begin();
+
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
+#endif
 
     XL9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
@@ -1077,18 +1036,43 @@ extern "C" void app_main(void)
     //                          Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE);
     // SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
 
+#if defined USE_SCREEN
+
+#if defined CONFIG_LCD_PIXEL_FORMAT_RGB565
     // 设置整个屏幕为白色
-    size_t screen_size = HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT * 2; // RGB565: 2 bytes per pixel
-    size_t data_cache_line_size = 16;                                    // 通常16或32，具体可查芯片手册
+    size_t screen_size = SCREEN_WIDTH * SCREEN_HEIGHT * 2; // RGB565: 2 bytes per pixel
+    size_t data_cache_line_size = 16;                      // 通常16或32，具体可查芯片手册
     void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
     if (white_buf)
     {
         uint16_t *p = (uint16_t *)white_buf;
-        for (size_t i = 0; i < HI8561_SCREEN_WIDTH * HI8561_SCREEN_HEIGHT; ++i)
+        for (size_t i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
         {
             p[i] = 0xFFFF; // RGB565白色
         }
-        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, HI8561_SCREEN_WIDTH, HI8561_SCREEN_HEIGHT, white_buf);
+        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf);
+        if (err != ESP_OK)
+        {
+            printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
+        }
+        heap_caps_free(white_buf);
+    }
+#elif defined CONFIG_LCD_PIXEL_FORMAT_RGB888
+
+    // 设置整个屏幕为白色
+    size_t screen_size = SCREEN_WIDTH * SCREEN_HEIGHT * 3; // RGB888: 3 bytes per pixel
+    size_t data_cache_line_size = 16;                      // 通常16或32，具体可查芯片手册
+    void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
+    if (white_buf)
+    {
+        uint8_t *p = (uint8_t *)white_buf;
+        for (size_t i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
+        {
+            p[i * 3 + 0] = 0xFF; // R
+            p[i * 3 + 1] = 0xFF; // G
+            p[i * 3 + 2] = 0xFF; // B
+        }
+        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf);
         if (err != ESP_OK)
         {
             printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
@@ -1096,8 +1080,23 @@ extern "C" void app_main(void)
         heap_caps_free(white_buf);
     }
 
-    // Start PWM backlight after LVGL refresh is complete
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+
+#endif
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
     ESP32P4->start_pwm_gradient_time(100, 500);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+    for (uint8_t i = 0; i < 255; i += 5)
+    {
+        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
