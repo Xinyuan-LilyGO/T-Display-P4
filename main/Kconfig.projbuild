@@ -23,14 +23,6 @@ menu "Example Configuration"
         # H0410S001AM
         default "2799104"
 
-    # config LV_USE_MEM_MONITOR
-    #     bool "LV_USE_MEM_MONITOR"
-    #     default y
-
-    # config LV_MEM_MONITOR_ALIGN_BOTTOM_LEFT
-    #     bool "LV_MEM_MONITOR_ALIGN_BOTTOM_LEFT"
-    #     default y
-
     config EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
         bool "Enable MIPI CSI Camera Sensor"
         default y
