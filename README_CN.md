@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-09 15:02:52
+ * @LastEditTime: 2025-07-11 17:55:26
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -69,9 +69,9 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > #### 型号：H0405S002T002-V0
 > * 显示尺寸(对角线)：4.05 inch
 > * 液晶显示屏类型：α-Si TFT
-> * 分辨率：540(H)x1168(V) px
-> * 显示区：41.9904(W)x91.1040(H) mm
-> * 模组外形：44(H) ×95.5(V)×1.46(T) mm
+> * 分辨率：540(H) × 1168(V) px
+> * 显示区：41.9904(H) × 91.1040(V) mm
+> * 模组外形：44(H) × 95.5(V) × 1.46(T) mm
 > * 显示颜色：16.7M
 > * 屏幕通讯接口：MIPI
 > * 触摸通讯接口：IIC
@@ -89,6 +89,31 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 相关资料：
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)
 
+> #### 型号：H0410S001AM
+> * 显示尺寸(对角线)：4.1 inch
+> * 液晶显示屏类型：α-Si AMOLED
+> * 分辨率：568(H) × 1232(V) px
+> * 显示区：43.55(H) × 94.47(V) mm
+> * 模组外形：45.6(H) × 97.22(V) × 0.7(T) mm
+> * 显示颜色：16.7M
+> * 屏幕通讯接口：MIPI
+> * 触摸通讯接口：IIC
+> * 屏幕驱动芯片：RM69A10
+> * 触摸驱动芯片：GT9895
+> * 触摸最大点数：10点触控
+> * 亮度：500 cd/m²
+> * 视角方向：All
+> * 对比度：20000:1
+> * 色域：100%
+> * 图像点密集度：190
+> * 视窗效果：无一体黑
+> * 盖板表面效果：无 AF/AG
+> * 工作温度：-20～70  ºC
+> * 储存温度：-30～80 ºC
+> * 相关资料：
+>    >[RM69A10](./information/RM69A10_DataSheet_V0.2_20230330 (Public version).pdf)  
+>    >[GT9895](./information/GT9895_Datasheet_V1.1.pdf)
+
 * 依赖库：
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
 
@@ -99,7 +124,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 麦克风芯片：mic咪头
 * 通信协议：IIS
 * 相关资料：
-    >[ES8311](./information/ES8311.pdf)
+    >[ES8311](./information/ES8311.pdf)  
     >[NS4150B](./information/NS4150B.pdf)
 * 依赖库：
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
@@ -188,9 +213,9 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 | [es8311_sd_wav](./main/examples/es8311_sd_wav) |  <p align="center">![alt text][supported] | | |
 | [esp32c6_at_host_sdio_uart](./main/examples/esp32c6_at_host_sdio_uart) |  <p align="center">![alt text][supported] | | |
 | [esp32c6_at_host_sdio_wifi](./main/examples/esp32c6_at_host_sdio_wifi) |  <p align="center">![alt text][supported] | | |
-| [hi8561_camera](./main/examples/hi8561_camera) |  <p align="center">![alt text][supported] | | |
-| [hi8561_lvgl](./main/examples/hi8561_lvgl) |  <p align="center">![alt text][supported] | | |
-| [hi8561_lvgl_touch_draw](./main/examples/hi8561_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
+| [screen_camera](./main/examples/screen_camera) |  <p align="center">![alt text][supported] | | |
+| [screen_lvgl](./main/examples/screen_lvgl) |  <p align="center">![alt text][supported] | | |
+| [screen_lvgl_touch_draw](./main/examples/screen_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
 | [icm20948](./main/examples/icm20948) |  <p align="center">![alt text][supported] | | |
 | [iic_scan](./main/examples/iic_scan) |  <p align="center">![alt text][supported] | | |
 | [l76k](./main/examples/l76k) |  <p align="center">![alt text][supported] | | |
@@ -207,7 +232,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 
 | firmware | description | picture |
 | ------  | ------  | ------ |
-| [lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]/) | ov2710摄像头版本出厂程序 |  |
+| [lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]/) | 出厂程序 |  |
 | [esp32c6_at_slave_v4.1.0.0_dev(sdio)](./firmware/[T-Display-P4][esp32c6_at_slave_v4.1.0.0_dev][sdio]_firmware_202503260916.bin) | esp32c6-at 出厂程序 |  |
 
 ### ESP-IDF Visual Studio Code

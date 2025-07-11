@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-09 15:01:54
+ * @LastEditTime: 2025-07-11 17:56:20
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -70,7 +70,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Display Size (Diagonal): 4.05 inch  
 > * LCD Type: α-Si TFT  
 > * Resolution: 540(H) × 1168(V) px  
-> * Active Area: 41.9904(W) × 91.1040(H) mm  
+> * Active Area: 41.9904(H) × 91.1040(V) mm  
 > * Module Dimensions: 44(H) × 95.5(V) × 1.46(T) mm  
 > * Display Colors: 16.7M  
 > * Display Interface: MIPI  
@@ -88,6 +88,31 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 > * Storage Temperature: -30～80 ºC
 > * Related Documents:  
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
+
+> #### Model: H0410S001AM
+> * Display Size (Diagonal): 4.1 inch  
+> * LCD Type: α-Si AMOLED
+> * Resolution: 568(H) × 1232(V) px  
+> * Active Area: 43.55(H) × 94.47(V) mm  
+> * Module Dimensions: 45.6(H) × 97.22(V) × 0.7(T) mm  
+> * Display Colors: 16.7M  
+> * Display Interface: MIPI  
+> * Touch Interface: IIC
+> * Display Driver IC: RM69A10
+> * Touch Driver IC: GT9895
+> * Maximum touch points: 10-point touch
+> * Luminance on surface: 500 cd/m²
+> * View Direction: All
+> * Contrast ratio: 20000:1
+> * Color gamut: 100%
+> * PPI: 190
+> * Window effect: No all-black  
+> * Cover plate surface effect: No AF/AG
+> * Operating Temperature: -20～70  ºC
+> * Storage Temperature: -30～80 ºC
+> * Related Documents:  
+>    >[RM69A10](./information/RM69A10_DataSheet_V0.2_20230330 (Public version).pdf)  
+>    >[GT9895](./information/GT9895_Datasheet_V1.1.pdf)
 
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
@@ -188,9 +213,9 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 | [es8311_sd_wav](./main/examples/es8311_sd_wav) |  <p align="center">![alt text][supported] | | |
 | [esp32c6_at_host_sdio_uart](./main/examples/esp32c6_at_host_sdio_uart) |  <p align="center">![alt text][supported] | | |
 | [esp32c6_at_host_sdio_wifi](./main/examples/esp32c6_at_host_sdio_wifi) |  <p align="center">![alt text][supported] | | |
-| [hi8561_camera](./main/examples/hi8561_camera) |  <p align="center">![alt text][supported] | | |
-| [hi8561_lvgl](./main/examples/hi8561_lvgl) |  <p align="center">![alt text][supported] | | |
-| [hi8561_lvgl_touch_draw](./main/examples/hi8561_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
+| [screen_camera](./main/examples/screen_camera) |  <p align="center">![alt text][supported] | | |
+| [screen_lvgl](./main/examples/screen_lvgl) |  <p align="center">![alt text][supported] | | |
+| [screen_lvgl_touch_draw](./main/examples/screen_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
 | [icm20948](./main/examples/icm20948) |  <p align="center">![alt text][supported] | | |
 | [iic_scan](./main/examples/iic_scan) |  <p align="center">![alt text][supported] | | |
 | [l76k](./main/examples/l76k) |  <p align="center">![alt text][supported] | | |
@@ -207,7 +232,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 
 | firmware | description | picture |
 | ------  | ------  | ------ |
-| [lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]/) | ov2710 camera version factory program |  |
+| [lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]/) | factory program |  |
 | [esp32c6_at_slave_v4.1.0.0_dev(sdio)](./firmware/[T-Display-P4][esp32c6_at_slave_v4.1.0.0_dev][sdio]_firmware_202503260916.bin) | esp32c6-at factory program |  |
 
 ### ESP-IDF Visual Studio Code  
