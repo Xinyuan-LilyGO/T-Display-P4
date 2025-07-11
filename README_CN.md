@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-11 18:06:23
+ * @LastEditTime: 2025-07-11 18:10:05
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -87,7 +87,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 工作温度：-20～70  ºC
 > * 储存温度：-30～80 ºC
 > * 相关资料：
->    >[H0405S002T002-V0](./information/H0405S002T002-V0_4.05inch_540x1168px_MIPI.pdf)
+>    >[H0405S002T002-V0](./information/H0405S002T002-V0_4.05inch_540x1168px_MIPI.pdf)  
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)
 
 > #### 型号：H0410S001AMT001-V0
@@ -112,7 +112,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 > * 工作温度：-20～70  ºC
 > * 储存温度：-30～80 ºC
 > * 相关资料：
->    >[H0410S001AMT001-V0](./information/H0410S001AMT001-V0_4.1inch_568X1232px_MIPI_AMOLED.pdf)
+>    >[H0410S001AMT001-V0](./information/H0410S001AMT001-V0_4.1inch_568X1232px_MIPI_AMOLED.pdf)  
 >    >[RM69A10](./information/RM69A10_DataSheet_V0.2_20230330 (Public version).pdf)  
 >    >[GT9895](./information/GT9895_Datasheet_V1.1.pdf)
 
