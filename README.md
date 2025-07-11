@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-11 17:56:20
+ * @LastEditTime: 2025-07-11 18:04:08
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
