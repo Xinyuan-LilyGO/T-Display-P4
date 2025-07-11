@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2025-07-10 14:58:49
+ * @LastEditTime: 2025-07-11 17:38:42
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -219,7 +219,7 @@ void Device_Sleep_Status(bool status)
 #if defined CONFIG_CAMERA_TYPE_SC2336
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
-#elif (defined CONFIG_CAMERA_TYPE_OV2710) || (defined CONFIG_CAMERA_TYPE_OV2710)
+#elif (defined CONFIG_CAMERA_TYPE_OV2710) || (defined CONFIG_CAMERA_TYPE_OV5645)
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
@@ -243,13 +243,26 @@ void Device_Sleep_Status(bool status)
 
         SX1262->set_sleep();
 
-        // printf("esp_lcd_panel_disp_off\n");
-        // esp_lcd_panel_disp_off(Screen_Mipi_Dpi_Panel, true);
-        // printf("esp_lcd_panel_disp_sleep\n");
-        // esp_lcd_panel_disp_sleep(Screen_Mipi_Dpi_Panel, true);
+#if defined USE_SCREEN
+        printf("esp_lcd_panel_disp_off\n");
+        esp_lcd_panel_disp_off(Screen_Mipi_Dpi_Panel, true);
+        printf("esp_lcd_panel_disp_sleep\n");
+        esp_lcd_panel_disp_sleep(Screen_Mipi_Dpi_Panel, true);
 
-        // esp_lcd_panel_del(Screen_Mipi_Dpi_Panel);
-        // printf("esp_lcd_panel_del\n");
+        esp_lcd_panel_del(Screen_Mipi_Dpi_Panel);
+        printf("esp_lcd_panel_del\n");
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+        XL9535->pin_mode(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        XL9535->pin_write(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+        GT9895->set_sleep();
+#else
+#error "Unknown macro definition. Please select the correct macro definition."
+#endif
+#endif
 
         // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
@@ -277,8 +290,8 @@ void Device_Sleep_Status(bool status)
 #if !defined USE_SCREEN
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-#endif
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO4, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+#endif
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO5, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO6, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
         XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO7, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
@@ -833,6 +846,8 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
+
+    XL9535->pin_mode(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 #endif
 
     XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
