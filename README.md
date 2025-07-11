@@ -90,7 +90,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 >    >[H0405S002T002-V0](./information/H0405S002T002-V0_4.05inch_540x1168px_MIPI.pdf)
 >    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
 
-> #### Model: H0410S001AM
+> #### Model: H0410S001AMT001-V0
 > * Display Size (Diagonal): 4.1 inch  
 > * LCD Type: α-Si AMOLED
 > * Resolution: 568(H) × 1232(V) px  
