@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-07-09 15:11:28
+ * @LastEditTime: 2025-07-14 16:52:49
  * @License: GPL 3.0
  */
 #pragma once
@@ -385,9 +385,9 @@ namespace Lvgl_Ui
 
             struct
             {
-                float freq = 868.0;
+                double freq = 868.0;
                 Sx126x::Lora_Bw bw = Sx126x::Lora_Bw::BW_125000HZ;
-                float current_limit = 140;
+                float current_limit = 140.0;
                 int8_t power = 22;
                 Sx126x::Sf sf = Sx126x::Sf::SF9;
                 Sx126x::Cr cr = Sx126x::Cr::CR_4_7;

@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2025-07-10 10:38:49
+ * @LastEditTime: 2025-07-14 17:06:43
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -82,7 +82,7 @@ namespace Lvgl_Ui
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202507101039"},
+            {"firmware build date:\n     ", "202507141706"},
     };
 
     void System::begin()
@@ -3264,7 +3264,7 @@ namespace Lvgl_Ui
                                 const char* freq_text = lv_textarea_get_text(self->_registry.win.lora.setings.config_lora_params.textarea.freq);
                                 if (freq_text != nullptr && freq_text[0] != '\0') // 同时检查NULL和空字符串
                                 {  
-                                    float buffer = std::stof(freq_text, nullptr);  
+                                    double buffer = std::stod(freq_text, nullptr);  
 
                                     // 限制范围
                                     if((buffer >= 150.0) && (buffer <= 960.0))
@@ -3385,7 +3385,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_right(_registry.win.lora.setings.config_lora_params.textarea.freq, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_width(_registry.win.lora.setings.config_lora_params.textarea.freq, 300);
         lv_textarea_set_one_line(_registry.win.lora.setings.config_lora_params.textarea.freq, true);
-        char freq_str[10];
+        char freq_str[15];
         snprintf(freq_str, sizeof(freq_str), "%.6f", _device_lora.params.freq);
         lv_textarea_set_text(_registry.win.lora.setings.config_lora_params.textarea.freq, freq_str);
         lv_obj_set_style_text_font(_registry.win.lora.setings.config_lora_params.textarea.freq, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3531,7 +3531,7 @@ namespace Lvgl_Ui
         lv_obj_set_width(_registry.win.lora.setings.config_lora_params.textarea.current_limit, 300);
         lv_textarea_set_one_line(_registry.win.lora.setings.config_lora_params.textarea.current_limit, true);
         char current_limit_str[10];
-        snprintf(current_limit_str, sizeof(current_limit_str), "%.6f", _device_lora.params.current_limit);
+        snprintf(current_limit_str, sizeof(current_limit_str), "%.1f", _device_lora.params.current_limit);
         lv_textarea_set_text(_registry.win.lora.setings.config_lora_params.textarea.current_limit, current_limit_str); // 设置初始内容
         lv_obj_set_style_text_font(_registry.win.lora.setings.config_lora_params.textarea.current_limit, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_align_to(_registry.win.lora.setings.config_lora_params.textarea.current_limit, msgbox_current_limit_text, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
