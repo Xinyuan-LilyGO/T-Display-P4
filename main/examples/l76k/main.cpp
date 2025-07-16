@@ -2,7 +2,7 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2025-07-16 16:18:53
+ * @LastEditTime: 2025-07-16 18:11:01
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -84,13 +84,13 @@ extern "C" void app_main(void)
 
                 if (rmc.data.update_flag == true)
                 {
-                    printf("utc data year: %d month: %d day: %d\n", rmc.data.year, rmc.data.month, rmc.data.day);
+                    printf("utc data: %d/%d/%d\n", rmc.data.year + 2000, rmc.data.month, rmc.data.day);
                     rmc.data.update_flag = false;
                 }
                 if (rmc.utc.update_flag == true)
                 {
-                    printf("utc hour: %d minute: %d second: %f\n", rmc.utc.hour, rmc.utc.minute, rmc.utc.second);
-                    printf("china hour: %d minute: %d second: %f\n", (rmc.utc.hour + 8 + 24) % 24, rmc.utc.minute, rmc.utc.second);
+                    printf("utc time: %d:%d:%.02f\n", rmc.utc.hour, rmc.utc.minute, rmc.utc.second);
+                    printf("china time: %d:%d:%.02f\n", (rmc.utc.hour + 8 + 24) % 24, rmc.utc.minute, rmc.utc.second);
                     rmc.utc.update_flag = false;
                 }
 
