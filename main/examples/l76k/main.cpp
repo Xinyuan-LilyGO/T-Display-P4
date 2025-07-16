@@ -2,7 +2,7 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2025-07-05 11:02:30
+ * @LastEditTime: 2025-07-16 16:18:53
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -66,7 +66,7 @@ extern "C" void app_main(void)
 
         // vTaskDelay(pdMS_TO_TICKS(L76K->_update_freq)); // 等待接收
 
-        std::shared_ptr<uint8_t[]> buffer;
+        std::unique_ptr<uint8_t[]> buffer;
         size_t buffer_lenght = 0;
 
         if (L76K->get_info_data(buffer, &buffer_lenght) == true)
@@ -78,7 +78,7 @@ extern "C" void app_main(void)
 
             Cpp_Bus_Driver::L76k::Rmc rmc;
 
-            if (L76K->parse_rmc_info(buffer, buffer_lenght, rmc) == true)
+            if (L76K->parse_rmc_info(buffer.get(), buffer_lenght, rmc) == true)
             {
                 printf("location status: %s\n", (rmc.location_status).c_str());
 

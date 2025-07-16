@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-10 10:35:36
+ * @LastEditTime: 2025-07-16 16:18:14
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -1029,7 +1029,7 @@ void device_gps_task(void *arg)
             if (esp_log_timestamp() > cycle_time)
             {
                 // 读取Gps数据
-                std::shared_ptr<uint8_t[]> buffer;
+                std::unique_ptr<uint8_t[]> buffer;
                 uint32_t buffer_length = 0;
 
                 if (L76K->get_info_data(buffer, &buffer_length) == true)
@@ -1037,7 +1037,7 @@ void device_gps_task(void *arg)
                     // 打印RMC的相关信息
                     Cpp_Bus_Driver::L76k::Rmc rmc;
 
-                    if (L76K->parse_rmc_info(buffer, buffer_length, rmc) == true)
+                    if (L76K->parse_rmc_info(buffer.get(), buffer_length, rmc) == true)
                     {
                         std::string rmc_data_str = "";
                         if (L76k_Gps_Positioning_Flag == false)
