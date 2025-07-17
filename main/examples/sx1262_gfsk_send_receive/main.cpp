@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-06-20 18:12:28
+ * @LastEditTime: 2025-07-17 14:32:19
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -98,7 +98,7 @@ extern "C" void app_main(void)
                 break;
             }
 
-            switch (SX1262->assert_chip_mode_status(SX1262->get_status()))
+            switch (SX1262->parse_chip_mode_status(SX1262->get_status()))
             {
             case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::STBY_RC:
                 printf("SX1262 chip mode status: STBY_RC\n");
@@ -144,7 +144,7 @@ extern "C" void app_main(void)
                         // 方法1（速度比方法2快）
                         //  获取芯片模式状态
                         //  先前设置发送成功后进入FS模式，所以这里进入FS模式即判断成功发送
-                        if (SX1262->assert_chip_mode_status(SX1262->get_status()) == Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::FS)
+                        if (SX1262->parse_chip_mode_status(SX1262->get_status()) == Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::FS)
                         {
                             printf("SX1262 send success\n");
                             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::TX_DONE);
@@ -154,9 +154,9 @@ extern "C" void app_main(void)
                         // //方法2（速度比方法1慢）
                         // // 检查中断
                         // Cpp_Bus_Driver::Sx126x::Iqr_Status is;
-                        // if (SX1262->assert_iqr_flag(SX1262->get_irq_flag(), is) == false)
+                        // if (SX1262->parse_iqr_flag(SX1262->get_irq_flag(), is) == false)
                         // {
-                        //     printf("assert_iqr_flag fail\n");
+                        //     printf("parse_iqr_flag fail\n");
                         // }
                         // else
                         // {
@@ -197,9 +197,9 @@ extern "C" void app_main(void)
             // 检查中断
             Cpp_Bus_Driver::Sx126x::Irq_Status is;
             // 判断中断正确性
-            if (SX1262->assert_irq_status(SX1262->get_irq_flag(), is) == false)
+            if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
             {
-                printf("assert_iqr_status fail\n");
+                printf("parse_iqr_status fail\n");
             }
             else
             {
@@ -218,9 +218,9 @@ extern "C" void app_main(void)
                     // 判断传输包正确性
                     Cpp_Bus_Driver::Sx126x::Gfsk_Packet_Status gps;
                     uint32_t packet_buffer = SX1262->get_gfsk_packet_status();
-                    if (SX1262->assert_gfsk_packet_status(packet_buffer, gps) == false)
+                    if (SX1262->parse_gfsk_packet_status(packet_buffer, gps) == false)
                     {
-                        printf("assert_gfsk_packet_status fail\n");
+                        printf("parse_gfsk_packet_status fail\n");
                     }
                     else
                     {
@@ -259,7 +259,7 @@ extern "C" void app_main(void)
                             else
                             {
                                 Cpp_Bus_Driver::Sx126x::Packet_Metrics pm;
-                                SX1262->assert_gfsk_packet_metrics(packet_buffer, pm);
+                                SX1262->parse_gfsk_packet_metrics(packet_buffer, pm);
 
                                 printf("SX1262 receive rssi_average: %.01f rssi_sync: %.01f\n", pm.gfsk.rssi_average, pm.gfsk.rssi_sync);
 

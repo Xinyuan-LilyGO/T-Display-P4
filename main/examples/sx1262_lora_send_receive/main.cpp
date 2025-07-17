@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2025-06-20 18:12:35
+ * @LastEditTime: 2025-07-17 14:32:28
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -98,7 +98,7 @@ extern "C" void app_main(void)
                 break;
             }
 
-            switch (SX1262->assert_chip_mode_status(SX1262->get_status()))
+            switch (SX1262->parse_chip_mode_status(SX1262->get_status()))
             {
             case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::STBY_RC:
                 printf("SX1262 chip mode status: STBY_RC\n");
@@ -144,7 +144,7 @@ extern "C" void app_main(void)
                         // 方法1（速度比方法2快）
                         //  获取芯片模式状态
                         //  先前设置发送成功后进入FS模式，所以这里进入FS模式即判断成功发送
-                        if (SX1262->assert_chip_mode_status(SX1262->get_status()) == Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::FS)
+                        if (SX1262->parse_chip_mode_status(SX1262->get_status()) == Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::FS)
                         {
                             printf("SX1262 send success\n");
                             break;
@@ -153,9 +153,9 @@ extern "C" void app_main(void)
                         // //方法2（速度比方法1慢）
                         // // 检查中断
                         // Cpp_Bus_Driver::Sx126x::Iqr_Status is;
-                        // if (SX1262->assert_iqr_status(SX1262->get_irq_status(), is) == false)
+                        // if (SX1262->parse_iqr_status(SX1262->get_irq_status(), is) == false)
                         // {
-                        //     printf("assert_Iqr_status fail\n");
+                        //     printf("parse_Iqr_status fail\n");
                         // }
                         // else
                         // {
@@ -195,9 +195,9 @@ extern "C" void app_main(void)
         {
             // 检查中断
             Cpp_Bus_Driver::Sx126x::Irq_Status is;
-            if (SX1262->assert_irq_status(SX1262->get_irq_flag(), is) == false)
+            if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
             {
-                printf("assert_iqr_status fail\n");
+                printf("parse_iqr_status fail\n");
             }
             else
             {
