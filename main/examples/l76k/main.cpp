@@ -2,7 +2,7 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2025-07-16 18:11:01
+ * @LastEditTime: 2025-07-17 08:56:53
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -89,8 +89,8 @@ extern "C" void app_main(void)
                 }
                 if (rmc.utc.update_flag == true)
                 {
-                    printf("utc time: %d:%d:%.02f\n", rmc.utc.hour, rmc.utc.minute, rmc.utc.second);
-                    printf("china time: %d:%d:%.02f\n", (rmc.utc.hour + 8 + 24) % 24, rmc.utc.minute, rmc.utc.second);
+                    printf("utc time: %d:%d:%.03f\n", rmc.utc.hour, rmc.utc.minute, rmc.utc.second);
+                    printf("china time: %d:%d:%.03f\n", (rmc.utc.hour + 8 + 24) % 24, rmc.utc.minute, rmc.utc.second);
                     rmc.utc.update_flag = false;
                 }
 
