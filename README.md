@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-23 09:03:29
+ * @LastEditTime: 2025-07-23 09:06:34
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -60,7 +60,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 ### 1. Core Processor  
 
 * Chip: ESP32-P4  
-* FLASH: 32M  
+* FLASH: 16M  
 * Related Documents:  
     >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)  
 

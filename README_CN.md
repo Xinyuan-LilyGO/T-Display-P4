@@ -60,7 +60,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 ### 1. 核心处理器
 
 * 芯片：ESP32-P4
-* FLASH：32M
+* FLASH：16M
 * 相关资料：
     >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)
 
