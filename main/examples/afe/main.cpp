@@ -2,7 +2,7 @@
  * @Description: Afe
  * @Author: LILYGO_L
  * @Date: 2025-07-22 15:02:53
- * @LastEditTime: 2025-07-23 08:58:08
+ * @LastEditTime: 2025-07-23 11:35:15
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -56,6 +56,8 @@ void feed_Task(void *arg)
         // }
 
         afe_handle->feed(afe_data, iis_buffer.get());
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     vTaskDelete(NULL);
@@ -96,6 +98,8 @@ void detect_Task(void *arg)
             printf("model index:%d, word index:%d\n", res->wakenet_model_index, res->wake_word_index);
             printf("-----------LISTENING-----------\n");
         }
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     vTaskDelete(NULL);
