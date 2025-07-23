@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-11 18:10:05
+ * @LastEditTime: 2025-07-23 09:02:17
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -229,6 +229,7 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 | [sx1262_tx_continuous_wave](./main/examples/sx1262_tx_continuous_wave) |  <p align="center">![alt text][supported] | | |
 | [tusb_serial_device](./main/examples/tusb_serial_device) |  <p align="center">![alt text][supported] | | |
 | [xl9535](./main/examples/Vibration_Motor) |  <p align="center">![alt text][supported] | | |
+| [afe](./main/examples/afe) |  <p align="center">![alt text][supported] | | |
 
 [supported]: https://img.shields.io/badge/-supported-green "example"
 
