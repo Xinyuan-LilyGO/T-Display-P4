@@ -150,6 +150,8 @@ menu "Example Configuration"
                 bool "tusb_serial_device"
             config EXAMPLE_BUILD_XL9535
                 bool "xl9535"
+            config EXAMPLE_BUILD_AFE
+                bool "afe"
     endchoice
 
 endmenu

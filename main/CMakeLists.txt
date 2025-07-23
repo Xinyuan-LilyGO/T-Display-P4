@@ -41,6 +41,8 @@ elseif(CONFIG_EXAMPLE_BUILD_TUSB_SERIAL_DEVICE)
     set(project_path "examples/tusb_serial_device/")
 elseif(CONFIG_EXAMPLE_BUILD_XL9535)
     set(project_path "examples/xl9535/")
+elseif(CONFIG_EXAMPLE_BUILD_AFE)
+    set(project_path "examples/afe/")
 endif()
         
 idf_component_register(SRC_DIRS ${project_path} 
