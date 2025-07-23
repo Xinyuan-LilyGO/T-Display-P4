@@ -2,7 +2,7 @@
  * @Description: Afe
  * @Author: LILYGO_L
  * @Date: 2025-07-22 15:02:53
- * @LastEditTime: 2025-07-23 11:35:15
+ * @LastEditTime: 2025-07-23 16:06:33
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -42,13 +42,13 @@ void feed_Task(void *arg)
     int audio_chunksize = afe_handle->get_feed_chunksize(afe_data);
     int nch = afe_handle->get_feed_channel_num(afe_data);
 
-    auto iis_buffer = std::make_unique<int16_t[]>(audio_chunksize * sizeof(int16_t) * 2);
+    auto iis_buffer = std::make_unique<int16_t[]>(audio_chunksize * sizeof(int16_t));
 
     while (1)
     {
-        ES8311->read_data(iis_buffer.get(), audio_chunksize * sizeof(uint16_t) * 2);
+        ES8311->read_data(iis_buffer.get(), audio_chunksize * sizeof(uint16_t));
 
-        // ES8311->write_data(iis_buffer, audio_chunksize * sizeof(uint16_t) * 2);
+        // ES8311->write_data(iis_buffer, audio_chunksize * sizeof(uint16_t));
 
         // for (uint8_t i = 0; i < 10; i++)
         // {
@@ -57,7 +57,7 @@ void feed_Task(void *arg)
 
         afe_handle->feed(afe_data, iis_buffer.get());
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 
     vTaskDelete(NULL);
