@@ -57,18 +57,6 @@ void rotate90(uint8_t *src, uint8_t *dst, int width, int height)
     }
 }
 
-void example_bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
-
 bool SC2336_Sensor_Init(std::shared_ptr<Cpp_Bus_Driver::Hardware_Iic_1> bus)
 {
     //---------------SCCB Init------------------//
@@ -567,7 +555,16 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    example_bsp_enable_dsi_phy_power();
+    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_3_config =
+        {
+            .chan_id = 3,
+            .voltage_mv = 1800,
+        };
+    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    {
+        printf("esp_ldo_acquire_channel 3 fail\n");
+    }
 
     esp_cam_ctlr_handle_t cam_ctlr_handle = NULL;
     esp_cam_ctlr_trans_t cam_ctlr_trans;

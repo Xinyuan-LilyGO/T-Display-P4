@@ -43,19 +43,6 @@ auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADD
 auto SGM38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(IIC_Bus_1, SGM38121_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config =
-        {
-            .chan_id = 3,
-            .voltage_mv = 1800,
-        };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
-
 bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t dpi_clock_freq_mhz, lcd_color_format_t color_format, uint8_t num_fbs, uint32_t width, uint32_t height,
                    uint32_t mipi_dsi_hsync, uint32_t mipi_dsi_hbp, uint32_t mipi_dsi_hfp, uint32_t mipi_dsi_vsync, uint32_t mipi_dsi_vbp, uint32_t mipi_dsi_vfp,
                    uint32_t bits_per_pixel, esp_lcd_panel_handle_t *mipi_dpi_panel)
@@ -387,7 +374,16 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    bsp_enable_dsi_phy_power();
+    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_3_config =
+        {
+            .chan_id = 3,
+            .voltage_mv = 1800,
+        };
+    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    {
+        printf("esp_ldo_acquire_channel 3 fail\n");
+    }
 
     if (App_Video_Init() == false)
     {

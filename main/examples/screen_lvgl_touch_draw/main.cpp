@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2025-07-28 10:24:23
+ * @LastEditTime: 2025-07-28 14:05:18
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -99,18 +99,6 @@ void lvgl_port_task(void *arg)
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }
-}
-
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
 }
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
@@ -360,7 +348,7 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    bsp_enable_dsi_phy_power();
+    Init_Camera_Screen_Mipi_Io_Power();
 
     Screen_Init(&Screen_Mipi_Dpi_Panel);
 

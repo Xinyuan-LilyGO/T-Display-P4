@@ -26,7 +26,7 @@
 #define CSI_NAME                    "MIPI-CSI"
 
 #define CSI_LDO_UNIT_ID             3
-#define CSI_LDO_CFG_VOL_MV          2500
+#define CSI_LDO_CFG_VOL_MV          1800
 
 #define CSI_DMA_ALIGN_BYTES         64
 #define CSI_MEM_CAPS                (MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM | MALLOC_CAP_CACHE_ALIGNED)

@@ -5,8 +5,8 @@ dependencies:
   espressif/esp_tinyusb:
     version: "^1"
 
-  esp_video:
-    version: "0.9.*"
+  # esp_video:
+  #   version: "0.9.*"
 
   espressif/esp-sr:
     version: "^2.1.3"

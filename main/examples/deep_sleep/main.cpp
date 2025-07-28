@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2025-07-28 10:22:22
+ * @LastEditTime: 2025-07-28 14:04:42
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -626,18 +626,6 @@ void Esp32c6_At_Init(void)
     // }
 }
 
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
-
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
                                   size_t camera_buf_len, void *user_data)
 {
@@ -930,7 +918,7 @@ extern "C" void app_main(void)
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-    bsp_enable_dsi_phy_power();
+    Init_Camera_Screen_Mipi_Io_Power();
 
     vTaskDelay(pdMS_TO_TICKS(100));
 

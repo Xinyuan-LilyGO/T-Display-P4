@@ -2,6 +2,7 @@
 #include "esp_lcd_mipi_dsi.h"
 #include "cpp_bus_driver_library.h"
 #include "t_display_p4_driver.h"
+#include "esp_ldo_regulator.h"
 
 bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t dpi_clock_freq_mhz, lcd_color_rgb_pixel_format_t color_rgb_pixel_format, uint8_t num_fbs, uint32_t width, uint32_t height,
                    uint32_t mipi_dsi_hsync, uint32_t mipi_dsi_hbp, uint32_t mipi_dsi_hfp, uint32_t mipi_dsi_vsync, uint32_t mipi_dsi_vbp, uint32_t mipi_dsi_vfp,
@@ -125,6 +126,23 @@ bool Camera_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
                       CONFIG_EXAMPLE_CAM_BUF_COUNT, CAMERA_WIDTH, CAMERA_HEIGHT, 0, 0, 0, 0, 0, 0, CAMERA_BITS_PER_PIXEL, mipi_dpi_panel) == false)
     {
         printf("Mipi_Dsi_Init fail\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool Init_Camera_Screen_Mipi_Io_Power(void)
+{
+    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_3_config =
+        {
+            .chan_id = 3,
+            .voltage_mv = 1800,
+        };
+    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    {
+        printf("esp_ldo_acquire_channel 3 fail\n");
         return false;
     }
 

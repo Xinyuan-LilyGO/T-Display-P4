@@ -153,19 +153,6 @@ static void example_increase_lvgl_tick(void *arg)
     lv_tick_inc(2);
 }
 
-static void example_bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    ESP_LOGI(TAG, "MIPI DSI PHY Powered on");
-}
-
 void example_sensor_init_2(int i2c_port, i2c_master_bus_handle_t *out_i2c_bus_handle)
 {
     esp_err_t ret = ESP_FAIL;
@@ -722,7 +709,16 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    example_bsp_enable_dsi_phy_power();
+    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_3_config =
+        {
+            .chan_id = 3,
+            .voltage_mv = 1800,
+        };
+    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    {
+        printf("esp_ldo_acquire_channel 3 fail\n");
+    }
 
     Camera_Init();
     Screen_Init();

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-28 11:03:32
+ * @LastEditTime: 2025-07-28 14:00:04
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -1795,18 +1795,6 @@ void iis_transmission_data_stream_task(void *arg)
     }
 }
 
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
-
 void bsp_init_refresh_monitor_io(void)
 {
     // gpio_config_t monitor_io_conf = {
@@ -3268,7 +3256,7 @@ extern "C" void app_main(void)
 
     // bsp_init_refresh_monitor_io();
 
-    bsp_enable_dsi_phy_power();
+    Init_Camera_Screen_Mipi_Io_Power();
 
     vTaskDelay(pdMS_TO_TICKS(100));
 

@@ -131,20 +131,6 @@ static bool example_monitor_refresh_rate(esp_lcd_panel_handle_t panel, esp_lcd_d
 }
 #endif
 
-static void example_bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-#ifdef EXAMPLE_MIPI_DSI_PHY_PWR_LDO_CHAN
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = EXAMPLE_MIPI_DSI_PHY_PWR_LDO_CHAN,
-        .voltage_mv = EXAMPLE_MIPI_DSI_PHY_PWR_LDO_VOLTAGE_MV,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    ESP_LOGI(TAG, "MIPI DSI PHY Powered on");
-#endif
-}
-
 #if CONFIG_EXAMPLE_MONITOR_REFRESH_BY_GPIO
 static void example_bsp_init_refresh_monitor_io(void)
 {
@@ -182,7 +168,17 @@ extern "C" void app_main(void)
     example_bsp_init_refresh_monitor_io();
 #endif
 
-    example_bsp_enable_dsi_phy_power();
+    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_3_config =
+        {
+            .chan_id = 3,
+            .voltage_mv = 1800,
+        };
+    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    {
+        printf("esp_ldo_acquire_channel 3 fail\n");
+    }
+
     // example_bsp_init_lcd_backlight();
     // example_bsp_set_lcd_backlight(EXAMPLE_LCD_BK_LIGHT_OFF_LEVEL);
 

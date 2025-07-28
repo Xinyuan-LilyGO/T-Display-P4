@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2025-07-28 10:20:36
+ * @LastEditTime: 2025-07-28 14:05:11
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -138,18 +138,6 @@ void Lvgl_Init(void)
     _lock_release(&lvgl_api_lock);
 }
 
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config = {
-        .chan_id = 3,
-        .voltage_mv = 1800,
-    };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
-
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
@@ -197,7 +185,7 @@ extern "C" void app_main(void)
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-    bsp_enable_dsi_phy_power();
+    Init_Camera_Screen_Mipi_Io_Power();
 
     Screen_Init(&Screen_Mipi_Dpi_Panel);
 

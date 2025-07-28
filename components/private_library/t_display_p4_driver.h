@@ -58,3 +58,5 @@ bool Mipi_Dsi_Init(uint8_t num_data_lanes, uint32_t lane_bit_rate_mbps, uint32_t
 bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel);
 
 bool Camera_Init(esp_lcd_panel_handle_t *mipi_dpi_panel);
+
+bool Init_Camera_Screen_Mipi_Io_Power(void);

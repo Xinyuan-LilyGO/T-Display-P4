@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2025-07-28 11:06:00
+ * @LastEditTime: 2025-07-28 14:05:02
  * @License: GPL 3.0
  */
 #include "esp_video_init.h"
@@ -37,19 +37,6 @@ auto IIC_Bus_1 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(SGM38121_SDA, 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto SGM38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(IIC_Bus_1, SGM38121_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
-
-void bsp_enable_dsi_phy_power(void)
-{
-    // Turn on the power for MIPI DSI PHY, so it can go from "No Power" state to "Shutdown" state
-    esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
-    esp_ldo_channel_config_t ldo_mipi_phy_config =
-        {
-            .chan_id = 3,
-            .voltage_mv = 1800,
-        };
-    ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
-    printf("mipi dsi phy powered on\n");
-}
 
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
                                   size_t camera_buf_len, void *user_data)
@@ -327,7 +314,7 @@ extern "C" void app_main(void)
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-    bsp_enable_dsi_phy_power();
+    Init_Camera_Screen_Mipi_Io_Power();
 
     if (App_Video_Init() == false)
     {
