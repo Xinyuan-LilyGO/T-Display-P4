@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-28 10:24:11
+ * @LastEditTime: 2025-07-28 11:03:32
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -3257,7 +3257,7 @@ extern "C" void app_main(void)
     XL9535->pin_mode(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 打开摄像头
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 2800);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);

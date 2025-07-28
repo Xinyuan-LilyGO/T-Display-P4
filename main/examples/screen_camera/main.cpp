@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2025-07-28 10:19:53
+ * @LastEditTime: 2025-07-28 11:06:00
  * @License: GPL 3.0
  */
 #include "esp_video_init.h"
@@ -310,7 +310,7 @@ extern "C" void app_main(void)
     XL9535->pin_mode(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_CAMERA_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 打开摄像头
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 2800);
+    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
     SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
     SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
