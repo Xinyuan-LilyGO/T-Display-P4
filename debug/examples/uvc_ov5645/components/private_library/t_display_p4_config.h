@@ -23,7 +23,7 @@
 #define XL9535_INT 5
 // XL9535引脚功能
 #define XL9535_VIBRATION_MOTOR_INT static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(0)
-#define XL9535_CAMERA_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(1)
+#define XL9535_SKY13453_VCTL static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(1)
 #define XL9535_SCREEN_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(2)
 #define XL9535_TOUCH_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(3)
 #define XL9535_TOUCH_INT static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(4)
