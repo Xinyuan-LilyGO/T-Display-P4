@@ -50,7 +50,7 @@ void bsp_enable_dsi_phy_power(void)
     esp_ldo_channel_config_t ldo_mipi_phy_config =
         {
             .chan_id = 3,
-            .voltage_mv = 2500,
+            .voltage_mv = 1800,
         };
     ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
     printf("mipi dsi phy powered on\n");

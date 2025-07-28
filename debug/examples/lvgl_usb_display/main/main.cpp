@@ -46,7 +46,7 @@ static const char *TAG = "example";
 
 // The "VDD_MIPI_DPHY" should be supplied with 2.5V, it can source from the internal LDO regulator or from external LDO chip
 #define EXAMPLE_MIPI_DSI_PHY_PWR_LDO_CHAN 3 // LDO_VO3 is connected to VDD_MIPI_DPHY
-#define EXAMPLE_MIPI_DSI_PHY_PWR_LDO_VOLTAGE_MV 2500
+#define EXAMPLE_MIPI_DSI_PHY_PWR_LDO_VOLTAGE_MV 1800
 #define EXAMPLE_PIN_NUM_BK_LIGHT -1
 #define EXAMPLE_PIN_NUM_LCD_RST -1
 

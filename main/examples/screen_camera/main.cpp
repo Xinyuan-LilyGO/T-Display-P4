@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2025-07-09 11:24:27
+ * @LastEditTime: 2025-07-28 10:19:53
  * @License: GPL 3.0
  */
 #include "esp_video_init.h"
@@ -45,7 +45,7 @@ void bsp_enable_dsi_phy_power(void)
     esp_ldo_channel_config_t ldo_mipi_phy_config =
         {
             .chan_id = 3,
-            .voltage_mv = 2500,
+            .voltage_mv = 1800,
         };
     ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
     printf("mipi dsi phy powered on\n");

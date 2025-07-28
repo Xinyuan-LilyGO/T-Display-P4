@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2025-07-09 16:31:07
+ * @LastEditTime: 2025-07-28 10:24:23
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -107,7 +107,7 @@ void bsp_enable_dsi_phy_power(void)
     esp_ldo_channel_handle_t ldo_mipi_phy = NULL;
     esp_ldo_channel_config_t ldo_mipi_phy_config = {
         .chan_id = 3,
-        .voltage_mv = 2500,
+        .voltage_mv = 1800,
     };
     ESP_ERROR_CHECK(esp_ldo_acquire_channel(&ldo_mipi_phy_config, &ldo_mipi_phy));
     printf("mipi dsi phy powered on\n");
