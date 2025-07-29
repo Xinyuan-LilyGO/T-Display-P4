@@ -2,7 +2,7 @@
  * @Description: sx1262_tx_continuous_wave
  * @Author: LILYGO_L
  * @Date: 2025-03-28 17:41:28
- * @LastEditTime: 2025-06-20 18:12:41
+ * @LastEditTime: 2025-07-29 11:45:02
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -59,6 +59,10 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
+
+    // 默认使用RF1天线
+    XL9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     SX1262->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 

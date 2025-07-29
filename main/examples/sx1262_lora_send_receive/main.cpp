@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2025-07-17 14:32:28
+ * @LastEditTime: 2025-07-29 11:44:01
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -39,7 +39,7 @@ auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SPI_Bus_2, Cpp_Bus_Driver
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    
+
     XL9535->begin();
     XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -59,6 +59,10 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
+
+    // 默认使用RF1天线
+    XL9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     SX1262->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 

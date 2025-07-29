@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-28 14:00:04
+ * @LastEditTime: 2025-07-29 11:43:08
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -3426,6 +3426,10 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
+
+    // 默认使用RF1天线
+    XL9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     XL9535->pin_mode(XL9535_LORA_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
     if (SX1262->begin(10000000) == false)
