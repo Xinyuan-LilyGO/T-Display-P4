@@ -2,7 +2,7 @@
  * @Description: iic_scan
  * @Author: LILYGO_L
  * @Date: 2025-06-13 12:06:14
- * @LastEditTime: 2025-07-08 09:55:22
+ * @LastEditTime: 2025-07-29 16:41:58
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -14,18 +14,18 @@
 #include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
-auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
+auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(EXT_1X4P_2_IO_46, EXT_1X4P_2_IO_45, I2C_NUM_0);
 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#X\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#X\n", i, address[i]);
         }
     }
 }
@@ -49,7 +49,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        IIC_Scan();
+        Iic_Scan();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

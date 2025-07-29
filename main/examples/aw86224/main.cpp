@@ -22,14 +22,14 @@ auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADD
 
 auto AW86224 = std::make_unique<Cpp_Bus_Driver::Aw862xx>(IIC_Bus_1, AW86224_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus_1->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#X\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#X\n", i, address[i]);
         }
     }
 }
@@ -47,7 +47,7 @@ extern "C" void app_main(void)
     AW86224->begin(500000);
     // printf("AW86224 input voltage: %.06f V\n", AW86224->get_input_voltage());
 
-    IIC_Scan();
+    Iic_Scan();
 
     // 等待F0校准
     while (1)
@@ -68,7 +68,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        // IIC_Scan();
+        // Iic_Scan();
         // printf("AW86224 input voltage: %.06f V\n", AW86224->get_input_voltage());
 
         // // RTP播放

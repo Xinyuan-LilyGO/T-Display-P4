@@ -23,14 +23,14 @@ auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(IIC_Bus_0_1, PCF8563_I
 
 volatile bool interrupt_flag = false;
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus_0->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#X\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#X\n", i, address[i]);
         }
     }
 }
@@ -110,7 +110,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        // IIC_Scan();
+        // Iic_Scan();
         printf("pcf8563 ID: %#X\n", PCF8563->get_device_id());
 
         if (PCF8563->check_clock_integrity_flag() == true) // 检查时钟完整

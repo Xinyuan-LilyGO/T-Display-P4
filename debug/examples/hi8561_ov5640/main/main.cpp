@@ -332,14 +332,14 @@ bool App_Video_Init()
     return true;
 }
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus_1->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
         }
     }
 }
@@ -438,7 +438,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        IIC_Scan();
+        Iic_Scan();
         vTaskDelay(pdMS_TO_TICKS(1000));
         vTaskDelay(pdMS_TO_TICKS(10));
     }

@@ -43,14 +43,14 @@ auto IIS_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(11, 9, 10, 12, 13)
 
 auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(IIC_Bus_0, IIS_Bus, ES8311_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus_0->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
         }
     }
     else
@@ -384,7 +384,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        // IIC_Scan();
+        // Iic_Scan();
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }

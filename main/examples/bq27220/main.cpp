@@ -25,14 +25,14 @@ auto BQ27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(BQ27220_Bus, BQ2722
 // auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 // auto BQ27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(IIC_Bus_0, BQ27220_IIC_ADDRESS);
 
-// void IIC_Scan(void)
+// void Iic_Scan(void)
 // {
 //     std::vector<uint8_t> address;
 //     if (IIC_Bus_0->scan_7bit_address(&address) == true)
 //     {
 //         for (size_t i = 0; i < address.size(); i++)
 //         {
-//             printf("Discovered IIC devices[%u]: %#X\n", i, address[i]);
+//             printf("discovered iic devices[%u]: %#X\n", i, address[i]);
 //         }
 //     }
 // }
@@ -64,7 +64,7 @@ extern "C" void app_main(void)
     {
         // printf("BQ27220 ID: %#X\n", BQ27220->get_device_id());
 
-        // IIC_Scan();
+        // Iic_Scan();
         printf("////////////////////////////////////////////////////\n");
         printf("--------------------------------------------------------------------------\n");
         printf("BQ27220 ID: %#X\n", BQ27220->get_device_id());

@@ -28,14 +28,14 @@ auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(IIC_Bus_0, IIS_Bus, ES831
 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_1, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus_0->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
         }
     }
     else
@@ -390,7 +390,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        // IIC_Scan();
+        // Iic_Scan();
         // vTaskDelay(pdMS_TO_TICKS(1000));
 
         // ADC和DAC相互回环测试
@@ -408,7 +408,7 @@ extern "C" void app_main(void)
 
         if (XL9535->Tool::pin_read(ESP32P4_BOOT) == 0)
         {
-            IIC_Scan();
+            Iic_Scan();
             uint8_t buffer = 0;
             for (size_t i = 0; i < 256; i++)
             {

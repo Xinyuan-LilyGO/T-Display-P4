@@ -18,14 +18,14 @@ IRAM_ATTR void HI8561_T_Interrupt(void *arg)
     HI8561_T_Interrupt_Flag = true;
 }
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
         }
     }
 }
@@ -42,7 +42,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        // IIC_Scan();
+        // Iic_Scan();
 
         // uint8_t finger_count = HI8561_T->get_finger_count();
         // if (HI8561_T->get_single_touch_point(tp, finger_count) == true)

@@ -9,14 +9,14 @@
 
 auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::HWIIC>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
     if (IIC_Bus->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
-            printf("Discovered IIC devices[%u]: %#x\n", i, address[i]);
+            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
         }
     }
 }
@@ -94,7 +94,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        IIC_Scan();
+        Iic_Scan();
 
         // for (size_t i = 0; i < 48; i++)
         // {

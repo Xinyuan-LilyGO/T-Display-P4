@@ -489,7 +489,7 @@ bool ICM20948_Init(void)
     return true;
 }
 
-void IIC_Scan(void)
+void Iic_Scan(void)
 {
     std::vector<uint8_t> address_1;
     if (XL9535_IIC_Bus->scan_7bit_address(&address_1) == true)
@@ -1101,7 +1101,7 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    // IIC_Scan();
+    // Iic_Scan();
 
     /* Enable wakeup from light sleep by gpio */
     // example_register_gpio_wakeup();
