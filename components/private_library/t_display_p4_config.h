@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-28 16:27:56
+ * @LastEditTime: 2025-07-29 16:22:07
  */
 #pragma once
 
@@ -137,6 +137,23 @@
 #define ESP32C6_SDIO_D2 SDIO_2_D2
 #define ESP32C6_SDIO_D3 SDIO_2_D3
 
+// Extended io
+#define EXT_2X8P_SPI_SCLK SPI_1_SCLK
+#define EXT_2X8P_SPI_MOSI SPI_1_MOSI
+#define EXT_2X8P_SPI_MISO SPI_1_MISO
+#define EXT_2X8P_IO_26 26
+#define EXT_2X8P_IO_27 27
+#define EXT_2X8P_IO_33 33
+#define EXT_2X8P_IO_32 32
+#define EXT_2X8P_IO_25 25
+#define EXT_2X8P_IO_36 36
+#define EXT_2X8P_IO_53 53
+#define EXT_2X8P_IO_54 54
+#define EXT_1X4P_1_IO_47 47
+#define EXT_1X4P_1_IO_48 48
+#define EXT_1X4P_2_IO_45 45
+#define EXT_1X4P_2_IO_46 46
+
 ////////////////////////////////////////////////// gpio config //////////////////////////////////////////////////
 
 ////////////////////////////////////////////////// other define config //////////////////////////////////////////////////
@@ -195,8 +212,8 @@
 #define GT9895_IIC_ADDRESS 0x5D
 #define GT9895_MAX_X_SIZE 1060
 #define GT9895_MAX_Y_SIZE 2400
-#define GT9895_X_SCALE_FACTOR static_cast<float> (RM69A10_SCREEN_WIDTH) / static_cast<float> (GT9895_MAX_X_SIZE)
-#define GT9895_Y_SCALE_FACTOR static_cast<float> (RM69A10_SCREEN_HEIGHT) / static_cast<float> (GT9895_MAX_Y_SIZE)
+#define GT9895_X_SCALE_FACTOR static_cast<float>(RM69A10_SCREEN_WIDTH) / static_cast<float>(GT9895_MAX_X_SIZE)
+#define GT9895_Y_SCALE_FACTOR static_cast<float>(RM69A10_SCREEN_HEIGHT) / static_cast<float>(GT9895_MAX_Y_SIZE)
 
 // CAMERA
 #define CAMERA_WIDTH 1920
