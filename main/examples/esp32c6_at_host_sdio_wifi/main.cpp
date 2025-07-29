@@ -2,7 +2,7 @@
  * @Description: esp32c6_at_host_sdio_wifi
  * @Author: LILYGO_L
  * @Date: 2025-06-13 10:40:19
- * @LastEditTime: 2025-06-13 10:56:24
+ * @LastEditTime: 2025-07-29 15:19:07
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -151,6 +151,18 @@ extern "C" void app_main(void)
         //     // std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(buffer_lenght + 1);
         //     // ESP32C6_AT->receive_packet(buffer.get(), &buffer_lenght);
         //     // printf("esp32c6_at receive lenght: [%d] receive: \n[%s]\n", buffer_lenght, buffer.get());
+
+        //     // 方式4（由于espidf库限制只能使用方式4的方式读取大容量数据）
+        //     size_t buffer_length = ESP32C6_AT->get_rx_data_length();
+        //     // 为了去除串口调试出现的乱码，这里+1预留最后一位'\0'
+        //     size_t alloc_size = buffer_length + 1;
+        //     uint8_t *buffer = (uint8_t *)heap_caps_malloc(alloc_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+        //     // 接收数据（注意：receive_packet接口可能需要调整以接受普通指针）
+        //     ESP32C6_AT->receive_packet(buffer, &buffer_length);
+        //     // 确保字符串终止
+        //     buffer[buffer_length] = '\0';
+        //     printf("esp32c6_at receive length: [%d] receive: \n[%s]\n", buffer_length, buffer);
+        //     heap_caps_free(buffer);
         // }
         // // }
 
