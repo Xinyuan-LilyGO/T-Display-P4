@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-06-16 16:20:13
+ * @LastEditTime: 2025-07-29 18:11:20
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -33,10 +33,8 @@ extern "C" void app_main(void)
                                   });
 
     XL9535->begin();
-    printf("XL9535 ID: %#X\n", XL9535->get_device_id());
     XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-    printf("XL9535 ID: %#X\n", XL9535->get_device_id());
 
     XL9535->clear_irq_flag();
 

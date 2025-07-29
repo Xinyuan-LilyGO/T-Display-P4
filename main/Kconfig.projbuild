@@ -105,53 +105,87 @@ menu "Example Configuration"
                 bool "RM69A10"
     endchoice
 
+    choice BOARD_TYPE
+        prompt "Board type"
+        default BOARD_TYPE_T_DISPLAY_P4
+        config BOARD_TYPE_T_DISPLAY_P4
+            bool "t_display_p4"
+        config BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            bool "t_display_p4_keyboard"
+    endchoice
+
     choice
         prompt "Select the example to build"
         default EXAMPLE_BUILD_LVGL_9_UI
             config EXAMPLE_BUILD_AW86224
                 bool "aw86224"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_BQ27220
                 bool "bq27220"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_DEEP_SLEEP
                 bool "deep_sleep"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_ES8311
                 bool "es8311"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_ES8311_SD_WAV
                 bool "es8311_sd_wav"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART
                 bool "esp32c6_at_host_sdio_uart"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI
                 bool "esp32c6_at_host_sdio_wifi"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SCREEN_CAMERA
                 bool "screen_camera"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SCREEN_LVGL
                 bool "screen_lvgl"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW
                 bool "screen_lvgl_touch_draw"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_ICM20948
                 bool "icm20948"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_IIC_SCAN
                 bool "iic_scan"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_L76K
                 bool "l76k"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_LVGL_9_UI
                 bool "lvgl_9_ui"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_PCF8563
                 bool "pcf8563"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SGM38121
                 bool "sgm38121"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE
                 bool "sx1262_gfsk_send_receive"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE
                 bool "sx1262_lora_send_receive"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE
                 bool "sx1262_tx_continuous_wave"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_TUSB_SERIAL_DEVICE
                 bool "tusb_serial_device"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_XL9535
                 bool "xl9535"
+                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_AFE
                 bool "afe"
+                depends on BOARD_TYPE_T_DISPLAY_P4
+            config EXAMPLE_BUILD_XL9555
+                bool "xl9555"
+                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
 
 endmenu
