@@ -132,17 +132,17 @@ bool Camera_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
     return true;
 }
 
-bool Init_Camera_Screen_Mipi_Io_Power(void)
+bool Init_Ldo_Channel_Power(uint8_t chan_id, uint32_t voltage_mv)
 {
-    esp_ldo_channel_handle_t ldo_channel_3_handle = NULL;
-    esp_ldo_channel_config_t ldo_channel_3_config =
+    esp_ldo_channel_handle_t ldo_channel_handle = NULL;
+    esp_ldo_channel_config_t ldo_channel_config =
         {
-            .chan_id = 3,
-            .voltage_mv = 1800,
+            .chan_id = static_cast<int>(chan_id),
+            .voltage_mv = static_cast<int>(voltage_mv),
         };
-    if (esp_ldo_acquire_channel(&ldo_channel_3_config, &ldo_channel_3_handle) != ESP_OK)
+    if (esp_ldo_acquire_channel(&ldo_channel_config, &ldo_channel_handle) != ESP_OK)
     {
-        printf("esp_ldo_acquire_channel 3 fail\n");
+        printf("esp_ldo_acquire_channel %d fail\n", chan_id);
         return false;
     }
 

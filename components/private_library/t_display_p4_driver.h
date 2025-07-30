@@ -59,4 +59,4 @@ bool Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel);
 
 bool Camera_Init(esp_lcd_panel_handle_t *mipi_dpi_panel);
 
-bool Init_Camera_Screen_Mipi_Io_Power(void);
+bool Init_Ldo_Channel_Power(uint8_t chan_id, uint32_t voltage_mv);

@@ -348,7 +348,7 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    Init_Camera_Screen_Mipi_Io_Power();
+    Init_Ldo_Channel_Power(3, 1800);
 
     Screen_Init(&Screen_Mipi_Dpi_Panel);
 

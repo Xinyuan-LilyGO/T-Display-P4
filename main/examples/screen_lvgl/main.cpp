@@ -185,7 +185,7 @@ extern "C" void app_main(void)
 #error "Unknown macro definition. Please select the correct macro definition."
 #endif
 
-    Init_Camera_Screen_Mipi_Io_Power();
+    Init_Ldo_Channel_Power(3, 1800);
 
     Screen_Init(&Screen_Mipi_Dpi_Panel);
 

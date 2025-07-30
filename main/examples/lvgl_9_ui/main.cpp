@@ -3254,7 +3254,7 @@ extern "C" void app_main(void)
 
     // bsp_init_refresh_monitor_io();
 
-    Init_Camera_Screen_Mipi_Io_Power();
+    Init_Ldo_Channel_Power(3, 1800);
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
