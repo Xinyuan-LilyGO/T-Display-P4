@@ -34,8 +34,8 @@ namespace Cpp_Bus_Driver
     public:
         struct Touch_Info
         {
-            uint16_t x = -1;             // X 坐标
-            uint16_t y = -1;             // Y 坐标
+            uint16_t x = -1;             // x 坐标
+            uint16_t y = -1;             // y 坐标
             uint8_t pressure_value = -1; // 触摸压力值
         };
 

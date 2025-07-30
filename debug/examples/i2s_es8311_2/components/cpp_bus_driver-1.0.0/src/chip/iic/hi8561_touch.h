@@ -50,8 +50,8 @@ namespace Cpp_Bus_Driver
         struct Touch_Point
         {
             uint8_t finger_count = -1; // 触摸手指总数
-            uint16_t x = -1;           // X 坐标
-            uint16_t y = -1;           // Y 坐标
+            uint16_t x = -1;           // x 坐标
+            uint16_t y = -1;           // y 坐标
             uint8_t p = -1;            // 触摸压力值
             bool edge_touch_flag = 0;  // 边缘触摸标志
         };
