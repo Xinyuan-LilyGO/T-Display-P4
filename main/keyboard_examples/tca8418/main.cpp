@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-30 14:42:09
+ * @LastEditTime: 2025-07-30 17:13:56
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -26,6 +26,8 @@ auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA841
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
+volatile bool interrupt_flag = false;
+
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
@@ -40,16 +42,34 @@ extern "C" void app_main(void)
     XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
+    XL9555->pin_mode(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    TCA8418->create_gpio_interrupt(TCA8418_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+                                   [](void *arg) -> IRAM_ATTR void
+                                   {
+                                       interrupt_flag = true;
+                                   });
+
     TCA8418_IIC_Bus->set_bus_handle(XL9555_IIC_Bus->get_bus_handle());
 
     TCA8418->begin();
 
-    ESP32P4->create_pwm(SY7200A_EN_PWM, ledc_channel_t::LEDC_CHANNEL_0, 20000);
+    ESP32P4->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_0, 20000);
 
     ESP32P4->start_pwm_gradient_time(100, 1000);
 
     while (1)
     {
+
+        if ()
+        {
+        }
 
         vTaskDelay(pdMS_TO_TICKS(10));
     }
