@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-07-29 11:43:52
+ * @LastEditTime: 2025-07-30 17:28:36
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -158,9 +158,9 @@ extern "C" void app_main(void)
                         // //方法2（速度比方法1慢）
                         // // 检查中断
                         // Cpp_Bus_Driver::Sx126x::Iqr_Status is;
-                        // if (SX1262->parse_iqr_flag(SX1262->get_irq_flag(), is) == false)
+                        // if (SX1262->parse_irq_flag(SX1262->get_irq_flag(), is) == false)
                         // {
-                        //     printf("parse_iqr_flag fail\n");
+                        //     printf("parse_irq_flag fail\n");
                         // }
                         // else
                         // {
@@ -203,7 +203,7 @@ extern "C" void app_main(void)
             // 判断中断正确性
             if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
             {
-                printf("parse_iqr_status fail\n");
+                printf("parse_irq_status fail\n");
             }
             else
             {

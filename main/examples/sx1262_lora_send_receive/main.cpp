@@ -157,7 +157,7 @@ extern "C" void app_main(void)
                         // //方法2（速度比方法1慢）
                         // // 检查中断
                         // Cpp_Bus_Driver::Sx126x::Iqr_Status is;
-                        // if (SX1262->parse_iqr_status(SX1262->get_irq_status(), is) == false)
+                        // if (SX1262->parse_irq_status(SX1262->get_irq_status(), is) == false)
                         // {
                         //     printf("parse_Iqr_status fail\n");
                         // }
@@ -201,7 +201,7 @@ extern "C" void app_main(void)
             Cpp_Bus_Driver::Sx126x::Irq_Status is;
             if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
             {
-                printf("parse_iqr_status fail\n");
+                printf("parse_irq_status fail\n");
             }
             else
             {
