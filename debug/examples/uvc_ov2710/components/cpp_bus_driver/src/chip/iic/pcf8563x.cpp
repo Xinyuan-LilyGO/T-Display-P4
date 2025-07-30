@@ -34,7 +34,7 @@ namespace Cpp_Bus_Driver
 
         if (init_list(_init_list, sizeof(_init_list)) == false)
         {
-            assert_log(Log_Level::CHIP, __FILE__, __LINE__, "_init_list fail\n");
+            assert_log(Log_Level::CHIP, __FILE__, __LINE__, "init_list fail\n");
             return false;
         }
 
