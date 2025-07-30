@@ -21,7 +21,7 @@ auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADD
 
 auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(IIC_Bus_0_1, PCF8563_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-volatile bool interrupt_flag = false;
+volatile bool Interrupt_Flag = false;
 
 void Iic_Scan(void)
 {
@@ -42,7 +42,7 @@ extern "C" void app_main(void)
     XL9535->create_gpio_interrupt(XL9535_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
                                   [](void *arg) IRAM_ATTR
                                   {
-                                      interrupt_flag = true;
+                                      Interrupt_Flag = true;
                                   });
 
     XL9535->begin();
@@ -146,7 +146,7 @@ extern "C" void app_main(void)
             }
 
             XL9535->clear_irq_flag();
-            interrupt_flag = false;
+            Interrupt_Flag = false;
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));

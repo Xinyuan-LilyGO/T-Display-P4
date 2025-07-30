@@ -26,7 +26,7 @@ auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA841
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
-volatile bool interrupt_flag = false;
+volatile bool Interrupt_Flag = false;
 
 extern "C" void app_main(void)
 {
@@ -53,7 +53,7 @@ extern "C" void app_main(void)
     TCA8418->create_gpio_interrupt(TCA8418_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
                                    [](void *arg) -> IRAM_ATTR void
                                    {
-                                       interrupt_flag = true;
+                                       Interrupt_Flag = true;
                                    });
 
     TCA8418_IIC_Bus->set_bus_handle(XL9555_IIC_Bus->get_bus_handle());

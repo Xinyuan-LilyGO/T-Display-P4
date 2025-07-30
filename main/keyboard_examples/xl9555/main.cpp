@@ -18,7 +18,7 @@ auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL95
 
 auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9555_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-volatile bool interrupt_flag = false;
+volatile bool Interrupt_Flag = false;
 
 extern "C" void app_main(void)
 {
@@ -28,7 +28,7 @@ extern "C" void app_main(void)
     //                               {
     //                                   //   if ((uint32_t)arg == XL9535_INT)
     //                                   //   {
-    //                                   interrupt_flag = true;
+    //                                   Interrupt_Flag = true;
     //                                   //   }
     //                               });
 
@@ -44,10 +44,10 @@ extern "C" void app_main(void)
     {
         if (interrupt_flag == true)
         {
-            printf("XL9555 interrupt_flag triggered\n");
+            printf("XL9555 Interrupt_Flag triggered\n");
 
             XL9555->clear_irq_flag();
-            interrupt_flag = false;
+            Interrupt_Flag = false;
         }
 
         XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
