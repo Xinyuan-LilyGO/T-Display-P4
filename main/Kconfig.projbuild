@@ -186,6 +186,9 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_XL9555
                 bool "xl9555"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            config EXAMPLE_BUILD_TCA8418
+                bool "tca8418"
+                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
 
 endmenu

@@ -45,6 +45,8 @@ elseif(CONFIG_EXAMPLE_BUILD_AFE)
     set(project_path "examples/afe/")
 elseif(CONFIG_EXAMPLE_BUILD_XL9555)
     set(project_path "keyboard_examples/xl9555/")
+elseif(CONFIG_EXAMPLE_BUILD_TCA8418)
+    set(project_path "keyboard_examples/tca8418/")
 endif()
         
 idf_component_register(SRC_DIRS ${project_path} 

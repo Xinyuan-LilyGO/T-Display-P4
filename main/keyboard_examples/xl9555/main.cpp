@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-29 17:56:08
+ * @LastEditTime: 2025-07-30 09:16:38
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -23,9 +23,20 @@ volatile bool interrupt_flag = false;
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
+    // XL9555->create_gpio_interrupt(XL9535_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+    //                               [](void *arg) -> IRAM_ATTR void
+    //                               {
+    //                                   //   if ((uint32_t)arg == XL9535_INT)
+    //                                   //   {
+    //                                   interrupt_flag = true;
+    //                                   //   }
+    //                               });
+
     XL9555->begin();
-    XL9555->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    XL9555->pin_mode(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9555->pin_mode(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9555->pin_mode(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9555->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO7, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 
     XL9555->clear_irq_flag();
 
@@ -39,11 +50,15 @@ extern "C" void app_main(void)
             interrupt_flag = false;
         }
 
-        XL9555->pin_write(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        printf("XL9555 IO3: %d\n", XL9555->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO3));
+        XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        printf("XL9555 IO3: %d\n", XL9555->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO7));
         vTaskDelay(pdMS_TO_TICKS(1000));
-        XL9555->pin_write(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        printf("XL9555 IO3: %d\n", XL9555->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO3));
+        XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        printf("XL9555 IO3: %d\n", XL9555->pin_read(Cpp_Bus_Driver::Xl95x5::Pin::IO7));
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
