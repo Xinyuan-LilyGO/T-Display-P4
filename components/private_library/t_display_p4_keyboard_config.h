@@ -2,16 +2,19 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-30 09:14:55
+ * @LastEditTime: 2025-07-30 10:43:49
  */
 #pragma once
 #include "t_display_p4_config.h"
 
 ////////////////////////////////////////////////// gpio config //////////////////////////////////////////////////
 
+#define IIC_3_SDA EXT_1X4P_2_IO_46
+#define IIC_3_SCL EXT_1X4P_2_IO_45
+
 // XL9555
-#define XL9555_SDA EXT_1X4P_2_IO_46
-#define XL9555_SCL EXT_1X4P_2_IO_45
+#define XL9555_SDA IIC_3_SDA
+#define XL9555_SCL IIC_3_SCL
 // XL9555引脚功能
 #define XL9555_LED_1 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(3)
 #define XL9555_LED_2 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(4)
@@ -20,6 +23,9 @@
 // SY7200A
 #define SY7200A_EN_PWM EXT_1X4P_1_IO_47
 
+// TCA8418
+#define TCA8418_SDA IIC_3_SDA
+#define TCA8418_SCL IIC_3_SCL
 
 ////////////////////////////////////////////////// gpio config //////////////////////////////////////////////////
 
@@ -28,5 +34,7 @@
 // XL9555
 #define XL9555_IIC_ADDRESS 0x20
 
+// TCA8418
+#define TCA8418_IIC_ADDRESS 0x34
 
 ////////////////////////////////////////////////// other define config //////////////////////////////////////////////////
