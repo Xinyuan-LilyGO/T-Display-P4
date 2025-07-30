@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-30 10:43:49
+ * @LastEditTime: 2025-07-30 14:41:34
  */
 #pragma once
 #include "t_display_p4_config.h"
@@ -26,6 +26,8 @@
 // TCA8418
 #define TCA8418_SDA IIC_3_SDA
 #define TCA8418_SCL IIC_3_SCL
+#define TCA8418_SCAN_WIDTH 8
+#define TCA8418_SCAN_HEIGHT 10
 
 ////////////////////////////////////////////////// gpio config //////////////////////////////////////////////////
 
