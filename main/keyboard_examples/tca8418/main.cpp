@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-30 17:13:56
+ * @LastEditTime: 2025-07-30 17:27:24
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -66,9 +66,38 @@ extern "C" void app_main(void)
 
     while (1)
     {
-
-        if ()
+        if (Interrupt_Flag == true)
         {
+            Cpp_Bus_Driver::Tca8418::Irq_Status is;
+
+            if (TCA8418->parse_irq_status(TCA8418->get_irq_flag(), is) == true)
+            {
+                printf("parse_irq_status fail\n");
+            }
+            else
+            {
+            }
+
+            if (is.key_events_flag)
+            {
+                Cpp_Bus_Driver::Touch_Point touch_point;
+                TCA8418->get_touch_point(&touch_point);
+
+                printf("Touch Point: finger_count=%d\n", touch_point.finger_count);
+                for (const auto &info : touch_point.info)
+                {
+                    printf("  Finger: x=%d, y=%d, press_status_flag=%d\n", info.x, info.y, info.press_status_flag);
+                }
+            }
+
+            if (is.gpio_interrupt_flag)
+            {
+                printf("GPIO Interrupt Triggered!\n");
+            }
+
+            TCA8418->clear_irq_flag();
+
+            Interrupt_Flag = false;
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
