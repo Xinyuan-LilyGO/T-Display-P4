@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2025-07-29 11:44:01
+ * @LastEditTime: 2025-07-31 10:29:55
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -71,10 +71,10 @@ extern "C" void app_main(void)
     SX1262->clear_buffer();
 
     SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
-    SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE,
-                             Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE,
-                             Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE);
-    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
+    SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE,
+                             Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE,
+                             Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE);
+    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
 
     printf("SX1262 start lora transmit\n");
 
@@ -131,10 +131,10 @@ extern "C" void app_main(void)
         {
             // 设置发送模式，发送完成后进入快速切换模式（FS模式）
             SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::TX, 0, Cpp_Bus_Driver::Sx126x::Fallback_Mode::FS);
-            SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Flag::TX_DONE,
-                                     Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE,
-                                     Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE);
-            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::TX_DONE);
+            SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE,
+                                     Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE,
+                                     Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE);
+            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
 
             if (SX1262->send_data(Send_Package, sizeof(Send_Package)) == true)
             {
@@ -189,10 +189,10 @@ extern "C" void app_main(void)
 
             // 还原接收模式
             SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
-            SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE,
-                                     Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE,
-                                     Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE);
-            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
+            SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE,
+                                     Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE,
+                                     Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE);
+            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
         }
 
         if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 接收完成中断
@@ -208,17 +208,17 @@ extern "C" void app_main(void)
                 if (is.all_flag.tx_rx_timeout == true)
                 {
                     printf("receive timeout\n");
-                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::TIMEOUT);
+                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TIMEOUT);
                 }
                 else if (is.all_flag.crc_error == true)
                 {
                     printf("receive crc error\n");
-                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::CRC_ERROR);
+                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::CRC_ERROR);
                 }
                 else if (is.lora_reg_flag.header_error == true)
                 {
                     printf("receive header error\n");
-                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::HEADER_ERROR);
+                    SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::HEADER_ERROR);
                 }
                 else
                 {
@@ -244,7 +244,7 @@ extern "C" void app_main(void)
                 }
             }
 
-            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
+            SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
