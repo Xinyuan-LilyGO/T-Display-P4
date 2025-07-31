@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-31 10:11:53
+ * @LastEditTime: 2025-07-31 11:55:19
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -59,11 +59,10 @@ extern "C" void app_main(void)
 
     TCA8418->begin();
     TCA8418->set_keypad_scan_window(0, 0, TCA8418_KEYPAD_SCAN_WIDTH, TCA8418_KEYPAD_SCAN_HEIGHT);
-
-    TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::ALL);
+    TCA8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
+    TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
 
     ESP32P4->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_0, 20000);
-
     ESP32P4->start_pwm_gradient_time(100, 1000);
 
     while (1)
@@ -87,7 +86,20 @@ extern "C" void app_main(void)
 
                         for (uint8_t i = 0; i < tp.info.size(); i++)
                         {
-                            printf("touch num:[%d] x: %d y: %d press_flag: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].press_flag);
+                            switch (tp.info[i].event_type)
+                            {
+                            case Cpp_Bus_Driver::Tca8418::Event_Type::KEYPAD:
+                                printf("keypad event\n");
+                                printf("   touch num:[%d] num: %d x: %d y: %d press_flag: %d\n", i + 1, tp.info[i].num, tp.info[i].x, tp.info[i].y, tp.info[i].press_flag);
+                                break;
+                            case Cpp_Bus_Driver::Tca8418::Event_Type::GPIO:
+                                printf("gpio event\n");
+                                printf("   touch num:[%d] num: %d press_flag: %d\n", i + 1, tp.info[i].num, tp.info[i].press_flag);
+                                break;
+
+                            default:
+                                break;
+                            }
                         }
                     }
 
