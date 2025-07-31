@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-30 17:13:44
+ * @LastEditTime: 2025-07-31 10:12:37
  */
 #pragma once
 #include "t_display_p4_config.h"
@@ -41,7 +41,7 @@
 
 // TCA8418
 #define TCA8418_IIC_ADDRESS 0x34
-#define TCA8418_SCAN_WIDTH 8
-#define TCA8418_SCAN_HEIGHT 10
+#define TCA8418_KEYPAD_SCAN_WIDTH 10
+#define TCA8418_KEYPAD_SCAN_HEIGHT 7
 
 ////////////////////////////////////////////////// other define config //////////////////////////////////////////////////

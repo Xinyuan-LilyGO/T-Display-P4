@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-30 17:27:24
+ * @LastEditTime: 2025-07-31 10:11:53
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -21,8 +21,7 @@ auto TCA8418_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(TCA8418_
 
 auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9555_IIC_Bus, XL9555_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA8418_IIC_ADDRESS, TCA8418_SCAN_WIDTH, TCA8418_SCAN_HEIGHT,
-                                                         DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA8418_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
@@ -59,6 +58,9 @@ extern "C" void app_main(void)
     TCA8418_IIC_Bus->set_bus_handle(XL9555_IIC_Bus->get_bus_handle());
 
     TCA8418->begin();
+    TCA8418->set_keypad_scan_window(0, 0, TCA8418_KEYPAD_SCAN_WIDTH, TCA8418_KEYPAD_SCAN_HEIGHT);
+
+    TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::ALL);
 
     ESP32P4->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_0, 20000);
 
@@ -70,32 +72,28 @@ extern "C" void app_main(void)
         {
             Cpp_Bus_Driver::Tca8418::Irq_Status is;
 
-            if (TCA8418->parse_irq_status(TCA8418->get_irq_flag(), is) == true)
+            if (TCA8418->parse_irq_status(TCA8418->get_irq_flag(), is) == false)
             {
                 printf("parse_irq_status fail\n");
             }
             else
             {
-            }
-
-            if (is.key_events_flag)
-            {
-                Cpp_Bus_Driver::Touch_Point touch_point;
-                TCA8418->get_touch_point(&touch_point);
-
-                printf("Touch Point: finger_count=%d\n", touch_point.finger_count);
-                for (const auto &info : touch_point.info)
+                if (is.key_events_flag == true)
                 {
-                    printf("  Finger: x=%d, y=%d, press_status_flag=%d\n", info.x, info.y, info.press_status_flag);
+                    Cpp_Bus_Driver::Tca8418::Touch_Point tp;
+                    if (TCA8418->get_multiple_touch_point(tp) == true)
+                    {
+                        printf("touch finger: %d\n", tp.finger_count);
+
+                        for (uint8_t i = 0; i < tp.info.size(); i++)
+                        {
+                            printf("touch num:[%d] x: %d y: %d press_flag: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].press_flag);
+                        }
+                    }
+
+                    TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
                 }
             }
-
-            if (is.gpio_interrupt_flag)
-            {
-                printf("GPIO Interrupt Triggered!\n");
-            }
-
-            TCA8418->clear_irq_flag();
 
             Interrupt_Flag = false;
         }
