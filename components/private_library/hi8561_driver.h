@@ -1,9 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2023 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
+ * @Description: hi8561_driver
+ * @Author: LILYGO_L
+ * @Date: 2025-06-13 11:02:44
+ * @LastEditTime: 2025-07-31 16:28:21
+ * @License: GPL 3.0
  */
-
 #pragma once
 
 #include <stdint.h>

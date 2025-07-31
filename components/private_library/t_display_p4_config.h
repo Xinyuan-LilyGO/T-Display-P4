@@ -1,8 +1,8 @@
 /*
- * @Description: t-display-p4 config
+ * @Description: t_display_p4_config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-29 16:22:07
+ * @LastEditTime: 2025-07-31 16:29:03
  */
 #pragma once
 

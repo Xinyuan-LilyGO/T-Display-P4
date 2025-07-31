@@ -1,8 +1,8 @@
 /*
- * @Description: t-display-p4 config
+ * @Description: t_display_p4_keyboard_config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-31 14:50:26
+ * @LastEditTime: 2025-07-31 16:28:52
  */
 #pragma once
 #include "t_display_p4_config.h"

@@ -1,9 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2023 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
+ * @Description: rm69a10_driver
+ * @Author: LILYGO_L
+ * @Date: 2025-07-07 14:23:16
+ * @LastEditTime: 2025-07-31 16:27:15
+ * @License: GPL 3.0
  */
-
 #pragma once
 
 #include <stdint.h>

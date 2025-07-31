@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-30 09:16:38
+ * @LastEditTime: 2025-07-31 16:18:18
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -42,13 +42,13 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        if (interrupt_flag == true)
-        {
-            printf("XL9555 Interrupt_Flag triggered\n");
+        // if (interrupt_flag == true)
+        // {
+        //     printf("XL9555 Interrupt_Flag triggered\n");
 
-            XL9555->clear_irq_flag();
-            Interrupt_Flag = false;
-        }
+        //     XL9555->clear_irq_flag();
+        //     Interrupt_Flag = false;
+        // }
 
         XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);

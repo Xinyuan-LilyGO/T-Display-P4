@@ -1,3 +1,10 @@
+/*
+ * @Description: t_display_p4_driver
+ * @Author: LILYGO_L
+ * @Date: 2025-07-07 14:31:51
+ * @LastEditTime: 2025-07-31 16:26:58
+ * @License: GPL 3.0
+ */
 #pragma once
 
 #include "t_display_p4_config.h"
