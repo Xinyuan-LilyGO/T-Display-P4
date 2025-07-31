@@ -2,7 +2,7 @@
  * @Description: t-display-p4 config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-31 14:41:07
+ * @LastEditTime: 2025-07-31 14:50:26
  */
 #pragma once
 #include "t_display_p4_config.h"
@@ -44,6 +44,7 @@
 #define TCA8418_IIC_ADDRESS 0x34
 #define TCA8418_KEYPAD_SCAN_WIDTH 10
 #define TCA8418_KEYPAD_SCAN_HEIGHT 7
+// TCA8418键盘按键映射
 constexpr const std::string Tca8418_Map[] =
     {
         "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
