@@ -2,7 +2,7 @@
  * @Description: t_display_p4_config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-07-31 16:29:03
+ * @LastEditTime: 2025-08-01 10:00:46
  */
 #pragma once
 
@@ -36,8 +36,8 @@
 #define XL9535_ESP32C6_WAKE_UP static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(13)
 #define XL9535_ESP32C6_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(14)
 #define XL9535_SD_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(15)
-#define XL9535_LORA_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(16)
-#define XL9535_LORA_DIO1 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(17)
+#define XL9535_SX1262_RST static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(16)
+#define XL9535_SX1262_DIO1 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(17)
 
 // ES8311
 #define ES8311_SDA IIC_2_SDA
@@ -70,14 +70,11 @@
 #define SPI_1_MISO 4
 
 // SX1262
-#define LORA_CS 24
-#define LORA_DIO1 -1
-#define LORA_DIO3 -1
-#define LORA_RST -1
-#define LORA_BUSY 6
-#define LORA_SCLK SPI_1_SCLK
-#define LORA_MOSI SPI_1_MOSI
-#define LORA_MISO SPI_1_MISO
+#define SX1262_CS 24
+#define SX1262_BUSY 6
+#define SX1262_SCLK SPI_1_SCLK
+#define SX1262_MOSI SPI_1_MOSI
+#define SX1262_MISO SPI_1_MISO
 
 // L76K
 #define GPS_TX 22

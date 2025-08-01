@@ -33,8 +33,8 @@ auto SPI_Bus_2 = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SPI_1_MOSI, SPI_
 //     // return 1;
 // }
 
-auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SPI_Bus_2, Cpp_Bus_Driver::Sx126x::Chip_Type::SX1262, LORA_BUSY,
-                                                       LORA_CS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SPI_Bus_2, Cpp_Bus_Driver::Sx126x::Chip_Type::SX1262, SX1262_BUSY,
+                                                       SX1262_CS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
 extern "C" void app_main(void)
 {
@@ -49,15 +49,15 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    XL9535->pin_mode(XL9535_LORA_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    XL9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 
     // LORA复位
-    XL9535->pin_mode(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    XL9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_LORA_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
     // 默认使用RF1天线
@@ -143,7 +143,7 @@ extern "C" void app_main(void)
 
                 while (1) // 等待发送完成
                 {
-                    if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 发送完成中断
+                    if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 发送完成中断
                     {
                         // 方法1（速度比方法2快）
                         //  获取芯片模式状态
@@ -195,7 +195,7 @@ extern "C" void app_main(void)
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
         }
 
-        if (XL9535->pin_read(XL9535_LORA_DIO1) == 1) // 接收完成中断
+        if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 接收完成中断
         {
             // 检查中断
             Cpp_Bus_Driver::Sx126x::Irq_Status is;
