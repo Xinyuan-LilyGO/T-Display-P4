@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-29 18:11:20
+ * @LastEditTime: 2025-08-01 14:12:01
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -14,11 +14,11 @@
 #include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
 
+volatile bool Interrupt_Flag = false;
+
 auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
-volatile bool Interrupt_Flag = false;
 
 extern "C" void app_main(void)
 {

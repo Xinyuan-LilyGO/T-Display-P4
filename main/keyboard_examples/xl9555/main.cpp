@@ -2,7 +2,7 @@
  * @Description: xl9535
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-07-31 16:18:18
+ * @LastEditTime: 2025-08-01 14:11:44
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -14,11 +14,11 @@
 #include "t_display_p4_keyboard_config.h"
 #include "cpp_bus_driver_library.h"
 
+volatile bool Interrupt_Flag = false;
+
 auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
 
 auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9555_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
-volatile bool Interrupt_Flag = false;
 
 extern "C" void app_main(void)
 {
