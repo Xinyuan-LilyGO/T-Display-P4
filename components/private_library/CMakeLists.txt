@@ -5,7 +5,7 @@ idf_component_register(
         INCLUDE_DIRS 
         ${src_dirs}
         REQUIRES
-        "driver" "cpp_bus_driver" "esp_lcd" "esp_video"
+        "driver" "cpp_bus_driver" "esp_lcd" "esp_video" "RadioLib"
     )
 
 target_compile_options(
