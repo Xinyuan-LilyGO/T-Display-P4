@@ -1,8 +1,8 @@
 /*
- * @Description: xl9535
+ * @Description: radiolib_sx1262_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-01 11:33:42
+ * @LastEditTime: 2025-08-01 11:38:33
  * @License: GPL 3.0
  */
 #include <stdio.h>
