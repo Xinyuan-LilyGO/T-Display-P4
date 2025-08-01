@@ -2,7 +2,7 @@
  * @Description: radiolib_sx1262_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-01 11:38:33
+ * @LastEditTime: 2025-08-01 11:48:44
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -55,6 +55,7 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(10));
 
     int32_t status = Sx1262.begin(920.0, 125.0, 9, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
+    // int32_t status = Sx1262.beginFSK(850.0, 200.0, 10, 467.0, 22, 16);
     status = Sx1262.setCurrentLimit(140);
     if (status == RADIOLIB_ERR_NONE)
     {
