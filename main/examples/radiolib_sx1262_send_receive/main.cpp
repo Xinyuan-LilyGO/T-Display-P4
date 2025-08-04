@@ -2,7 +2,7 @@
  * @Description: radiolib_sx1262_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-04 11:25:11
+ * @LastEditTime: 2025-08-04 12:00:54
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -43,6 +43,7 @@ extern "C" void app_main(void)
 
     ESP32P4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
 
+    ESP32P4->pin_mode(SX1262_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status ::PULLDOWN);
     XL9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 
     // LORA复位
@@ -82,8 +83,18 @@ extern "C" void app_main(void)
             printf("SX1262 send package\n");
 
             Sx1262.finishTransmit();
-            Sx1262.transmit(Send_Package, 9);
-            Sx1262.startReceive();
+
+            status = Sx1262.transmit(Send_Package, 9);
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("transmit fail (error code: %d)\n", status);
+            }
+
+            status = Sx1262.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
+            }
         }
 
         if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 接收完成中断
