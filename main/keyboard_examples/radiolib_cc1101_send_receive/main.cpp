@@ -2,7 +2,7 @@
  * @Description: radiolib_cc1101_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-04 13:34:51
+ * @LastEditTime: 2025-08-04 15:24:34
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -146,6 +146,8 @@ extern "C" void app_main(void)
     }
 
     Cc1101.startReceive();
+
+    Interrupt_Flag = false;
 
     while (1)
     {
