@@ -195,6 +195,9 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE
                 bool "radiolib_cc1101_send_receive"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            config EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE
+                bool "radiolib_nrf24l01_send_receive"
+                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
 
 endmenu
