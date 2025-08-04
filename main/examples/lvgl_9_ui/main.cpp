@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-07-31 10:29:36
+ * @LastEditTime: 2025-08-04 10:59:56
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -1482,12 +1482,11 @@ void device_lora_task(void *arg)
             SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
 
+            printf("SX1262 send start\n");
+            printf("SX1262 send data size: %d\n", strlen(reinterpret_cast<const char *>(Lora_Send_Package)));
+            uint16_t timeout_count = 0;
             if (SX1262->send_data(Lora_Send_Package, strlen(reinterpret_cast<const char *>(Lora_Send_Package))) == true)
             {
-                uint16_t timeout_count = 0;
-                printf("SX1262 send start\n");
-                printf("SX1262 send data size: %d\n", strlen(reinterpret_cast<const char *>(Lora_Send_Package)));
-
                 while (1) // 等待发送完成
                 {
                     if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 发送完成中断

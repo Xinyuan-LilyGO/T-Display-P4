@@ -2,7 +2,7 @@
  * @Description: radiolib_sx1262_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-01 11:48:44
+ * @LastEditTime: 2025-08-04 11:25:11
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -54,9 +54,8 @@ extern "C" void app_main(void)
     XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    int32_t status = Sx1262.begin(920.0, 125.0, 9, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
-    // int32_t status = Sx1262.beginFSK(850.0, 200.0, 10, 467.0, 22, 16);
-    status = Sx1262.setCurrentLimit(140);
+    int16_t status = Sx1262.begin(920.0, 125.0, 9, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
+    // int16_t status = Sx1262.beginFSK(850.0, 200.0, 10, 467.0, 22, 16);
     if (status == RADIOLIB_ERR_NONE)
     {
         printf("sx1262 init success\n");
@@ -64,6 +63,12 @@ extern "C" void app_main(void)
     else
     {
         printf("sx1262 init fail (error code: %ld)\n", status);
+    }
+
+    status = Sx1262.setCurrentLimit(140);
+    if (status != RADIOLIB_ERR_NONE)
+    {
+        printf("setCurrentLimit fail (error code: %ld)\n", status);
     }
 
     Sx1262.startReceive();
@@ -76,6 +81,7 @@ extern "C" void app_main(void)
 
             printf("SX1262 send package\n");
 
+            Sx1262.finishTransmit();
             Sx1262.transmit(Send_Package, 9);
             Sx1262.startReceive();
         }

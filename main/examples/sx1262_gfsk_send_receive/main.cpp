@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-07-31 10:29:50
+ * @LastEditTime: 2025-08-04 11:04:15
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -136,11 +136,10 @@ extern "C" void app_main(void)
                                      Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE);
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
 
+            printf("SX1262 send start\n");
+            uint16_t timeout_count = 0;
             if (SX1262->send_data(Send_Package, sizeof(Send_Package)) == true)
             {
-                uint16_t timeout_count = 0;
-                printf("SX1262 send start\n");
-
                 while (1) // 等待发送完成
                 {
                     if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 发送完成中断
@@ -173,12 +172,12 @@ extern "C" void app_main(void)
                     }
 
                     timeout_count++;
-                    if (timeout_count > 5000) // 超时
+                    if (timeout_count > 500) // 超时
                     {
                         printf("SX1262 send timeout\n");
                         break;
                     }
-                    vTaskDelay(pdMS_TO_TICKS(1));
+                    vTaskDelay(pdMS_TO_TICKS(10));
                 }
             }
             else

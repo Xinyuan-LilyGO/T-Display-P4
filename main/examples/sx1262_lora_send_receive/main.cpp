@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2025-07-31 10:29:55
+ * @LastEditTime: 2025-08-04 10:59:33
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -136,11 +136,10 @@ extern "C" void app_main(void)
                                      Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::DISABLE);
             SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
 
+            printf("SX1262 send start\n");
+            uint16_t timeout_count = 0;
             if (SX1262->send_data(Send_Package, sizeof(Send_Package)) == true)
             {
-                uint16_t timeout_count = 0;
-                printf("SX1262 send start\n");
-
                 while (1) // 等待发送完成
                 {
                     if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 发送完成中断
