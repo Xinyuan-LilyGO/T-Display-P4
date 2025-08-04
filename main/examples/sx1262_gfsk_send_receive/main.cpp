@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2025-08-04 11:04:15
+ * @LastEditTime: 2025-08-04 14:44:25
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -82,7 +82,7 @@ extern "C" void app_main(void)
     {
         if (esp_log_timestamp() > Cycle_Time)
         {
-            printf("SX1262 ID: %#X\n", SX1262->get_device_id());
+            printf("SX1262 ID: %s\n", SX1262->get_device_id().c_str());
 
             printf("SX1262 get current limit: %d\n", SX1262->get_current_limit());
 
