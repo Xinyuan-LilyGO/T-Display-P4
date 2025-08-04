@@ -2,7 +2,7 @@
  * @Description: t_display_p4_keyboard_config
  * @Author: LILYGO_L
  * @Date: 2024-12-06 10:32:28
- * @LastEditTime: 2025-08-01 09:54:39
+ * @LastEditTime: 2025-08-04 11:56:16
  */
 #pragma once
 #include "t_display_p4_config.h"
@@ -17,6 +17,9 @@
 #define XL9555_SDA IIC_3_SDA
 #define XL9555_SCL IIC_3_SCL
 // XL9555引脚功能
+#define XL9555_T_MIXRF_EN static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(0)
+#define XL9555_T_MIXRF_CC1101_RF_SWITCH_0 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(1)
+#define XL9555_T_MIXRF_CC1101_RF_SWITCH_1 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(2)
 #define XL9555_LED_1 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(3)
 #define XL9555_LED_2 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(4)
 #define XL9555_LED_3 static_cast<Cpp_Bus_Driver::Xl95x5::Pin>(5)
@@ -34,14 +37,27 @@
 #define KEYBOARD_BL SY7200A_EN_PWM
 
 // T-MixRF
-#define T_MIXRF_LR1121_CS 24
-#define T_MIXRF_LR1121_DIO1 -1
-#define T_MIXRF_LR1121_DIO3 -1
-#define T_MIXRF_LR1121_RST -1
-#define T_MIXRF_LR1121_BUSY 6
-#define T_MIXRF_LR1121_SCLK EXT_2X8P_SPI_SCLK
-#define T_MIXRF_LR1121_MOSI EXT_2X8P_SPI_MOSI
-#define T_MIXRF_LR1121_MISO EXT_2X8P_SPI_MISO
+#define T_MIXRF_CC1101_CS EXT_2X8P_IO_25
+#define T_MIXRF_CC1101_SCLK EXT_2X8P_SPI_SCLK
+#define T_MIXRF_CC1101_MOSI EXT_2X8P_SPI_MOSI
+#define T_MIXRF_CC1101_MISO EXT_2X8P_SPI_MISO
+#define T_MIXRF_CC1101_GDO0 EXT_2X8P_IO_36
+#define T_MIXRF_CC1101_GDO2 EXT_2X8P_IO_33
+#define T_MIXRF_CC1101_INT T_MIXRF_CC1101_GDO0
+#define T_MIXRF_CC1101_BUSY T_MIXRF_CC1101_GDO2
+
+#define T_MIXRF_NRF24L01_CS EXT_2X8P_IO_54
+#define T_MIXRF_NRF24L01_SCLK EXT_2X8P_SPI_SCLK
+#define T_MIXRF_NRF24L01_MOSI EXT_2X8P_SPI_MOSI
+#define T_MIXRF_NRF24L01_MISO EXT_2X8P_SPI_MISO
+#define T_MIXRF_NRF24L01_CE EXT_2X8P_IO_53
+#define T_MIXRF_NRF24L01_INT EXT_2X8P_IO_32
+
+#define T_MIXRF_ST25R3916B_CS EXT_2X8P_IO_27
+#define T_MIXRF_ST25R3916B_SCLK EXT_2X8P_SPI_SCLK
+#define T_MIXRF_ST25R3916B_MOSI EXT_2X8P_SPI_MOSI
+#define T_MIXRF_ST25R3916B_MISO EXT_2X8P_SPI_MISO
+#define T_MIXRF_ST25R3916B_INT EXT_2X8P_IO_26
 
 ////////////////////////////////////////////////// gpio config //////////////////////////////////////////////////
 

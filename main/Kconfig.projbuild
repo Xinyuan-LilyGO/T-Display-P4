@@ -192,6 +192,9 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_TCA8418
                 bool "tca8418"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            config EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE
+                bool "radiolib_cc1101_send_receive"
+                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
 
 endmenu

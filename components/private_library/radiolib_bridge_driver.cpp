@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-01 10:17:29
+ * @LastEditTime: 2025-08-04 13:53:54
  * @License: GPL 3.0
  */
 #include "radiolib_bridge_driver.h"
@@ -136,4 +136,9 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::spiEnd()
 void Radiolib_Cpp_Bus_Driver_Hal::init()
 {
     _bus->begin(_freq_hz, _cs);
+}
+
+void inline Radiolib_Cpp_Bus_Driver_Hal::yield()
+{
+    _bus->delay_ms(10);
 }

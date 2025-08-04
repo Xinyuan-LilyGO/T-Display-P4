@@ -2,7 +2,7 @@
  * @Description: radiolib_bridge_driver
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-01 10:18:46
+ * @LastEditTime: 2025-08-04 13:53:49
  * @License: GPL 3.0
  */
 #pragma once
@@ -46,6 +46,6 @@ public:
     // void term() override;
     // void tone(uint32_t pin, unsigned int frequency, RadioLibTime_t duration = 0) override;
     // void noTone(uint32_t pin) override;
-    // void yield() override;
+    void yield() override;
     // uint32_t pinToInterrupt(uint32_t pin) override;
 };

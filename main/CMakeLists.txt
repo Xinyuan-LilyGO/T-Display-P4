@@ -49,6 +49,8 @@ elseif(CONFIG_EXAMPLE_BUILD_XL9555)
     set(project_path "keyboard_examples/xl9555/")
 elseif(CONFIG_EXAMPLE_BUILD_TCA8418)
     set(project_path "keyboard_examples/tca8418/")
+elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE)
+    set(project_path "keyboard_examples/radiolib_cc1101_send_receive/")
 endif()
         
 idf_component_register(SRC_DIRS ${project_path} 
