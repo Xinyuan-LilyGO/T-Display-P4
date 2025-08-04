@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2025-07-25 17:24:59
+ * @LastEditTime: 2025-08-04 14:03:13
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -64,7 +64,16 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Related Documents:  
     >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)  
 
-### 2. Display & Touch  
+### 2. Auxiliary Processor
+
+* Module: ESP32-C6-MINI-1U
+* Chip: ESP32-C6-FH4
+* PSRAM: 4M 
+* FLASH: -
+* Communication Protocol: SDIO
+* Other: For more information, please visit [Espressif ESP32-C6-MINI-1U datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-c6-mini-1_mini-1u_datasheet_en.pdf)
+
+### 3. Display & Touch  
 
 > #### Model: H0405S002T002-V0  
 > * Display Size (Diagonal): 4.05 inch  
@@ -119,7 +128,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 3. Speaker & Microphone  
+### 4. Speaker & Microphone  
 
 * DAC Chip: ES8311  
 * Amplifier Chip: NS4150B  
@@ -131,7 +140,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 4. Vibration  
+### 5. Vibration  
 
 * Driver IC: AW86224AFCR  
 * Communication Protocol: IIC
@@ -140,7 +149,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 5. LoRa  
+### 6. LoRa  
 
 * Module: HPD16A  
 * Chip: SX1262  
@@ -151,7 +160,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 6. GPS  
+### 7. GPS  
 
 * Module: L76K  
 * Communication Protocol: Uart
@@ -160,7 +169,7 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 7. RTC  
+### 8. RTC  
 
 * Chip: PCF8563  
 * Communication Protocol: IIC
@@ -169,14 +178,14 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 8. Charging IC  
+### 9. Charging IC  
 
 * Chip: LGS4056H  
 * Additional Notes: The NTC pin of the 3-wire battery is connected to the LGS4056H charging IC. Over-temperature protection during charging is automatically controlled by the chip.  
 * Related Documents:  
     >[LGS4056H](./information/LGS4056H.pdf)  
 
-### 9. Battery Gauge  
+### 10. Battery Gauge  
 
 * Chip: BQ27220  
 * Communication Protocol: IIC
@@ -185,14 +194,14 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 * Dependent Libraries:  
     >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
 
-### 10. Camera  
+### 11. Camera  
 
 > #### Model: OV2710  
 > * Interface: MIPI  
 > * Related Documents:  
 >    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
 
-### 11. IMU
+### 12. IMU
 
 * Chip: ICM20948
 * Communication Protocol: IIC
