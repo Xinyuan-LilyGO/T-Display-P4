@@ -2,7 +2,7 @@
  * @Description: radiolib_cc1101_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-04 16:39:51
+ * @LastEditTime: 2025-08-04 18:10:42
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -79,10 +79,10 @@ extern "C" void app_main(void)
 
     ESP32P4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
 
-    ESP32P4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    ESP32P4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
     ESP32P4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
     ESP32P4->pin_mode(T_MIXRF_ST25R3916B_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
+    ESP32P4->pin_write(T_MIXRF_CC1101_CS, 1);
     ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
     ESP32P4->pin_write(T_MIXRF_ST25R3916B_CS, 1);
 
