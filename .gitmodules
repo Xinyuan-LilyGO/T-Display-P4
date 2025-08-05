@@ -10,3 +10,12 @@
 [submodule "components/RadioLib"]
 	path = components/RadioLib
 	url = https://github.com/Llgok/RadioLib.git
+[submodule "components/ST25R3916"]
+	path = components/ST25R3916
+	url = https://github.com/Llgok/ST25R3916.git
+[submodule "components/NFC-RFAL"]
+	path = components/NFC-RFAL
+	url = https://github.com/Llgok/NFC-RFAL.git
+[submodule "components/arduino_cpp_bus_driver"]
+	path = components/arduino_cpp_bus_driver
+	url = https://github.com/Llgok/arduino_cpp_bus_driver.git

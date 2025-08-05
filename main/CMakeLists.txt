@@ -53,6 +53,8 @@ elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE)
     set(project_path "keyboard_examples/radiolib_cc1101_send_receive/")
 elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE)
     set(project_path "keyboard_examples/radiolib_nrf24l01_send_receive/")
+elseif(CONFIG_EXAMPLE_BUILD_ST25R3916B)
+    set(project_path "keyboard_examples/st25r3916b/")
 endif()
         
 idf_component_register(SRC_DIRS ${project_path} 
