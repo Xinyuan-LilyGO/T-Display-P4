@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2025-08-04 10:59:56
+ * @LastEditTime: 2025-08-07 18:11:13
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -220,7 +220,6 @@ auto PCF8563_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_
 auto SGM38121_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(SGM38121_SDA, SGM38121_SCL, I2C_NUM_1);
 auto AW86224_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(AW86224_SDA, AW86224_SCL, I2C_NUM_1);
 auto ES8311_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_1);
-auto ICM20948_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ICM20948_SDA, ICM20948_SCL, I2C_NUM_1);
 
 // IIS
 auto ES8311_IIS_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK, I2S_NUM_0);
@@ -246,7 +245,7 @@ auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(PCF8563_IIC_Bus, PCF85
 auto SGM38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(SGM38121_IIC_Bus, SGM38121_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto AW86224 = std::make_unique<Cpp_Bus_Driver::Aw862xx>(AW86224_IIC_Bus, AW86224_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(ES8311_IIC_Bus, ES8311_IIS_Bus, ES8311_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto ICM20948 = std::make_unique<ICM20948_WE>(ICM20948_IIC_Bus, ICM20948_IIC_ADDRESS);
+auto ICM20948 = std::make_unique<ICM20948_WE>(&Wire1, ICM20948_IIC_ADDRESS);
 
 // UART
 auto L76K = std::make_unique<Cpp_Bus_Driver::L76k>(L76K_Uart_Bus, [](bool Value) -> IRAM_ATTR bool
@@ -887,13 +886,16 @@ void device_imu_task(void *arg)
             {
                 // 读取IMU数据
                 ICM20948->readSensor();
-                xyzFloat gValue = ICM20948->getGValues();
-                xyzFloat angle = ICM20948->getAngles();
+                xyzFloat gValue;
+                ICM20948->getGValues(&gValue);
+                xyzFloat angle;
+                ICM20948->getAngles(&angle);
                 float pitch = ICM20948->getPitch();
                 float roll = ICM20948->getRoll();
 
                 // 获取磁力计的 x, y 值以计算航向角（Yaw）
-                xyzFloat magValues = ICM20948->getMagValues();
+                xyzFloat magValues;
+                ICM20948->getMagValues(&magValues);
                 float yaw = atan2(magValues.y, magValues.x) * (180.0 / M_PI); // 计算航向角
 
                 // 将IMU数据格式化为字符串
@@ -2472,7 +2474,8 @@ void ES8311_Init(void)
 
 bool ICM20948_Init(void)
 {
-    if (ICM20948->begin() == false)
+    Wire1.begin(ICM20948_SDA, ICM20948_SCL);
+    if (ICM20948->init() == false)
     {
         printf("ICM20948 AG initialization failed\n");
         return false;
@@ -3310,10 +3313,6 @@ extern "C" void app_main(void)
     XL9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
 
     if (Sdmmc_Init(SD_BASE_PATH) == false)
     {
@@ -3395,7 +3394,7 @@ extern "C" void app_main(void)
     Set_Lvgl_Startup_Progress_Bar(70);
     _lock_release(&lvgl_api_lock);
 
-    ICM20948_IIC_Bus->_iic_bus_handle = SGM38121_IIC_Bus->_iic_bus_handle;
+    Wire1._bus->_iic_bus_handle = SGM38121_IIC_Bus->_iic_bus_handle;
     ICM20948_Init();
 
     _lock_acquire(&lvgl_api_lock);

@@ -2,7 +2,7 @@
  * @Description: icm20948
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:59:51
- * @LastEditTime: 2025-06-13 13:47:15
+ * @LastEditTime: 2025-08-07 17:48:06
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -16,11 +16,10 @@
 #include "ICM20948_WE.h"
 
 auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto ICM20948_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ICM20948_SDA, ICM20948_SCL, I2C_NUM_1);
 
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
 
-auto ICM20948 = std::make_unique<ICM20948_WE>(ICM20948_IIC_Bus, ICM20948_IIC_ADDRESS);
+auto ICM20948 = std::make_unique<ICM20948_WE>(&Wire1, ICM20948_IIC_ADDRESS);
 
 extern "C" void app_main(void)
 {
@@ -35,7 +34,8 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    while (ICM20948->begin() == false)
+    Wire1.begin(ICM20948_SDA, ICM20948_SCL);
+    while (ICM20948->init() == false)
     {
         printf("ICM20948 AG initialization failed\n");
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -60,13 +60,17 @@ extern "C" void app_main(void)
     while (1)
     {
         ICM20948->readSensor();
-        xyzFloat gValue = ICM20948->getGValues();
-        xyzFloat angle = ICM20948->getAngles();
+
+        xyzFloat gValue;
+        ICM20948->getGValues(&gValue);
+        xyzFloat angle;
+        ICM20948->getAngles(&angle);
         float pitch = ICM20948->getPitch();
         float roll = ICM20948->getRoll();
 
         // 获取磁力计的 x, y 值以计算航向角（Yaw）
-        xyzFloat magValues = ICM20948->getMagValues();
+        xyzFloat magValues;
+        ICM20948->getMagValues(&magValues);
         float yaw = atan2(magValues.y, magValues.x) * (180.0 / M_PI); // 计算航向角
 
         printf("gValue (x,y,z): %f , %f , %f\n", gValue.x, gValue.y, gValue.z);
