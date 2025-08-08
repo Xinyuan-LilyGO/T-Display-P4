@@ -2,18 +2,22 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-04 13:53:54
+ * @LastEditTime: 2025-08-08 11:48:37
  * @License: GPL 3.0
  */
 #include "radiolib_bridge_driver.h"
 
-void (*Global_Interrupt_Callback)(void) = nullptr;
-
-void IRAM_ATTR Interrupt_Callback(void *arg)
+struct Interrupt_Arg
 {
-    if (Global_Interrupt_Callback != nullptr)
+    std::function<void(void)> interrupt_function;
+};
+
+void IRAM_ATTR Interrupt_Callback_Template(void *arg)
+{
+    Interrupt_Arg *local_arg = (Interrupt_Arg *)arg;
+    if (local_arg->interrupt_function != nullptr)
     {
-        Global_Interrupt_Callback();
+        local_arg->interrupt_function();
     }
 }
 
@@ -21,6 +25,7 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::pinMode(uint32_t pin, uint32_t mode)
 {
     if (pin == RADIOLIB_NC)
     {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "pinMode fail (pin == RADIOLIB_NC)\n");
         return;
     }
     _bus->pin_mode(pin, static_cast<Cpp_Bus_Driver::Tool::Pin_Mode>(mode));
@@ -30,6 +35,7 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::digitalWrite(uint32_t pin, uint32_t val
 {
     if (pin == RADIOLIB_NC)
     {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalWrite fail (pin == RADIOLIB_NC)\n");
         return;
     }
     _bus->pin_write(pin, value);
@@ -39,6 +45,7 @@ uint32_t inline Radiolib_Cpp_Bus_Driver_Hal::digitalRead(uint32_t pin)
 {
     if (pin == RADIOLIB_NC)
     {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalRead fail (pin == RADIOLIB_NC)\n");
         return 0;
     }
     return _bus->pin_read(pin);
@@ -48,22 +55,30 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::attachInterrupt(uint32_t interruptNum, 
 {
     if (interruptNum == RADIOLIB_NC)
     {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "attachInterrupt fail (interruptNum == RADIOLIB_NC)\n");
         return;
     }
 
-    Global_Interrupt_Callback = interruptCb;
+    auto interrupt_arg = std::make_unique<Interrupt_Arg>(interruptCb);
 
-    // 使用静态函数作为回调函数
-    _bus->create_gpio_interrupt(interruptNum, static_cast<Cpp_Bus_Driver::Tool::Interrupt_Mode>(mode), Interrupt_Callback);
+    if (_bus->create_gpio_interrupt(interruptNum, static_cast<Cpp_Bus_Driver::Tool::Interrupt_Mode>(mode),
+                                    Interrupt_Callback_Template, interrupt_arg.get()) == false)
+    {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "create_gpio_interrupt fail\n");
+    }
 }
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::detachInterrupt(uint32_t interruptNum)
 {
     if (interruptNum == RADIOLIB_NC)
     {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "detachInterrupt fail (interruptNum == RADIOLIB_NC)\n");
         return;
     }
-    _bus->delete_gpio_interrupt(interruptNum);
+    if (_bus->delete_gpio_interrupt(interruptNum) == false)
+    {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "delete_gpio_interrupt fail\n");
+    }
 }
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::delay(RadioLibTime_t ms)
@@ -90,7 +105,8 @@ long inline Radiolib_Cpp_Bus_Driver_Hal::pulseIn(uint32_t pin, uint32_t state, R
 {
     if (pin == RADIOLIB_NC)
     {
-        return (0);
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "pulseIn fail (pin == RADIOLIB_NC)\n");
+        return 0;
     }
 
     _bus->pin_mode(pin, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
@@ -110,7 +126,10 @@ long inline Radiolib_Cpp_Bus_Driver_Hal::pulseIn(uint32_t pin, uint32_t state, R
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::spiBegin()
 {
-    _bus->begin(_freq_hz, _cs);
+    if (_bus->begin(_freq_hz, _cs) == false)
+    {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::BUS, __FILE__, __LINE__, "begin fail\n");
+    }
 }
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::spiBeginTransaction()
@@ -120,7 +139,10 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::spiBeginTransaction()
 
 void Radiolib_Cpp_Bus_Driver_Hal::spiTransfer(uint8_t *out, size_t len, uint8_t *in)
 {
-    _bus->write_read(out, in, len);
+    if (_bus->write_read(out, in, len))
+    {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::BUS, __FILE__, __LINE__, "write_read fail\n");
+    }
 }
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::spiEndTransaction()
@@ -135,7 +157,10 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::spiEnd()
 
 void Radiolib_Cpp_Bus_Driver_Hal::init()
 {
-    _bus->begin(_freq_hz, _cs);
+    if (_bus->begin(_freq_hz, _cs) == false)
+    {
+        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::BUS, __FILE__, __LINE__, "begin fail\n");
+    }
 }
 
 void inline Radiolib_Cpp_Bus_Driver_Hal::yield()
