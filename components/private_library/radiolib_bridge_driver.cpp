@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-08 11:48:37
+ * @LastEditTime: 2025-08-08 14:32:14
  * @License: GPL 3.0
  */
 #include "radiolib_bridge_driver.h"
@@ -35,7 +35,7 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::digitalWrite(uint32_t pin, uint32_t val
 {
     if (pin == RADIOLIB_NC)
     {
-        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalWrite fail (pin == RADIOLIB_NC)\n");
+        // _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalWrite fail (pin == RADIOLIB_NC)\n");
         return;
     }
     _bus->pin_write(pin, value);
@@ -45,7 +45,7 @@ uint32_t inline Radiolib_Cpp_Bus_Driver_Hal::digitalRead(uint32_t pin)
 {
     if (pin == RADIOLIB_NC)
     {
-        _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalRead fail (pin == RADIOLIB_NC)\n");
+        // _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "digitalRead fail (pin == RADIOLIB_NC)\n");
         return 0;
     }
     return _bus->pin_read(pin);
