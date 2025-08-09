@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-08 14:32:14
+ * @LastEditTime: 2025-08-09 15:54:38
  * @License: GPL 3.0
  */
 #include "radiolib_bridge_driver.h"
@@ -12,10 +12,12 @@ struct Interrupt_Arg
     std::function<void(void)> interrupt_function;
 };
 
+std::unordered_map<uint8_t, std::unique_ptr<Interrupt_Arg>> Interrupt_Map;
+
 void IRAM_ATTR Interrupt_Callback_Template(void *arg)
 {
-    Interrupt_Arg *local_arg = (Interrupt_Arg *)arg;
-    if (local_arg->interrupt_function != nullptr)
+    auto *local_arg = static_cast<Interrupt_Arg *>(arg);
+    if (local_arg->interrupt_function)
     {
         local_arg->interrupt_function();
     }
@@ -59,10 +61,11 @@ void inline Radiolib_Cpp_Bus_Driver_Hal::attachInterrupt(uint32_t interruptNum, 
         return;
     }
 
-    auto interrupt_arg = std::make_unique<Interrupt_Arg>(interruptCb);
+    auto arg = std::make_unique<Interrupt_Arg>(interruptCb);
+    Interrupt_Map[interruptNum] = std::move(arg);
 
     if (_bus->create_gpio_interrupt(interruptNum, static_cast<Cpp_Bus_Driver::Tool::Interrupt_Mode>(mode),
-                                    Interrupt_Callback_Template, interrupt_arg.get()) == false)
+                                    Interrupt_Callback_Template, Interrupt_Map[interruptNum].get()) == false)
     {
         _bus->assert_log(Cpp_Bus_Driver::Tool::Log_Level::INFO, __FILE__, __LINE__, "create_gpio_interrupt fail\n");
     }
