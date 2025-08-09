@@ -198,8 +198,8 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE
                 bool "radiolib_nrf24l01_send_receive"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
-            config EXAMPLE_BUILD_ST25R3916B
-                bool "st25r3916b"
+            config EXAMPLE_BUILD_ST25R3916
+                bool "st25r3916"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
 
