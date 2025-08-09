@@ -2,7 +2,7 @@
  * @Description: st25r3916
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-08-09 16:09:32
+ * @LastEditTime: 2025-08-09 17:12:58
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -41,15 +41,25 @@ extern "C" void app_main(void)
     ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
     ESP32P4->pin_write(T_MIXRF_ST25R3916_CS, 1);
 
-    // ESP32P4->create_gpio_interrupt(T_MIXRF_ST25R3916_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
-    //                                [](void *arg) -> IRAM_ATTR void
-    //                                {
-    //                                    Interrupt_Flag = true;
-    //                                });
+    ESP32P4->create_gpio_interrupt(T_MIXRF_ST25R3916_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
+                                   [](void *arg) -> IRAM_ATTR void
+                                   {
+                                       Interrupt_Flag = true;
+                                   });
+
     St25r3916_Init();
 
     while (1)
     {
+        if (Interrupt_Flag == true)
+        {
+            printf("Interrupt_Flag trigger\n");
+
+            rfst25r3916.st25r3916Isr();
+
+            Interrupt_Flag = false;
+        }
+
         St25r3916_Loop();
         vTaskDelay(pdMS_TO_TICKS(10));
     }

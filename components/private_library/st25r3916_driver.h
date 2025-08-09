@@ -2,12 +2,14 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-08-09 11:13:53
- * @LastEditTime: 2025-08-09 16:07:22
+ * @LastEditTime: 2025-08-09 16:58:08
  * @License: GPL 3.0
  */
 #pragma once
 
 #include "t_display_p4_keyboard_config.h"
+
+#include "rfal_rfst25r3916.h"
 
 /* Uncomment this line if you want to use the NFC reader with I2C bus instead of SPI */
 // #define I2C_ENABLED
@@ -19,7 +21,7 @@
 #endif
 
 #define CS_PIN T_MIXRF_ST25R3916_CS
-#define IRQ_PIN T_MIXRF_ST25R3916_INT
+#define IRQ_PIN -1
 
 #define LED_A_PIN -1
 #define LED_B_PIN -1
@@ -51,3 +53,5 @@
 
 void St25r3916_Init(void);
 void St25r3916_Loop(void);
+
+extern RfalRfST25R3916Class rfst25r3916;
