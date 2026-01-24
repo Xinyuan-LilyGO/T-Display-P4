@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2026-01-24 15:53:21
+ * @LastEditTime: 2026-01-24 17:46:18
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -104,7 +104,7 @@ void Lvgl_Init(void)
     // create a lvgl display
     lv_display_t *display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     // associate the mipi panel handle to the display
-    lv_display_set_user_data(display, (void *)Mipi_Bus->get_device_handle());
+    lv_display_set_user_data(display, Screen.get());
     // set color depth
     lv_display_set_color_format(display, LVGL_COLOR_FORMAT);
     // create draw buffer
@@ -119,13 +119,21 @@ void Lvgl_Init(void)
     // set the callback which can copy the rendered image to an area of the display
     lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
                             {
+#if defined CONFIG_SCREEN_TYPE_HI8561
+                                auto Screen = (Cpp_Bus_Driver::Hi8561 *)lv_display_get_user_data(disp);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+                                auto Screen = (Cpp_Bus_Driver::Rm69a10 *)lv_display_get_user_data(disp);
+#else
+#error "unknown macro definition, please select the correct macro definition."
+#endif
+
                                 esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
                                 int offsetx1 = area->x1;
                                 int offsetx2 = area->x2;
                                 int offsety1 = area->y1;
                                 int offsety2 = area->y2;
                                 // pass the draw buffer to the driver
-                                esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
+                                Screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
 
 #if CONFIG_ENABLE_USB_DISPLAY == true
                                 lv_display_flush_ready(disp);
