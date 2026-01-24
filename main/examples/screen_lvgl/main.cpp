@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2025-12-20 16:17:26
+ * @LastEditTime: 2026-01-24 15:53:21
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -33,11 +33,35 @@
 // LVGL library is not thread-safe, this example will call LVGL APIs from different tasks, so use a mutex to protect it
 static _lock_t lvgl_api_lock;
 
-esp_lcd_panel_handle_t Screen_Mipi_Dpi_Panel = NULL;
-
 auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_MIPI_DSI_HSYNC, SCREEN_MIPI_DSI_HBP, SCREEN_MIPI_DSI_HFP,
+                                                                SCREEN_MIPI_DSI_VSYNC, SCREEN_MIPI_DSI_VBP, SCREEN_MIPI_DSI_VFP, SCREEN_DATA_LANE_NUM,
+                                                                [](uint8_t format) -> Cpp_Bus_Driver::Hardware_Mipi::Color_Format
+                                                                {
+                                                                    switch (format)
+                                                                    {
+                                                                    case 16:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    case 24:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB888;
+                                                                    default:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    } }(SCREEN_BITS_PER_PIXEL));
 
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9535_IIC_ADDRESS);
+
+#if CONFIG_ENABLE_USB_DISPLAY == true
+#else
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Mipi_Bus);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Mipi_Bus);
+#else
+#error "unknown macro definition, please select the correct macro definition."
+#endif
+
+#endif
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
@@ -80,7 +104,7 @@ void Lvgl_Init(void)
     // create a lvgl display
     lv_display_t *display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     // associate the mipi panel handle to the display
-    lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
+    lv_display_set_user_data(display, (void *)Mipi_Bus->get_device_handle());
     // set color depth
     lv_display_set_color_format(display, LVGL_COLOR_FORMAT);
     // create draw buffer
@@ -129,7 +153,7 @@ void Lvgl_Init(void)
             // io_level = !io_level;
             return false; },
     };
-    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Dpi_Panel, &cbs, display));
+    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Mipi_Bus->get_device_handle(), &cbs, display));
 #endif
 
     printf("use esp_timer as lvgl tick timer\n");
@@ -427,23 +451,17 @@ extern "C" void app_main(void)
 
     XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
+    vTaskDelay(pdMS_TO_TICKS(5));
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(200));
+    vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
+    vTaskDelay(pdMS_TO_TICKS(120));
 
 #if CONFIG_ENABLE_USB_DISPLAY == true
     Usb_Screen_Init(&Screen_Mipi_Dpi_Panel);
 #else
-    Screen_Init(&Screen_Mipi_Dpi_Panel);
+    Screen->begin(SCREEN_MIPI_DSI_DPI_CLK_MHZ, SCREEN_LANE_BIT_RATE_MBPS);
 #endif
-
-    esp_err_t assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
-    if (assert != ESP_OK)
-    {
-        printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
-    }
 
     size_t screen_size = SCREEN_WIDTH * SCREEN_HEIGHT * SCREEN_BITS_PER_PIXEL / 8;
     size_t data_cache_line_size = 16;
@@ -452,7 +470,7 @@ extern "C" void app_main(void)
     {
         color_grid_buffer(color_buf, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BITS_PER_PIXEL / 8, SCREEN_HEIGHT);
 
-        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0,
+        esp_err_t err = esp_lcd_panel_draw_bitmap(Mipi_Bus->get_device_handle(), 0, 0,
                                                   SCREEN_WIDTH, SCREEN_HEIGHT, color_buf);
         if (err != ESP_OK)
         {
@@ -473,7 +491,7 @@ extern "C" void app_main(void)
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
     for (uint8_t i = 0; i < 255; i += 5)
     {
-        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        Screen->set_brightness(i);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 #else
@@ -485,6 +503,39 @@ extern "C" void app_main(void)
 
     Lvgl_Init();
     xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
+
+#if CONFIG_ENABLE_USB_DISPLAY == true
+#else
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+    Screen->set_mirror(Cpp_Bus_Driver::Hi8561::Mirror_Mode::HORIZONTAL);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_mirror(Cpp_Bus_Driver::Hi8561::Mirror_Mode::VERTICAL);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_mirror(Cpp_Bus_Driver::Hi8561::Mirror_Mode::HORIZONTAL_VERTICAL);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_mirror(Cpp_Bus_Driver::Hi8561::Mirror_Mode::OFF);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    Screen->set_color_order(Cpp_Bus_Driver::Hi8561::Color_Order::BGR);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_color_order(Cpp_Bus_Driver::Hi8561::Color_Order::RGB);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+#endif
+
+    Screen->set_inversion(true);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_inversion(false);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    Screen->set_screen_off(true);
+    Screen->set_sleep(true);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    Screen->set_sleep(false);
+    Screen->set_screen_off(false);
+
+#endif
 
     // for (uint8_t i = 0; i < 100; i++)
     // {
