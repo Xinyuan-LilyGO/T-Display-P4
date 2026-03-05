@@ -2,10 +2,10 @@
  * @Description: aw86224
  * @Author: LILYGO_L
  * @Date: 2024-12-25 10:33:25
- * @LastEditTime: 2026-03-05 15:45:34
+ * @LastEditTime: 2026-03-05 16:23:00
  * @License: GPL 3.0
  */
-#include "t_display_p4_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
 
 auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
