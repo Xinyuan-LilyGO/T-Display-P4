@@ -1,4 +1,0 @@
-dependencies:
-  lvgl/lvgl: "9.2.0"
-  esp_lcd_usb_display:
-    version: "1.0.0"

@@ -1,5 +1,0 @@
-## IDF Component Manager Manifest File
-dependencies:
-  espressif/esp_sccb_intf:
-    version: "*"
-    override_path: "../../../"

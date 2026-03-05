@@ -1,3 +1,0 @@
-esp_sccb_intf/test_apps/dummy:
-  depends_components:
-    - esp_sccb_intf
