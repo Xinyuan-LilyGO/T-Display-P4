@@ -2,17 +2,17 @@
  * @Description: bq27220
  * @Author: LILYGO_L
  * @Date: 2025-01-04 15:06:05
- * @LastEditTime: 2026-03-05 16:23:04
+ * @LastEditTime: 2026-03-05 16:33:06
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
 
-auto Xl9535_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto Bq27220_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Bq27220_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
 
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Bus, XL9535_IIC_ADDRESS);
-auto Bq27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(Bq27220_Bus, BQ27220_IIC_ADDRESS);
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+auto Bq27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(Bq27220_Iic_Bus, BQ27220_IIC_ADDRESS);
 
 extern "C" void app_main(void)
 {
@@ -26,7 +26,7 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    Bq27220_Bus->set_bus_handle(Xl9535_Bus->get_bus_handle());
+    Bq27220_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
     Bq27220->begin();
 
