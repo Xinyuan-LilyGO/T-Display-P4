@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-01-13 17:59:30
+ * @LastEditTime: 2026-02-25 11:34:56
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -77,8 +77,8 @@ T-Display-P4是基于ESP32-P4核心开发的多功能板，该产品的特点包
 * 模组：ESP32-C6-MINI-1U
 * FLASH：16M
 * 芯片：ESP32-C6-FH4
-* PSRAM：4M 
-* FLASH：-
+* PSRAM：-
+* FLASH：4M 
 * 通信协议：SDIO
 * 其他说明：更多资料请访问 [乐鑫官方ESP32-C6-MINI-1U数据手册](https://www.espressif.com/sites/default/files/documentation/esp32-c6-mini-1_mini-1u_datasheet_en.pdf)
 

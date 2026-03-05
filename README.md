@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-01-13 18:01:53
+ * @LastEditTime: 2026-02-25 11:35:15
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -76,8 +76,8 @@ The T-Display-P4 is a versatile development board based on the ESP32-P4 core. It
 
 * Module: ESP32-C6-MINI-1U
 * Chip: ESP32-C6-FH4
-* PSRAM: 4M 
-* FLASH: -
+* PSRAM: -
+* FLASH: 4M 
 * Communication Protocol: SDIO
 * Other: For more information, please visit [Espressif ESP32-C6-MINI-1U datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-c6-mini-1_mini-1u_datasheet_en.pdf)
 
