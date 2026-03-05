@@ -2,23 +2,14 @@
  * @Description: es8311_sd_wav
  * @Author: LILYGO_L
  * @Date: 2025-03-31 15:23:33
- * @LastEditTime: 2025-11-21 14:50:24
+ * @LastEditTime: 2026-03-05 17:49:36
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "t_display_p4_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
-#include "driver/sdmmc_host.h"
-#include "sd_pwr_ctrl_by_on_chip_ldo.h"
-#include "esp_vfs_fat.h"
 #include <fstream>
 
-#define SD_FILE_PATH_MUSIC "/sdcard/music.wav"
+#define MUSIC_FILE_PATH SD_BASE_PATH "/music.wav"
 
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 44100
@@ -43,20 +34,18 @@ struct Wav_Header
     uint32_t data_size;       // 数据块的大小，即音频数据的字节数
 };
 
-auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_0);
+auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_1);
 
-auto IIC_Bus_1 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_1);
+auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK);
 
-auto IIS_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK);
-
-auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(IIC_Bus_0, IIS_Bus, ES8311_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_1, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Es8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(Es8311_Iic_Bus, Es8311_Iis_Bus, ES8311_IIC_ADDRESS);
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
 
 void Iic_Scan(void)
 {
     std::vector<uint8_t> address;
-    if (IIC_Bus_0->scan_7bit_address(&address) == true)
+    if (Es8311_Iic_Bus->scan_7bit_address(&address) == true)
     {
         for (size_t i = 0; i < address.size(); i++)
         {
@@ -153,7 +142,7 @@ bool Play_Wav_File(const char *file_path)
 
         if (bytes_read > 0)
         {
-            ES8311->write_data(data_buffer.get(), bytes_read); // 这一行需要根据你的 I2S 驱动实现来修改
+            Es8311->write_data(data_buffer.get(), bytes_read); // 这一行需要根据你的 I2S 驱动实现来修改
         }
         // else
         // {
@@ -165,153 +154,25 @@ bool Play_Wav_File(const char *file_path)
     return true;
 }
 
-bool Sdmmc_Init(const char *base_path)
-{
-    esp_vfs_fat_sdmmc_mount_config_t mount_config =
-        {
-            .format_if_mount_failed = false,
-            .max_files = 5,
-            .allocation_unit_size = 16 * 1024,
-        };
-
-    sdmmc_card_t *card;
-
-    printf("initializing sd card\n");
-    printf("using sdmmc peripheral\n");
-
-    sd_pwr_ctrl_ldo_config_t ldo_config =
-        {
-            .ldo_chan_id = 4,
-        };
-    sd_pwr_ctrl_handle_t pwr_ctrl_handle = NULL;
-
-    int32_t assert = sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &pwr_ctrl_handle);
-    if (assert != ESP_OK)
-    {
-        printf("failed to create a new on-chip ldo power control driver\n");
-        return false;
-    }
-
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-    host.slot = SDMMC_HOST_SLOT_0;
-
-    // host.max_freq_khz=SDMMC_FREQ_SDR50;
-
-    host.pwr_ctrl_handle = pwr_ctrl_handle;
-
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    slot_config.width = 4;
-    slot_config.clk = static_cast<gpio_num_t>(SD_SDIO_CLK);
-    slot_config.cmd = static_cast<gpio_num_t>(SD_SDIO_CMD);
-    slot_config.d0 = static_cast<gpio_num_t>(SD_SDIO_D0);
-    slot_config.d1 = static_cast<gpio_num_t>(SD_SDIO_D1);
-    slot_config.d2 = static_cast<gpio_num_t>(SD_SDIO_D2);
-    slot_config.d3 = static_cast<gpio_num_t>(SD_SDIO_D3);
-
-    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-    printf("mounting filesystem\n");
-
-    assert = esp_vfs_fat_sdmmc_mount(base_path, &host, &slot_config, &mount_config, &card);
-    if (assert != ESP_OK)
-    {
-        printf("failed to mount filesystem\n");
-        return false;
-    }
-
-    printf("filesystem mounted\n");
-
-    // Card has been initialized, print its properties
-    sdmmc_card_print_info(stdout, card);
-
-    return true;
-}
-
-bool Sdspi_Init(const char *base_path)
-{
-    esp_vfs_fat_sdmmc_mount_config_t mount_config =
-        {
-            .format_if_mount_failed = false,
-            .max_files = 5,
-            .allocation_unit_size = 16 * 1024,
-        };
-
-    sdmmc_card_t *card;
-
-    printf("initializing sd card\n");
-    printf("using sdspi peripheral\n");
-
-    sd_pwr_ctrl_ldo_config_t ldo_config =
-        {
-            .ldo_chan_id = 4,
-        };
-    sd_pwr_ctrl_handle_t pwr_ctrl_handle = NULL;
-
-    int32_t assert = sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &pwr_ctrl_handle);
-    if (assert != ESP_OK)
-    {
-        printf("failed to create a new on-chip ldo power control driver\n");
-        return false;
-    }
-
-    sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-
-    // host.max_freq_khz=SDMMC_FREQ_SDR50;
-
-    host.pwr_ctrl_handle = pwr_ctrl_handle;
-
-    spi_bus_config_t bus_cfg = {
-        .mosi_io_num = SD_MOSI,
-        .miso_io_num = SD_MISO,
-        .sclk_io_num = SD_SCLK,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 4092,
-    };
-
-    assert = spi_bus_initialize(host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
-    if (assert != ESP_OK)
-    {
-        printf("failed to initialize bus\n");
-        return false;
-    }
-
-    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-    slot_config.gpio_cs = SD_CS;
-    slot_config.host_id = host.slot;
-
-    printf("mounting filesystem\n");
-
-    assert = esp_vfs_fat_sdspi_mount(base_path, &host, &slot_config, &mount_config, &card);
-    if (assert != ESP_OK)
-    {
-        printf("failed to mount filesystem\n");
-        return false;
-    }
-
-    printf("filesystem mounted\n");
-
-    // Card has been initialized, print its properties
-    sdmmc_card_print_info(stdout, card);
-
-    return true;
-}
-
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    XL9535->begin();
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->begin();
+    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    ES8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
+    Xl9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    Es8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
 
     while (1)
     {
-        if (ES8311->begin(50000) == true)
+        if (Es8311->begin(50000) == true)
         {
             printf("es8311 initialization success\n");
             break;
@@ -323,16 +184,16 @@ extern "C" void app_main(void)
         }
     }
 
-    ES8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
+    Es8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
 
-    ES8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
+    Es8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
 
-    ES8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
+    Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
 
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
     Cpp_Bus_Driver::Es8311::Power_Status ps =
         {
             .contorl =
@@ -346,37 +207,37 @@ extern "C" void app_main(void)
                 },
             .vmid = Cpp_Bus_Driver::Es8311::Vmid::START_UP_VMID_NORMAL_SPEED_CHARGE,
         };
-    ES8311->set_power_status(ps);
-    ES8311->set_pga_power(true);
-    ES8311->set_adc_power(true);
-    ES8311->set_dac_power(true);
-    ES8311->set_output_to_hp_drive(true);
-    ES8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
-    ES8311->set_adc_hpf_stage2_coeff(10);
-    ES8311->set_dac_equalizer(false);
+    Es8311->set_power_status(ps);
+    Es8311->set_pga_power(true);
+    Es8311->set_adc_power(true);
+    Es8311->set_dac_power(true);
+    Es8311->set_output_to_hp_drive(true);
+    Es8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
+    Es8311->set_adc_hpf_stage2_coeff(10);
+    Es8311->set_dac_equalizer(false);
 
-    ES8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
-    ES8311->set_adc_auto_volume_control(false);
-    ES8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
-    ES8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
+    Es8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
+    Es8311->set_adc_auto_volume_control(false);
+    Es8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
+    Es8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
 
-    ES8311->set_adc_volume(191);
-    ES8311->set_dac_volume(191);
+    Es8311->set_adc_volume(191);
+    Es8311->set_dac_volume(191);
 
     // 将ADC的数据自动输出到DAC上
-    // ES8311->set_adc_data_to_dac(true);
+    // Es8311->set_adc_data_to_dac(true);
 
-    if (Sdmmc_Init(SD_BASE_PATH) == false)
+    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
     {
         printf("Sdmmc_Init fail\n");
     }
 
-    // if (Sdspi_Init(SD_BASE_PATH) == false)
+    // if (Lilygo_Device_Driver::Sdspi_Init(SD_BASE_PATH) == false)
     // {
     //     printf("Sdspi_Init fail\n");
     // }
 
-    if (Play_Wav_File(SD_FILE_PATH_MUSIC) == false)
+    if (Play_Wav_File(MUSIC_FILE_PATH) == false)
     {
         printf("Play_Wav_File fail\n");
     }
@@ -384,15 +245,6 @@ extern "C" void app_main(void)
     {
         printf("Play_Wav_File complete\n");
     }
-
-    // esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
-    // printf("card unmounted\n");
-
-    // ret = sd_pwr_ctrl_del_on_chip_ldo(pwr_ctrl_handle);
-    // if (ret != ESP_OK)
-    // {
-    //     printf("failed to delete the on-chip ldo power control driver\n");
-    // }
 
     while (1)
     {

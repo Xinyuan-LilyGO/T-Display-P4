@@ -7,13 +7,13 @@ dependencies:
 
   private_library:
     override_path: "../libraries/private_library"
-    matches:
+    rules:
       - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_LR1121_SEND_RECEIVE} == True"
 
   espressif/esp-sr:
     version: "^2.1.3"
-    matches:
+    rules:
       - if: "$CONFIG{EXAMPLE_BUILD_AFE} == True"
 
   # lvgl/lvgl:
@@ -21,7 +21,7 @@ dependencies:
 
   # espressif/esp_tinyusb:
   #   version: "^1"
-  #   matches:
+  #   rules:
   #     - if: "$CONFIG{ENABLE_USB_DISPLAY} == False"
 
   # espressif/esp_hosted:
@@ -32,7 +32,7 @@ dependencies:
 
   # espressif/esp_lcd_usb_display:
   #   version: "^1.0.0"
-  #   matches:
+  #   rules:
   #     - if: "$CONFIG{ENABLE_USB_DISPLAY} == True"
 
   # espressif/ethernet_init:
