@@ -16,6 +16,16 @@ dependencies:
     rules:
       - if: "$CONFIG{EXAMPLE_BUILD_AFE} == True"
 
+  espressif/esp_hosted:
+    version: "2.11.5"
+    rules:
+      - if: "$CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
+
+  espressif/esp_wifi_remote:
+    version: "1.3.2"
+    rules:
+      - if: "$CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
+
   # lvgl/lvgl:
   #   version: "9.4.0"
 
