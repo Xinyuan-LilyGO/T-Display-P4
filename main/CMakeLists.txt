@@ -62,11 +62,6 @@ elseif(CONFIG_EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW)
 elseif(CONFIG_EXAMPLE_BUILD_BQ25896)
     set(project_path "keyboard_examples/bq25896/")
 endif()
-        
+
 idf_component_register(SRC_DIRS ${project_path} 
                         INCLUDE_DIRS ${project_path})
-
-target_compile_options(
-    ${COMPONENT_LIB}
-    PRIVATE -Wno-error=unused-const-variable -Wno-error=delete-non-virtual-dtor
-            -Wno-error=implicit-function-declaration -fpermissive)

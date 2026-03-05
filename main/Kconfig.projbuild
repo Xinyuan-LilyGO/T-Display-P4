@@ -23,59 +23,6 @@ menu "Example Configuration"
         # H0410S001AMT001-V0
         default "2799104"
 
-    config EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
-        bool "Enable MIPI CSI Camera Sensor"
-        default y
-        depends on SOC_MIPI_CSI_SUPPORTED
-
-    if EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_PORT
-            int "MIPI CSI SCCB I2C Port Number"
-            default 1
-            range 0 1
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_SCL_PIN
-            int "MIPI CSI SCCB I2C SCL Pin"
-            default 21
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_SDA_PIN
-            int "MIPI CSI SCCB I2C SDA Pin"
-            default 20
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_FREQ
-            int "MIPI CSI SCCB I2C Frequency"
-            default 100000
-            range 50000 400000
-            help
-                Increasing this value can reduce the initialization time of the camera sensor.
-                Please refer to the relevant instructions of the camera sensor to adjust the value.
-
-        config EXAMPLE_MIPI_CSI_CAM_SENSOR_RESET_PIN
-            int "MIPI CSI Camera Sensor Reset Pin"
-            default -1
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN
-            int "MIPI CSI Camera Sensor Power Down Pin"
-            default -1
-            range -1 56
-    endif
-
-    config EXAMPLE_USE_MEMORY_MAPPING
-        bool "Use Memory Mapping for Buffer Allocation"
-        default n
-        help
-        Enable this option if you want to allocate memory using memory mapping.
-        This is typically useful for performance optimization or when working
-        with hardware that requires mapped memory access
-
-    config EXAMPLE_CAM_BUF_COUNT
-        int "Camera Buffer Count"
-        default 2
-        range 2 3
-
     choice
         prompt "Select the camera type"
         default CAMERA_TYPE_OV2710
@@ -110,6 +57,15 @@ menu "Example Configuration"
             config SCREEN_PIXEL_FORMAT_RGB565
                 bool "RGB565"
             config SCREEN_PIXEL_FORMAT_RGB888
+                bool "RGB888"
+    endchoice
+
+    choice
+        prompt "Select the color format of the camera"
+        default CAMERA_PIXEL_FORMAT_RGB565
+            config CAMERA_PIXEL_FORMAT_RGB565
+                bool "RGB565"
+            config CAMERA_PIXEL_FORMAT_RGB888
                 bool "RGB888"
     endchoice
 
@@ -219,10 +175,5 @@ menu "Example Configuration"
                 bool "bq25896"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     endchoice
-
-    # config ESP_HOSTED_SDIO_GPIO_RESET_SLAVE
-    #     int "CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE"
-    #     default -1
-    #     range -1 -1
 
 endmenu

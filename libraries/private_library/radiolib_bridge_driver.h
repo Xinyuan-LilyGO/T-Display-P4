@@ -17,7 +17,7 @@ public:
     std::shared_ptr<Cpp_Bus_Driver::Bus_Spi_Guide> _bus;
     int32_t _freq_hz, _cs;
 
-    Radiolib_Cpp_Bus_Driver_Hal(std::shared_ptr<Cpp_Bus_Driver::Bus_Spi_Guide> bus, int32_t freq_hz = CPP_BUS_DRIVER_DEFAULT_VALUE, int32_t cs = CPP_BUS_DRIVER_DEFAULT_VALUE)
+    Radiolib_Cpp_Bus_Driver_Hal(std::shared_ptr<Cpp_Bus_Driver::Bus_Spi_Guide> bus, int32_t freq_hz = -1, int32_t cs = -1)
         : RadioLibHal(static_cast<uint32_t>(Cpp_Bus_Driver::Tool::Pin_Mode::INPUT), static_cast<uint32_t>(Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT),
                       0, 1, static_cast<uint32_t>(Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING), static_cast<uint32_t>(Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING)),
           _bus(bus), _freq_hz(freq_hz), _cs(cs)
