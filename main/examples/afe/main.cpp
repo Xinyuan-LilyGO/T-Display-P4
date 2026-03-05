@@ -2,18 +2,13 @@
  * @Description: Afe
  * @Author: LILYGO_L
  * @Date: 2025-07-22 15:02:53
- * @LastEditTime: 2026-03-05 15:34:18
+ * @LastEditTime: 2026-03-05 15:57:33
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
 
-#include "esp_wn_iface.h"
-#include "esp_wn_models.h"
 #include "esp_afe_sr_models.h"
-#include "esp_mn_iface.h"
-#include "esp_mn_models.h"
-#include "model_path.h"
 #include "hiesp.h"
 #include "hilexin.h"
 
