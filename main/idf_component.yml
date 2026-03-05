@@ -5,11 +5,11 @@ dependencies:
   lilygo_device_driver:
     override_path: "../libraries/lilygo_device_driver"
 
-  # private_library:
-  #   override_path: "../libraries/private_library"
-  #   matches:
-  #     - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
-  #     - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_LR1121_SEND_RECEIVE} == True"
+  private_library:
+    override_path: "../libraries/private_library"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_LR1121_SEND_RECEIVE} == True"
 
   espressif/esp-sr:
     version: "^2.1.3"
@@ -23,8 +23,6 @@ dependencies:
   #   version: "^1"
   #   matches:
   #     - if: "$CONFIG{ENABLE_USB_DISPLAY} == False"
-
-
 
   # espressif/esp_hosted:
   #   version: "2.0.17"
