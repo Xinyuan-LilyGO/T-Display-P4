@@ -2,74 +2,66 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2025-07-28 09:38:34
+ * @LastEditTime: 2026-03-06 09:23:32
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "t_display_p4_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
 
-auto Iic_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
 
-auto Uart_Bus_1 = std::make_shared<Cpp_Bus_Driver::Hardware_Uart>(GPS_RX, GPS_TX, UART_NUM_1);
+auto L76k_Uart_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Uart>(GPS_RX, GPS_TX, UART_NUM_1);
 
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Iic_Bus_0, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
-auto L76K = std::make_unique<Cpp_Bus_Driver::L76k>(Uart_Bus_1, [](bool Value) -> IRAM_ATTR bool
-                                                   { return XL9535->pin_write(XL9535_GPS_WAKE_UP, static_cast<Cpp_Bus_Driver::Xl95x5::Value>(Value)); }, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+auto L76K = std::make_unique<Cpp_Bus_Driver::L76k>(L76k_Uart_Bus, [](bool Value) -> IRAM_ATTR bool
+                                                   { return Xl9535->pin_write(XL9535_GPS_WAKE_UP, static_cast<Cpp_Bus_Driver::Xl95x5::Value>(Value)); });
 
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-    XL9535->begin();
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->begin();
+    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭睡眠
+    Xl9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭睡眠
 
-    L76K->begin();
-    printf("get_baud_rate:%ld\n", L76K->get_baud_rate());
+    L76k->begin();
+    printf("get_baud_rate:%ld\n", L76k->get_baud_rate());
 
-    L76K->set_baud_rate(Cpp_Bus_Driver::L76k::Baud_Rate::BR_115200_BPS);
-    printf("set_baud_rate:%ld\n", L76K->get_baud_rate());
+    L76k->set_baud_rate(Cpp_Bus_Driver::L76k::Baud_Rate::BR_115200_BPS);
+    printf("set_baud_rate:%ld\n", L76k->get_baud_rate());
 
-    L76K->set_update_frequency(Cpp_Bus_Driver::L76k::Update_Freq::FREQ_5HZ);
-    L76K->clear_rx_buffer_data();
+    L76k->set_update_frequency(Cpp_Bus_Driver::L76k::Update_Freq::FREQ_5HZ);
+    L76k->clear_rx_buffer_data();
 
     while (1)
     {
-        // printf("get_baud_rate:%ld\n", L76K->get_baud_rate());
+        // printf("get_baud_rate:%ld\n", L76k->get_baud_rate());
 
-        // size_t buffer_lenght = L76K->get_rx_buffer_length();
+        // size_t buffer_lenght = L76k->get_rx_buffer_length();
         // if (buffer_lenght > 0)
         // {
         //     auto buffer = std::make_shared<uint8_t []>(buffer_lenght);
 
-        //     if (L76K->read_data(buffer.get()) > 0)
+        //     if (L76k->read_data(buffer.get()) > 0)
         //     {
         //         printf("---begin---\n%s \n---end---\n", buffer.get());
         //     }
         // }
 
-        // vTaskDelay(pdMS_TO_TICKS(L76K->_update_freq)); // 等待接收
+        // vTaskDelay(pdMS_TO_TICKS(L76k->_update_freq)); // 等待接收
 
         std::unique_ptr<uint8_t[]> buffer;
         size_t buffer_lenght = 0;
 
-        if (L76K->get_info_data(buffer, &buffer_lenght) == true)
+        if (L76k->get_info_data(buffer, &buffer_lenght) == true)
         {
             // 打印RMC的相关信息
             printf("---begin---\n%s \n---end---\n", buffer.get());
@@ -78,7 +70,7 @@ extern "C" void app_main(void)
 
             Cpp_Bus_Driver::L76k::Rmc rmc;
 
-            if (L76K->parse_rmc_info(buffer.get(), buffer_lenght, rmc) == true)
+            if (L76k->parse_rmc_info(buffer.get(), buffer_lenght, rmc) == true)
             {
                 printf("location status: %s\n", (rmc.location_status).c_str());
 
@@ -117,7 +109,7 @@ extern "C" void app_main(void)
 
             // Cpp_Bus_Driver::L76k::Gga gga;
 
-            // if (L76K->parse_gga_info(buffer, buffer_lenght, gga) == true)
+            // if (L76k->parse_gga_info(buffer, buffer_lenght, gga) == true)
             // {
             //     if (gga.utc.update_flag == true)
             //     {
