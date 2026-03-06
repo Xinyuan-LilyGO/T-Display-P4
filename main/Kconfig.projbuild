@@ -43,10 +43,6 @@ menu "Example Configuration"
                 bool "RM69A10"
     endchoice
 
-    config ENABLE_USB_DISPLAY
-        bool "Enable USB Display"
-        default n
-
     config ENABLE_PPA_SCREEN_ROTATION
         bool "Enable ppa screen rotation"
         default y

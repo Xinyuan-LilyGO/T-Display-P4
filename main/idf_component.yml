@@ -40,6 +40,11 @@ dependencies:
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE} == True"
 
+  esp_video_app_video:
+    override_path: "../libraries/esp_video_app_video"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_CAMERA} == True"
+
   # lvgl/lvgl:
   #   version: "9.4.0"
 
@@ -54,10 +59,7 @@ dependencies:
   # espressif/esp_wifi_remote:
   #   version: "^1.1"
 
-  # espressif/esp_lcd_usb_display:
-  #   version: "^1.0.0"
-  #   matches:
-  #     - if: "$CONFIG{ENABLE_USB_DISPLAY} == True"
+
 
   # espressif/ethernet_init:
   #   version: "^0.7.0"
