@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2026-03-06 17:32:24
+ * @LastEditTime: 2026-03-06 17:35:27
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -14,7 +14,7 @@ uint8_t Send_Package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 size_t Cycle_Time = 0;
 
-auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
 
 auto Sx1262_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI2_HOST);
 
