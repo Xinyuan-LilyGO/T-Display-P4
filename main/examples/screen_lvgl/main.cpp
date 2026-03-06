@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2026-03-06 16:58:05
+ * @LastEditTime: 2026-03-06 17:18:33
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -97,9 +97,9 @@ void Lvgl_Init(void)
     // create draw buffer
     printf("allocate separate lvgl draw buffers\n");
     size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
-    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
     assert(buf1);
-    // void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+    // void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
     // assert(buf2);
     // initialize LVGL draw buffers
     lv_display_set_buffers(display, buf1, NULL, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
@@ -415,7 +415,7 @@ extern "C" void app_main(void)
 #error "no macro definition is set"
 #endif
 
-    Lilygo_Device_Driver::Init_Ldo_Channel_Power(3, 1830);
+    Lilygo_Device_Driver::Init_Ldo_Channel_Power(3, 2500);
 
     vTaskDelay(pdMS_TO_TICKS(100));
 

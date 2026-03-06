@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2026-03-06 16:34:50
+ * @LastEditTime: 2026-03-06 17:17:22
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -366,7 +366,7 @@ extern "C" void app_main(void)
     //         p[i] = 0xFFFF; // RGB565白色
     //     }
 
-    //     if (Screen->send_color_stream_coordinate(Screen_Mipi_Dpi_Panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf) == false)
+    //     if (Screen->send_color_stream_coordinate(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf) == false)
     //     {
     //         printf("send_color_stream_coordinate white fail\n");
     //     }
@@ -378,7 +378,7 @@ extern "C" void app_main(void)
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
     for (uint8_t i = 0; i < 255; i += 5)
     {
-        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        Screen->set_brightness(i);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 #else

@@ -49,6 +49,7 @@ dependencies:
     version: "9.4.0"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW} == True"
 
   # espressif/esp_tinyusb:
   #   version: "^1"
