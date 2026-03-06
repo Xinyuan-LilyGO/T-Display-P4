@@ -26,6 +26,16 @@ dependencies:
     rules:
       - if: "$CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
 
+  arduino_cpp_bus_driver:
+    override_path: "../libraries/arduino_cpp_bus_driver"
+    rules:
+      - if: "$CONFIG{EXAMPLE_BUILD_ICM20948} == True"
+
+  ICM20948_WE:
+    override_path: "../libraries/ICM20948_WE"
+    rules:
+      - if: "$CONFIG{EXAMPLE_BUILD_ICM20948} == True"
+
   # lvgl/lvgl:
   #   version: "9.4.0"
 
