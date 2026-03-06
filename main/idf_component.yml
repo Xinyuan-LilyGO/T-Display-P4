@@ -51,10 +51,10 @@ dependencies:
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW} == True"
 
-  # espressif/esp_tinyusb:
-  #   version: "^1"
-  #   matches:
-  #     - if: "$CONFIG{ENABLE_USB_DISPLAY} == False"
+  espressif/esp_tinyusb:
+    version: "^1"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_TUSB_SERIAL_DEVICE} == True"
 
   # espressif/ethernet_init:
   #   version: "^0.7.0"

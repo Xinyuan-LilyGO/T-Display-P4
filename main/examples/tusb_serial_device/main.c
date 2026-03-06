@@ -2,17 +2,12 @@
  * @Description: tusb_serial_device
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:03:32
- * @LastEditTime: 2025-06-13 14:03:48
+ * @LastEditTime: 2026-03-06 17:53:26
  * @License: GPL 3.0
  */
-#include <stdint.h>
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
 #include "tinyusb.h"
 #include "tusb_cdc_acm.h"
-#include "sdkconfig.h"
 
 #define PREPEND_STRING "esp32p4 hardware usb cdc receive: "
 #define PREPEND_LENGTH 34
