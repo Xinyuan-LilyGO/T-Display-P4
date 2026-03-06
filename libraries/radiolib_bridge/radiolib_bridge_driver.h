@@ -2,13 +2,12 @@
  * @Description: radiolib_bridge_driver
  * @Author: LILYGO_L
  * @Date: 2025-07-31 16:06:23
- * @LastEditTime: 2025-08-04 13:53:49
+ * @LastEditTime: 2026-03-06 11:00:37
  * @License: GPL 3.0
  */
 #pragma once
 
-#include "TypeDef.h"
-#include "Hal.h"
+#include "RadioLib.h"
 #include "cpp_bus_driver_library.h"
 
 class Radiolib_Cpp_Bus_Driver_Hal : public RadioLibHal
