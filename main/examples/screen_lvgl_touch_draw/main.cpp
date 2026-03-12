@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2026-03-06 17:19:46
+ * @LastEditTime: 2026-03-12 11:05:55
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -47,7 +47,15 @@ auto Screen_Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WI
                                                                     } }(SCREEN_BITS_PER_PIXEL));
 
 auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
 auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
+#else
+#error "no macro definition is set"
+#endif
+
 auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
@@ -125,8 +133,8 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 
     if (Gt9895_Touch->get_single_touch_point(tp) == true)
     {
-        printf("touch finger: %d edge touch flag: %d\n id: %d x: %d y: %d p: %d\n",
-               tp.finger_count, tp.edge_touch_flag, tp.info[0].finger_id, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
+        // printf("touch finger: %d edge touch flag: %d\n id: %d x: %d y: %d p: %d\n",
+        //        tp.finger_count, tp.edge_touch_flag, tp.info[0].finger_id, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
 
         data->state = LV_INDEV_STATE_PR;
 
@@ -413,41 +421,41 @@ extern "C" void app_main(void)
 #error "no macro definition is set"
 #endif
 
-    //     while (1)
-    //     {
-    //         if (esp_log_timestamp() > Cycle_Time)
-    //         {
-    // #if defined CONFIG_SCREEN_TYPE_HI8561
-    //             Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
+    while (1)
+    {
+        if (esp_log_timestamp() > Cycle_Time)
+        {
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
-    //             if (Hi8561_Touch->get_multiple_touch_point(tp) == true)
-    //             {
-    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+            if (Hi8561_Touch->get_multiple_touch_point(tp) == true)
+            {
+                printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
 
-    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
-    //                 {
-    //                     printf("touch num:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-    //                 }
-    //             }
-    // #elif defined CONFIG_SCREEN_TYPE_RM69A10
-    //             Cpp_Bus_Driver::Gt9895::Touch_Point tp;
+                for (uint8_t i = 0; i < tp.info.size(); i++)
+                {
+                    printf("touch num:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+                }
+            }
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+            Cpp_Bus_Driver::Gt9895::Touch_Point tp;
 
-    //             if (Gt9895_Touch->get_multiple_touch_point(tp) == true)
-    //             {
-    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+            if (Gt9895_Touch->get_multiple_touch_point(tp) == true)
+            {
+                printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
 
-    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
-    //                 {
-    //                     printf("touch num:[%d] id:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].finger_id, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-    //                 }
-    //             }
-    // #else
-    // #error "no macro definition is set"
-    // #endif
+                for (uint8_t i = 0; i < tp.info.size(); i++)
+                {
+                    printf("touch num:[%d] id:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].finger_id, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+                }
+            }
+#else
+#error "no macro definition is set"
+#endif
 
-    //             Cycle_Time = esp_log_timestamp() + 1000;
-    //         }
+            Cycle_Time = esp_log_timestamp() + 1000;
+        }
 
-    //         vTaskDelay(pdMS_TO_TICKS(10));
-    //     }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
 }

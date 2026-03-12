@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2026-03-06 17:17:22
+ * @LastEditTime: 2026-03-12 11:03:13
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -41,7 +41,13 @@ auto Screen_Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WI
 
 auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
 auto Sgm38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(Sgm38121_Iic_Bus, SGM38121_IIC_ADDRESS);
+#if defined CONFIG_SCREEN_TYPE_HI8561
 auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
+#else
+#error "no macro definition is set"
+#endif
 auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
