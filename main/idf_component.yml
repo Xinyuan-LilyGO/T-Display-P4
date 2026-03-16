@@ -56,5 +56,12 @@ dependencies:
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_TUSB_SERIAL_DEVICE} == True"
 
-  # espressif/ethernet_init:
-  #   version: "^0.7.0"
+  espressif/ethernet_init:
+    version: "^1.3.0"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
+
+  espressif/iperf-cmd:
+    version: "^0.1.1"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"

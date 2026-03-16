@@ -170,6 +170,9 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_BQ25896
                 bool "bq25896"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            config EXAMPLE_BUILD_IPERF_ETHERNET
+                bool "iperf_ethernet"
+                depends on BOARD_TYPE_T_DISPLAY_P4
     endchoice
 
 endmenu
