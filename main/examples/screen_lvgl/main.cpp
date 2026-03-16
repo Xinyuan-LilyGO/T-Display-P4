@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2026-03-16 11:36:52
+ * @LastEditTime: 2026-03-16 11:38:44
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -107,9 +107,9 @@ void Lvgl_Init(void)
     lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
                             {
 #if defined CONFIG_SCREEN_TYPE_HI8561
-                                auto Screen = (Cpp_Bus_Driver::Hi8561 *)lv_display_get_user_data(disp);
+                                auto screen = (Cpp_Bus_Driver::Hi8561 *)lv_display_get_user_data(disp);
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
-                                auto Screen = (Cpp_Bus_Driver::Rm69a10 *)lv_display_get_user_data(disp);
+                                auto screen = (Cpp_Bus_Driver::Rm69a10 *)lv_display_get_user_data(disp);
 #else
 #error "no macro definition is set"
 #endif
@@ -119,7 +119,7 @@ void Lvgl_Init(void)
                                 int offsety1 = area->y1;
                                 int offsety2 = area->y2;
                                 // pass the draw buffer to the driver
-                                Screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map); });
+                                screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map); });
 
     lv_indev_t *indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
