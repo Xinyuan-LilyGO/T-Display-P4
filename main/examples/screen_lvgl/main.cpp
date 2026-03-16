@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2026-03-06 17:18:33
+ * @LastEditTime: 2026-03-16 11:36:52
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -114,7 +114,6 @@ void Lvgl_Init(void)
 #error "no macro definition is set"
 #endif
 
-                                esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
                                 int offsetx1 = area->x1;
                                 int offsetx2 = area->x2;
                                 int offsety1 = area->y1;
