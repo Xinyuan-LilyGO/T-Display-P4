@@ -11,10 +11,10 @@
 
 #define MUSIC_FILE_PATH SD_BASE_PATH "/music.wav"
 
-#define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
-#define SAMPLE_RATE 44100
-#define BITS_PER_SAMPLE 16
-#define NUM_CHANNEL 2
+#define AUDIO_MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
+#define AUDIO_SAMPLE_RATE 44100
+#define AUDIO_BITS_PER_SAMPLE 16
+#define AUDIO_NUM_CHANNEL 2
 
 // WAV 文件头结构体
 struct Wav_Header
@@ -109,9 +109,9 @@ bool Play_Wav_File(const char *file_path)
     printf("bits per sample: %d\n", wav_header.bits_per_sample);
 
     // 检查采样率、通道数和位深度是否与 I2S 配置匹配 (如果使用 I2S)
-    if (wav_header.sample_rate != SAMPLE_RATE ||
-        wav_header.num_channel != NUM_CHANNEL ||
-        wav_header.bits_per_sample != BITS_PER_SAMPLE)
+    if (wav_header.sample_rate != AUDIO_SAMPLE_RATE ||
+        wav_header.num_channel != AUDIO_NUM_CHANNEL ||
+        wav_header.bits_per_sample != AUDIO_BITS_PER_SAMPLE)
     {
         printf("wav file parameters do not match i2s configuration audio may not play correctly\n");
         file.close();
@@ -173,7 +173,7 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    Es8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
+    Es8311->begin(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
 
     while (1)
     {
@@ -193,7 +193,7 @@ extern "C" void app_main(void)
     Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
     Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
 
-    Es8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
+    Es8311->set_clock_coeff(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE);
 
     Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
 
