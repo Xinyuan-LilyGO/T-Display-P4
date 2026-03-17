@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2026-02-25 09:09:45
- * @LastEditTime: 2026-03-17 09:49:35
+ * @LastEditTime: 2026-03-17 16:00:16
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -272,6 +272,52 @@ void parse_and_print_id3v1(FILE *f)
     fseek(f, original_pos, SEEK_SET);
 }
 
+float get_mp3_duration_from_vbr_header(FILE *f, size_t mp3_offset)
+{
+    fseek(f, mp3_offset, SEEK_SET);
+
+    uint8_t buf[576 + 256]; // 足够涵盖Xing/VBRI 位置
+    size_t read_len = fread(buf, 1, sizeof(buf), f);
+    if (read_len < 100)
+    {
+        return -1.0f;
+    }
+
+    // 找 "Xing" 或 "Info" (LAME 常用 Info 代替 Xing)
+    for (size_t i = 0; i < read_len - 4; ++i)
+    {
+        if (memcmp(buf + i, "Xing", 4) == 0 || memcmp(buf + i, "Info", 4) == 0)
+        {
+            size_t pos = i + 4;
+
+            uint32_t flags = (buf[pos] << 24) | (buf[pos + 1] << 16) | (buf[pos + 2] << 8) | buf[pos + 3];
+            pos += 4;
+
+            if (flags & 0x00000001) // Frames field present
+            {
+                uint32_t frames = (buf[pos] << 24) | (buf[pos + 1] << 16) | (buf[pos + 2] << 8) | buf[pos + 3];
+                pos += 4;
+
+                // MPEG1 Layer3: 1152 samples/frame, MPEG2: 576
+                // 假设 MPEG1 Layer3
+                uint32_t samples_per_frame = 1152;
+
+                // 如果能从前面 frame header 拿到 version/layer 更好
+                uint32_t total_samples = frames * samples_per_frame;
+
+                return (float)total_samples / AUDIO_SAMPLE_RATE;
+            }
+        }
+        // VBRI (Fraunhofer 格式)
+        else if (memcmp(buf + i, "VBRI", 4) == 0)
+        {
+            return -1.0f;
+        }
+    }
+
+    return -1.0f; // 没找到 VBR header
+}
+
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
@@ -385,12 +431,27 @@ extern "C" void app_main(void)
                     // Parse and print ID3v1 (restores file position)
                     parse_and_print_id3v1(f_in);
 
+                    float duration = get_mp3_duration_from_vbr_header(f_in, mp3_offset);
+                    if (duration != -1.0)
+                    {
+                        printf("duration: %.2f s\n", duration);
+                    }
+                    else
+                    {
+                        printf("cannot determine duration\n");
+                    }
+
                     // Seek to the start of actual MP3 data
                     fseek(f_in, mp3_offset, SEEK_SET);
 
                     auto read_buf = std::make_unique<uint8_t[]>(4 * 1024);
                     auto pcm_buf = std::make_unique<uint8_t[]>(8 * 1024);
                     size_t remain_bytes = 0;
+
+                    float total_duration = -1.0f;
+                    uint64_t total_pcm_bytes_sent = 0; // 累计已送出的 PCM 位元组数
+                    const uint32_t bytes_per_second = AUDIO_SAMPLE_RATE * AUDIO_CHANNELS * (AUDIO_BITS_PER_SAMPLE / 8);
+                    uint32_t last_print_ms = 0;
 
                     // 流式读取与解码循环
                     while (1)
@@ -423,6 +484,27 @@ extern "C" void app_main(void)
                             if (out_frame.decoded_size > 0)
                             {
                                 Es8311->write_data(out_frame.buffer, out_frame.decoded_size);
+
+                                total_pcm_bytes_sent += out_frame.decoded_size;
+
+                                float current_time = (float)total_pcm_bytes_sent / bytes_per_second;
+
+                                uint32_t now_ms = esp_timer_get_time() / 1000;
+                                if (now_ms - last_print_ms >= 1000)
+                                {
+                                    last_print_ms = now_ms;
+
+                                    printf("playing: %.2f s", current_time);
+
+                                    if (total_duration > 0)
+                                    {
+                                        printf(" / %.2f s  (%.1f%%)\n", total_duration, (current_time / total_duration) * 100.0f);
+                                    }
+                                    else
+                                    {
+                                        printf("\n");
+                                    }
+                                }
                             }
 
                             // 消耗量为 0，说明当前数据不足以解码一帧，需跳出内循环读取更多数据
