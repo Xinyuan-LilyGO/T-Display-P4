@@ -63,6 +63,8 @@ elseif(CONFIG_EXAMPLE_BUILD_BQ25896)
     set(project_path "keyboard_examples/bq25896/")
 elseif(CONFIG_EXAMPLE_BUILD_IPERF_ETHERNET)
     set(project_path "examples/iperf_ethernet/")
+elseif(CONFIG_EXAMPLE_BUILD_ES8311_SD_MP3)
+    set(project_path "examples/es8311_sd_mp3/")
 endif()
 
 idf_component_register(SRC_DIRS ${project_path} 

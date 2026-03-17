@@ -65,3 +65,8 @@ dependencies:
     version: "^0.1.1"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
+
+  espressif/esp_audio_codec:
+    version: "^2.4.1"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_ES8311_SD_MP3} == True"
