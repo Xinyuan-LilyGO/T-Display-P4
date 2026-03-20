@@ -2,7 +2,7 @@
  * @Description: radiolib_nrf24l01_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-09-10 09:57:44
+ * @LastEditTime: 2026-03-20 16:16:09
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -65,7 +65,7 @@ auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9555_IIC_ADD
 
 RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(SPI_Bus_2, 10000000, T_MIXRF_NRF24L01_CS);
 nRF24 Nrf24l01 = new Module(Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                            static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
+                            static_cast<uint32_t>(T_MIXRF_NRF24L01_INT), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
@@ -87,12 +87,6 @@ extern "C" void app_main(void)
     ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
     ESP32P4->pin_write(T_MIXRF_ST25R3916_CS, 1);
 
-    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
-                                   [](void *arg) -> IRAM_ATTR void
-                                   {
-                                       Interrupt_Flag = true;
-                                   });
-
     int16_t status = Nrf24l01.begin(2400.0, 1000.0, 0);
     if (status == RADIOLIB_ERR_NONE)
     {
@@ -102,6 +96,13 @@ extern "C" void app_main(void)
     {
         printf("nrf24l01 init fail (error code: %d)\n", status);
     }
+
+    // 中断需要放在Nrf24l01.begin后面
+    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+                                   [](void *arg) -> IRAM_ATTR void
+                                   {
+                                       Interrupt_Flag = true;
+                                   });
 
     uint8_t addr[] = {0x01, 0x23, 0x45, 0x67, 0x89};
     status = Nrf24l01.setTransmitPipe(addr);
@@ -122,8 +123,6 @@ extern "C" void app_main(void)
             vTaskDelay(pdMS_TO_TICKS(300));
 
             printf("T_MIXRF_NRF24L01 send package\n");
-
-            Nrf24l01.finishTransmit();
 
             status = Nrf24l01.transmit(Send_Package, 32, 0);
             if (status != RADIOLIB_ERR_NONE)
@@ -149,6 +148,12 @@ extern "C" void app_main(void)
                 {
                     printf("get T_MIXRF_NRF24L01 data[%d]: %d\n", i, receive_package[i]);
                 }
+            }
+
+            status = Nrf24l01.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
             }
 
             Interrupt_Flag = false;
