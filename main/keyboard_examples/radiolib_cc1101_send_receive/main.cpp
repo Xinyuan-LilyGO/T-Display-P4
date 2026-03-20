@@ -158,8 +158,6 @@ extern "C" void app_main(void)
 
             printf("T_MIXRF_CC1101 send package\n");
 
-            Cc1101.finishTransmit();
-
             status = Cc1101.transmit(Send_Package, 10);
             if (status != RADIOLIB_ERR_NONE)
             {
@@ -184,6 +182,12 @@ extern "C" void app_main(void)
                 {
                     printf("get T_MIXRF_CC1101 data[%d]: %d\n", i, receive_package[i]);
                 }
+            }
+
+            status = Cc1101.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
             }
 
             Interrupt_Flag = false;

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-01-14 11:27:43
+ * @LastEditTime: 2026-03-20 16:12:19
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -425,7 +425,7 @@ auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA841
 CC1101 Cc1101 = new Module(Cc1101_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
                            static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
 nRF24 Nrf24l01 = new Module(Nrf24l01_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                            static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
+                            static_cast<uint32_t>(T_MIXRF_NRF24L01_INT), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
 
 auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
@@ -1144,7 +1144,7 @@ void device_battery_health_task(void *arg)
             {
                 // 将电池数据格式化为字符串
                 std::string battery_health_data_str = "battery health data:\n\n";
-                
+
                 battery_health_data_str += "bq27220 data:\n";
                 battery_health_data_str += "device id: " + std::to_string(BQ27220->get_device_id()) + "\n\n";
 
@@ -1968,7 +1968,6 @@ void device_rf_task(void *arg)
             {
                 printf("cc1101 send start\n");
                 printf("cc1101 send data size: %d\n", strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
-                Cc1101.finishTransmit();
                 int16_t assert = Cc1101.transmit(Rf_Send_Package, strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
                 if (assert != RADIOLIB_ERR_NONE)
                 {
@@ -2041,6 +2040,12 @@ void device_rf_task(void *arg)
                     }
                 }
 
+                assert = Cc1101.startReceive();
+                if (assert != RADIOLIB_ERR_NONE)
+                {
+                    printf("cc1101 startReceive fail (error code: %d)\n", assert);
+                }
+
                 Cc1101_Interrupt_Flag = false;
             }
         }
@@ -2099,7 +2104,6 @@ void device_rf_task(void *arg)
             {
                 printf("nrf24l01 send start\n");
                 printf("nrf24l01 send data size: %d\n", strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
-                Nrf24l01.finishTransmit();
                 int16_t assert = Nrf24l01.transmit(Rf_Send_Package, strlen(reinterpret_cast<const char *>(Rf_Send_Package)), 0);
                 if (assert != RADIOLIB_ERR_NONE)
                 {
@@ -2170,6 +2174,12 @@ void device_rf_task(void *arg)
                         System_Ui->win_rf_chat_message_data_update(System_Ui->_registry.win.rf.chat_message_data);
                         _lock_release(&lvgl_api_lock);
                     }
+                }
+
+                assert = Nrf24l01.startReceive();
+                if (assert != RADIOLIB_ERR_NONE)
+                {
+                    printf("nrf24l01 startReceive fail (error code: %d)\n", assert);
                 }
 
                 Nrf24l01_Interrupt_Flag = false;
@@ -3217,6 +3227,12 @@ void System_Ui_Callback_Init(void)
             printf("nrf24l01 begin fail (error code: %d)\n", assert);
             return false;
         }
+
+        ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+                                       [](void *arg) -> IRAM_ATTR void
+                                       {
+                                           Nrf24l01_Interrupt_Flag = true;
+                                       });
 
         uint8_t address[] = {
             static_cast<uint8_t>(device_nrf24l01.params.address >> 32),
@@ -4892,7 +4908,8 @@ extern "C" void app_main(void)
     TCA8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
     TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
 
-    TCA8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 20000);
+    TCA8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
+                        0, ledc_mode_t::LEDC_LOW_SPEED_MODE, ledc_timer_bit_t ::LEDC_TIMER_5_BIT);
     TCA8418->start_pwm_gradient_time(30, 1000);
 
     XL9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -4937,12 +4954,6 @@ extern "C" void app_main(void)
 
     System_Ui->set_config_rf_params(System_Ui->_device_cc1101);
 
-    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
-                                   [](void *arg) -> IRAM_ATTR void
-                                   {
-                                       Nrf24l01_Interrupt_Flag = true;
-                                   });
-
     Nrf24l01_SPI_Bus->_bus_init_flag = true;
     assert_2 = Nrf24l01.begin();
     if (assert_2 == RADIOLIB_ERR_NONE)
@@ -4955,6 +4966,12 @@ extern "C" void app_main(void)
         Sys_Status.nrf24l01.init_flag = false;
         printf("nrf24l01 init fail (error code: %d)\n", assert_2);
     }
+
+    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+                                   [](void *arg) -> IRAM_ATTR void
+                                   {
+                                       Nrf24l01_Interrupt_Flag = true;
+                                   });
 
     System_Ui->set_config_rf_params(System_Ui->_device_nrf24l01);
 
