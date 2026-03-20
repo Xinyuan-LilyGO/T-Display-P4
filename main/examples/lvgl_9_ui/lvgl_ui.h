@@ -258,7 +258,7 @@ namespace Lvgl_Ui
                     {
                         lv_obj_t *root;
                         lv_obj_t *data_label;
-                    } esp32c6_at_test;
+                    } esp32c6_test;
 
                     // lv_obj_t *sleep_test;
 
@@ -577,7 +577,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
         Gt9895::Touch_Point _touch_point;
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         bool _edge_touch_flag = false;
@@ -596,7 +596,7 @@ namespace Lvgl_Ui
 
         void (*_win_cit_ethernet_test_callback)(bool status) = nullptr;
 
-        void (*_win_cit_esp32c6_at_test_callback)(bool status) = nullptr;
+        void (*_win_cit_esp32c6_test_callback)(bool status) = nullptr;
 
         // void (*_device_start_sleep_test_callback)(Sleep_Mode mode) = nullptr;
 
@@ -640,7 +640,7 @@ namespace Lvgl_Ui
         void set_imu_test(bool status);
         void set_gps_test(bool status);
         void set_ethernet_test(bool status);
-        void set_esp32c6_at_test(bool status);
+        void set_esp32c6_test(bool status);
         // void start_sleep_test(Sleep_Mode mode);
 
         void set_camera_status(bool status);
@@ -680,7 +680,7 @@ namespace Lvgl_Ui
 
         void init_win_cit_rtc_test(void);
 
-        void init_win_cit_esp32c6_at_test(void);
+        void init_win_cit_esp32c6_test(void);
 
         // void init_win_cit_sleep_test(void);
 
