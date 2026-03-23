@@ -4922,7 +4922,6 @@ extern "C" void app_main(void)
 
     Xl9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    Xl9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     Sx1262_Spi_Bus->_bus_init_flag = true;
 #endif

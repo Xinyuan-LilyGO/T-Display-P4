@@ -2,7 +2,7 @@
  * @Description: screen_lvgl
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:31:49
- * @LastEditTime: 2026-03-16 11:38:44
+ * @LastEditTime: 2026-03-23 14:19:52
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -435,11 +435,9 @@ extern "C" void app_main(void)
     {
         color_grid_buffer(color_buf, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BITS_PER_PIXEL / 8, SCREEN_HEIGHT);
 
-        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Bus->get_device_handle(), 0, 0,
-                                                  SCREEN_WIDTH, SCREEN_HEIGHT, color_buf);
-        if (err != ESP_OK)
+        if (Screen->send_color_stream_coordinate(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color_buf) == false)
         {
-            printf("esp_lcd_panel_draw_bitmap fail (error code: %#X)\n", err);
+            printf("send_color_stream_coordinate fail\n");
         }
 
         heap_caps_free(color_buf);
