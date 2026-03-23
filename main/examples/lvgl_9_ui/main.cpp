@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-20 16:20:37
+ * @LastEditTime: 2026-03-23 16:12:02
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -378,7 +378,7 @@ enum class Cc1101_Rf_Switch
     RF_SWITCH_868_915MHZ,
 };
 
-volatile bool TCA8418_Interrupt_Flag = false;
+volatile bool Tca8418_Interrupt_Flag = false;
 volatile bool Cc1101_Interrupt_Flag = false;
 volatile bool Nrf24l01_Interrupt_Flag = false;
 
@@ -392,8 +392,8 @@ auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
 //  Software IIC
-auto XL9555_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(XL9555_SDA, XL9555_SCL);
-auto TCA8418_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(TCA8418_SDA, TCA8418_SCL);
+auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(XL9555_SDA, XL9555_SCL);
+auto Tca8418_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(TCA8418_SDA, TCA8418_SCL);
 auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(BQ25896_SDA, BQ25896_SCL);
 
 // SPI
@@ -403,8 +403,8 @@ RadioLibHal *Cc1101_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Cc1101_SPI_Bu
 RadioLibHal *Nrf24l01_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Nrf24l01_SPI_Bus, 10000000, T_MIXRF_NRF24L01_CS);
 
 //  Software IIC
-auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9555_IIC_Bus, XL9555_IIC_ADDRESS);
-auto TCA8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(TCA8418_IIC_Bus, TCA8418_IIC_ADDRESS);
+auto Xl9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9555_Iic_Bus, XL9555_IIC_ADDRESS);
+auto Tca8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(Tca8418_Iic_Bus, TCA8418_IIC_ADDRESS);
 
 // SPI
 CC1101 Cc1101 = new Module(Cc1101_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
@@ -2587,11 +2587,11 @@ void my_keyboard_read(lv_indev_t *indev, lv_indev_data_t *data)
     static bool caps_lock_flag = false;
     static bool shift_press_flag = false;
 
-    if (TCA8418_Interrupt_Flag == true)
+    if (Tca8418_Interrupt_Flag == true)
     {
         Cpp_Bus_Driver::Tca8418::Irq_Status is;
 
-        if (TCA8418->parse_irq_status(TCA8418->get_irq_flag(), is) == false)
+        if (Tca8418->parse_irq_status(Tca8418->get_irq_flag(), is) == false)
         {
             printf("parse_irq_status fail\n");
         }
@@ -2600,7 +2600,7 @@ void my_keyboard_read(lv_indev_t *indev, lv_indev_data_t *data)
             if (is.key_events_flag == true)
             {
                 Cpp_Bus_Driver::Tca8418::Touch_Point tp;
-                if (TCA8418->get_multiple_touch_point(tp) == true)
+                if (Tca8418->get_multiple_touch_point(tp) == true)
                 {
                     // printf("touch finger: %d\n", tp.finger_count);
 
@@ -2611,7 +2611,7 @@ void my_keyboard_read(lv_indev_t *indev, lv_indev_data_t *data)
                         case Cpp_Bus_Driver::Tca8418::Event_Type::KEYPAD:
                         {
                             Cpp_Bus_Driver::Tca8418::Touch_Position tp_2;
-                            if (TCA8418->parse_touch_num(tp.info[i].num, tp_2) == true)
+                            if (Tca8418->parse_touch_num(tp.info[i].num, tp_2) == true)
                             {
                                 // printf("keypad event\n");
                                 // printf("   touch num:[%d] num: %d x: %d y: %d press_flag: %d\n", i + 1, tp.info[i].num, tp_2.x, tp_2.y, tp.info[i].press_flag);
@@ -2633,15 +2633,15 @@ void my_keyboard_read(lv_indev_t *indev, lv_indev_data_t *data)
                                         caps_lock_flag = !caps_lock_flag;
                                         if (caps_lock_flag == false)
                                         {
-                                            XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭LED
-                                            XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-                                            XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+                                            Xl9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭LED
+                                            Xl9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+                                            Xl9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
                                         }
                                         else
                                         {
-                                            XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::LOW); // 开启LED
-                                            XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-                                            XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+                                            Xl9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::LOW); // 开启LED
+                                            Xl9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+                                            Xl9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::LOW);
                                         }
                                     }
 
@@ -2691,11 +2691,11 @@ void my_keyboard_read(lv_indev_t *indev, lv_indev_data_t *data)
                     }
                 }
 
-                TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
+                Tca8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
             }
         }
 
-        TCA8418_Interrupt_Flag = false;
+        Tca8418_Interrupt_Flag = false;
     }
 
     if (pressed_state_flag == false)
@@ -2748,16 +2748,16 @@ void Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch rf_switch)
     switch (rf_switch)
     {
     case Cc1101_Rf_Switch::RF_SWITCH_315MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         break;
     case Cc1101_Rf_Switch::RF_SWITCH_434MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         break;
     case Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         break;
 
     default:
@@ -2768,23 +2768,23 @@ void Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch rf_switch)
 
 bool Set_T_Mixrf_Lr1121_Sleep()
 {
-    XL9555->pin_mode(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    // XL9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_mode(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     // vTaskDelay(pdMS_TO_TICKS(10));
-    XL9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     // vTaskDelay(pdMS_TO_TICKS(10));
-    // XL9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     // vTaskDelay(pdMS_TO_TICKS(10));
 
-    // XL9555->pin_mode(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    // XL9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    // Xl9555->pin_mode(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     // auto lr1121_spi_bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_LR1121_MOSI, T_MIXRF_LR1121_SCLK, T_MIXRF_LR1121_MISO, SPI2_HOST, 0);
     // RadioLibHal *lr1121_radiolib_hal = new Radiolib_Cpp_Bus_Driver_Hal(lr1121_spi_bus, 10000000, -1);
     // LR1121 lr1121 = new Module(lr1121_radiolib_hal, static_cast<uint32_t>(RADIOLIB_NC),
     //                            static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC));
 
-    // XL9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     // int16_t assert = lr1121.begin(434.0, 125.0, 9, 7, RADIOLIB_LR11X0_LORA_SYNC_WORD_PRIVATE, 10, 8, 3.3);
     // if (assert == RADIOLIB_ERR_NONE)
     // {
@@ -2793,18 +2793,18 @@ bool Set_T_Mixrf_Lr1121_Sleep()
     // else
     // {
     //     printf("lr1121 init fail (error code: %d)\n", assert);
-    //     XL9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    //     Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     //     return false;
     // }
     // assert = lr1121.sleep();
     // if (assert != RADIOLIB_ERR_NONE)
     // {
     //     printf("lr1121 sleep fail (error code: %d)\n", assert);
-    //     XL9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    //     Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     //     return false;
     // }
 
-    // XL9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     return true;
 }
 
@@ -4643,7 +4643,7 @@ extern "C" void app_main(void)
     xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
 
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
-    if (XL9555->begin() == false)
+    if (Xl9555->begin() == false)
     {
         printf("xl9555 init fail\n");
         Sys_Status.xl9555.init_flag = false;
@@ -4654,28 +4654,28 @@ extern "C" void app_main(void)
         Sys_Status.xl9555.init_flag = true;
     }
 
-    XL9555->pin_mode(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_mode(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_mode(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭led
-    XL9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_mode(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_LED_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH); // 关闭led
+    Xl9555->pin_write(XL9555_LED_2, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_write(XL9555_LED_3, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
-    XL9555->pin_mode(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_mode(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_write(XL9555_TCA8418_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    TCA8418->create_gpio_interrupt(TCA8418_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+    Tca8418->create_gpio_interrupt(TCA8418_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
                                    [](void *arg) -> IRAM_ATTR void
                                    {
-                                       TCA8418_Interrupt_Flag = true;
+                                       Tca8418_Interrupt_Flag = true;
                                    });
 
-    if (TCA8418->begin() == false)
+    if (Tca8418->begin() == false)
     {
         printf("tca8418 init fail\n");
         Sys_Status.tca8418.init_flag = false;
@@ -4685,16 +4685,16 @@ extern "C" void app_main(void)
         printf("tca8418 init success\n");
         Sys_Status.tca8418.init_flag = true;
     }
-    TCA8418->set_keypad_scan_window(0, 0, TCA8418_KEYPAD_SCAN_WIDTH, TCA8418_KEYPAD_SCAN_HEIGHT);
-    TCA8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
-    TCA8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
+    Tca8418->set_keypad_scan_window(0, 0, TCA8418_KEYPAD_SCAN_WIDTH, TCA8418_KEYPAD_SCAN_HEIGHT);
+    Tca8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
+    Tca8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
 
-    TCA8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
+    Tca8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
                         0, ledc_mode_t::LEDC_LOW_SPEED_MODE, ledc_timer_bit_t ::LEDC_TIMER_5_BIT);
-    TCA8418->start_pwm_gradient_time(30, 1000);
+    Tca8418->start_pwm_gradient_time(30, 1000);
 
-    XL9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     if (St25r3916_Init() == false)
     {
@@ -4709,8 +4709,8 @@ extern "C" void app_main(void)
 
     Set_T_Mixrf_Lr1121_Sleep();
 
-    XL9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
     ESP32P4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 

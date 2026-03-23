@@ -97,8 +97,10 @@ dependencies:
     override_path: "../libraries/ST25R3916"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
 
   NFC-RFAL:
     override_path: "../libraries/NFC-RFAL"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
