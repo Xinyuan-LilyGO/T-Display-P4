@@ -2,7 +2,7 @@
  * @Description: bq25896
  * @Author: LILYGO_L
  * @Date: 2026-03-06 11:26:23
- * @LastEditTime: 2026-03-23 17:35:02
+ * @LastEditTime: 2026-03-23 17:57:46
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -36,7 +36,9 @@ extern "C" void app_main(void)
     Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
     Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
 
-    // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+
+    Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
 
     while (1)
     {
