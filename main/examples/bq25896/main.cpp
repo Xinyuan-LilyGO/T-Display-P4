@@ -1,24 +1,15 @@
 /*
- * @Description: xl9535
+ * @Description: bq25896
  * @Author: LILYGO_L
- * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-01-13 17:50:27
+ * @Date: 2026-03-06 11:26:23
+ * @LastEditTime: 2026-03-23 17:35:02
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "t_display_p4_keyboard_config.h"
-#include "t_display_p4_driver.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
 #include "kode_bq25896.h"
 
-volatile bool Interrupt_Flag = false;
-
-auto IIC_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(BQ25896_SDA, BQ25896_SCL);
+auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
 
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
@@ -27,14 +18,12 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-    Init_Ldo_Channel_Power(4, 3300);
-
-    esp_err_t ret = Kode_Bq25896::bq25896_init(IIC_Bus, Bq25896_Handle);
-    if (ret != ESP_OK)
+    esp_err_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
+    if (assert != ESP_OK)
     {
         while (1)
         {
-            printf("Failed to initialize BQ25896! Error: %d\n", ret);
+            printf("bq25896_init fail (error code: %#X)\n", assert);
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
@@ -47,7 +36,7 @@ extern "C" void app_main(void)
     Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
     Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
 
-    Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
 
     while (1)
     {

@@ -74,6 +74,15 @@ menu "Example Configuration"
             bool "t_display_p4_keyboard"
     endchoice
 
+    choice BOARD_VERSION_T_DISPLAY_P4
+        prompt "Board version T-Display-P4"
+        default BOARD_VERSION_T_DISPLAY_P4_V1_1
+        config BOARD_VERSION_T_DISPLAY_P4_V1_0
+            bool "t_display_p4_v1_0"
+        config BOARD_VERSION_T_DISPLAY_P4_V1_1
+            bool "t_display_p4_v1_1"
+    endchoice
+
     choice
         prompt "Select the example to build"
         default EXAMPLE_BUILD_LVGL_9_UI
@@ -169,7 +178,7 @@ menu "Example Configuration"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_BQ25896
                 bool "bq25896"
-                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+                depends on BOARD_TYPE_T_DISPLAY_P4 && BOARD_VERSION_T_DISPLAY_P4_V1_1
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
                 depends on BOARD_TYPE_T_DISPLAY_P4
