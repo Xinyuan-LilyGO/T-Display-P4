@@ -50,6 +50,7 @@ dependencies:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE} == True"
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE} == True"
 
   esp_video_app_video:
     override_path: "../libraries/esp_video_app_video"

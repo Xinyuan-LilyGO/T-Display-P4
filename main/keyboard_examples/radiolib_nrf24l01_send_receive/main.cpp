@@ -2,18 +2,11 @@
  * @Description: radiolib_nrf24l01_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-03-20 16:16:09
+ * @LastEditTime: 2026-03-23 15:09:02
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "t_display_p4_keyboard_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
-#include "RadioLib.h"
 #include "radiolib_bridge_driver.h"
 
 // uint8_t Send_Package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -57,35 +50,35 @@ const uint8_t Send_Package[] =
 
 volatile bool Interrupt_Flag = false;
 
-auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
+auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
 
-auto SPI_Bus_2 = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_NRF24L01_MOSI, T_MIXRF_NRF24L01_SCLK, T_MIXRF_NRF24L01_MISO, SPI2_HOST, 0);
+auto Nrf24l01_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_NRF24L01_MOSI, T_MIXRF_NRF24L01_SCLK, T_MIXRF_NRF24L01_MISO, SPI2_HOST, 0);
 
-auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9555_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Xl9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9555_Iic_Bus, XL9555_IIC_ADDRESS);
 
-RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(SPI_Bus_2, 10000000, T_MIXRF_NRF24L01_CS);
+RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Nrf24l01_Spi_Bus, 10000000, T_MIXRF_NRF24L01_CS);
 nRF24 Nrf24l01 = new Module(Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
                             static_cast<uint32_t>(T_MIXRF_NRF24L01_INT), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
 
-auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    XL9555->begin();
-    XL9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9555->begin();
+    Xl9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    ESP32P4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
+    Esp32p4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
 
-    ESP32P4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_mode(T_MIXRF_ST25R3916_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_write(T_MIXRF_CC1101_CS, 1);
-    ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
-    ESP32P4->pin_write(T_MIXRF_ST25R3916_CS, 1);
+    Esp32p4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_mode(T_MIXRF_ST25R3916_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_write(T_MIXRF_CC1101_CS, 1);
+    Esp32p4->pin_write(T_MIXRF_NRF24L01_CS, 1);
+    Esp32p4->pin_write(T_MIXRF_ST25R3916_CS, 1);
 
     int16_t status = Nrf24l01.begin(2400.0, 1000.0, 0);
     if (status == RADIOLIB_ERR_NONE)
@@ -98,7 +91,7 @@ extern "C" void app_main(void)
     }
 
     // 中断需要放在Nrf24l01.begin后面
-    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+    Esp32p4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
                                    [](void *arg) -> IRAM_ATTR void
                                    {
                                        Interrupt_Flag = true;
@@ -118,7 +111,7 @@ extern "C" void app_main(void)
 
     while (1)
     {
-        if (ESP32P4->pin_read(ESP32P4_BOOT) == 0)
+        if (Esp32p4->pin_read(ESP32P4_BOOT) == 0)
         {
             vTaskDelay(pdMS_TO_TICKS(300));
 
