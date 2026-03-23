@@ -10,7 +10,7 @@
 
 auto Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(IIC_1_SDA, IIC_1_SCL, I2C_NUM_0);
 
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Iic_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Iic_Bus, XL9535_IIC_ADDRESS);
 
 void Iic_Scan(void)
 {
