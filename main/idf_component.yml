@@ -37,6 +37,7 @@ dependencies:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ICM20948} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
 
   ICM20948_WE:
     override_path: "../libraries/ICM20948_WE"
@@ -91,3 +92,13 @@ dependencies:
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ES8311_SD_MP3} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+
+  ST25R3916:
+    override_path: "../libraries/ST25R3916"
+    matches:
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
+
+  NFC-RFAL:
+    override_path: "../libraries/NFC-RFAL"
+    matches:
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4_KEYBOARD} == True && $CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
