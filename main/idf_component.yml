@@ -21,24 +21,28 @@ dependencies:
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   espressif/esp_wifi_remote:
     version: "1.3.2"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   arduino_cpp_bus_driver:
     override_path: "../libraries/arduino_cpp_bus_driver"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ICM20948} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   ICM20948_WE:
     override_path: "../libraries/ICM20948_WE"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_ICM20948} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   radiolib_bridge:
     override_path: "../libraries/radiolib_bridge"
@@ -51,6 +55,7 @@ dependencies:
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_SCREEN_CAMERA} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   lvgl/lvgl:
     version: "9.4.0"
@@ -70,6 +75,7 @@ dependencies:
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_DEEP_SLEEP} == True"
 
   espressif/iperf-cmd:
     version: "^0.1.1"

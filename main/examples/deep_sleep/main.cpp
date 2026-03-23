@@ -2,37 +2,29 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-03-14 10:29:56
+ * @LastEditTime: 2026-03-23 14:47:25
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/uart.h"
-#include "esp_sleep.h"
-#include "esp_log.h"
-#include "esp_timer.h"
-#include "light_sleep_example.h"
-#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
-#include "ICM20948_WE.h"
-#include "driver/rtc_io.h"
+#include "lilygo_device_driver_library.h"
+
+#include "Icm20948_WE.h"
+
 #include "esp_netif.h"
 #include "esp_eth.h"
-#include "ethernet_init.h"
 #include "esp_event.h"
-#include "esp_ldo_regulator.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_lcd_mipi_dsi.h"
-#include "t_display_p4_driver.h"
-#include "esp_lcd_panel_io.h"
+#include "ethernet_init.h"
+
 #include "app_video.h"
 #include "driver/ppa.h"
 #include "esp_private/esp_cache_private.h"
+#include "esp_video_init.h"
+
+#include "esp_hosted.h"
+#include "esp_wifi_remote.h"
+
+#include "esp_sleep.h"
+#include "light_sleep_example.h"
 
 #define ALIGN_UP(num, align) (((num) + ((align) - 1)) & ~((align) - 1))
 
@@ -41,87 +33,92 @@
 
 #define USE_SCREEN
 
+#define WIFI_SSID "xinyuandianzi"
+#define WIFI_PASSWORD "AA15994823428"
+
 uint8_t eth_port_cnt = 0;
 esp_eth_handle_t *eth_handles;
-esp_netif_t *eth_netifs[10];
-esp_eth_netif_glue_handle_t eth_netif_glues[10];
-
-esp_lcd_panel_handle_t Screen_Mipi_Dpi_Panel = NULL;
+esp_netif_t *eth_netif;
 
 ppa_client_handle_t ppa_srm_handle = NULL;
 size_t data_cache_line_size = 0;
-void *lcd_buffer[CONFIG_EXAMPLE_CAM_BUF_COUNT];
-int32_t fps_count;
-int64_t start_time;
 int32_t video_cam_fd0;
 
+int32_t fps_count;
+int64_t start_time;
+
 // IIC 1
-auto XL9535_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto BQ27220_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
-auto PCF8563_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_SDA, PCF8563_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Bq27220_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
+auto Pcf8563_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_SDA, PCF8563_SCL, I2C_NUM_0);
 
 // IIC 2
-auto SGM38121_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(SGM38121_SDA, SGM38121_SCL, I2C_NUM_1);
-auto AW86224_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(AW86224_SDA, AW86224_SCL, I2C_NUM_1);
-auto ES8311_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_1);
+auto Sgm38121_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(SGM38121_SDA, SGM38121_SCL, I2C_NUM_1);
+auto Aw86224_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(AW86224_SDA, AW86224_SCL, I2C_NUM_1);
+auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_1);
 
 // IIS
-auto ES8311_IIS_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK, I2S_NUM_0);
+auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK,
+                                                                     i2s_port_t::I2S_NUM_0, Cpp_Bus_Driver::Hardware_Iis::Data_Mode::INPUT_OUTPUT, Cpp_Bus_Driver::Hardware_Iis::Iis_Mode::STD,
+                                                                     i2s_clock_src_t::I2S_CLK_SRC_APLL);
 
 // UART
-auto L76K_Uart_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Uart>(GPS_RX, GPS_TX, UART_NUM_1);
-
-// SDIO
-auto ESP32C6_AT_SDIO_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Sdio>(ESP32C6_SDIO_CLK, ESP32C6_SDIO_CMD,
-                                                                           ESP32C6_SDIO_D0, ESP32C6_SDIO_D1, ESP32C6_SDIO_D2, ESP32C6_SDIO_D3, DEFAULT_CPP_BUS_DRIVER_VALUE,
-                                                                           DEFAULT_CPP_BUS_DRIVER_VALUE, DEFAULT_CPP_BUS_DRIVER_VALUE, DEFAULT_CPP_BUS_DRIVER_VALUE,
-                                                                           Cpp_Bus_Driver::Hardware_Sdio::Sdio_Port::SLOT_1);
+auto L76k_Uart_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Uart>(GPS_RX, GPS_TX, UART_NUM_1);
 
 // SPI
-auto SX1262_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI3_HOST, 0);
+auto Sx1262_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI3_HOST, 0);
+
+auto Screen_Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_MIPI_DSI_HSYNC, SCREEN_MIPI_DSI_HBP, SCREEN_MIPI_DSI_HFP,
+                                                                       SCREEN_MIPI_DSI_VSYNC, SCREEN_MIPI_DSI_VBP, SCREEN_MIPI_DSI_VFP, SCREEN_DATA_LANE_NUM,
+                                                                       [](uint8_t format) -> Cpp_Bus_Driver::Hardware_Mipi::Color_Format
+                                                                       {
+                                                                    switch (format)
+                                                                    {
+                                                                    case 16:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    case 24:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB888;
+                                                                    default:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    } }(SCREEN_BITS_PER_PIXEL));
 
 // IIC 1
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto BQ27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(BQ27220_IIC_Bus, BQ27220_IIC_ADDRESS);
-auto PCF8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(PCF8563_IIC_Bus, PCF8563_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+auto Bq27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(Bq27220_Iic_Bus, BQ27220_IIC_ADDRESS);
+auto Pcf8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(Pcf8563_Iic_Bus, PCF8563_IIC_ADDRESS);
 
 // IIC 2
-auto SGM38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(SGM38121_IIC_Bus, SGM38121_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto AW86224 = std::make_unique<Cpp_Bus_Driver::Aw862xx>(AW86224_IIC_Bus, AW86224_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(ES8311_IIC_Bus, ES8311_IIS_Bus, ES8311_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
-auto ICM20948 = std::make_unique<ICM20948_WE>(&Wire1, ICM20948_IIC_ADDRESS);
+auto Sgm38121 = std::make_unique<Cpp_Bus_Driver::Sgm38121>(Sgm38121_Iic_Bus, SGM38121_IIC_ADDRESS);
+auto Aw86224 = std::make_unique<Cpp_Bus_Driver::Aw862xx>(Aw86224_Iic_Bus, AW86224_IIC_ADDRESS);
+auto Es8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(Es8311_Iic_Bus, Es8311_Iis_Bus, ES8311_IIC_ADDRESS);
+auto Icm20948 = std::make_unique<ICM20948_WE>(&Wire1, ICM20948_IIC_ADDRESS);
 
 // UART
-auto L76K = std::make_unique<Cpp_Bus_Driver::L76k>(L76K_Uart_Bus, [](bool Value) -> IRAM_ATTR bool
-                                                   { return XL9535->pin_write(XL9535_GPS_WAKE_UP, static_cast<Cpp_Bus_Driver::Xl95x5::Value>(Value)); }, DEFAULT_CPP_BUS_DRIVER_VALUE);
-
-// SDIO
-auto ESP32C6_AT = std::make_unique<Cpp_Bus_Driver::Esp_At>(ESP32C6_AT_SDIO_Bus,
-                                                           [](bool value) -> IRAM_ATTR void
-                                                           {
-                                                               // ESP32C6复位
-                                                               XL9535->pin_write(XL9535_ESP32C6_EN, static_cast<Cpp_Bus_Driver::Xl95x5::Value>(value));
-                                                           });
+auto L76k = std::make_unique<Cpp_Bus_Driver::L76k>(L76k_Uart_Bus, [](bool Value) -> IRAM_ATTR bool
+                                                   { return Xl9535->pin_write(XL9535_GPS_WAKE_UP, static_cast<Cpp_Bus_Driver::Xl95x5::Value>(Value)); });
 
 // SPI
-auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SX1262_SPI_Bus, Cpp_Bus_Driver::Sx126x::Chip_Type::SX1262, SX1262_BUSY,
-                                                       SX1262_CS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Sx1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(Sx1262_Spi_Bus, Cpp_Bus_Driver::Sx126x::Chip_Type::SX1262, SX1262_BUSY,
+                                                       SX1262_CS);
 
-auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-auto HI8561_T_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
+auto Hi8561_Iic_Touch_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_IIC_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Hi8561_Touch = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(Hi8561_Iic_Touch_Bus, HI8561_TOUCH_IIC_ADDRESS);
+
+auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-auto GT9895_IIC_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
 
-auto GT9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(GT9895_IIC_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR,
-                                                       DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Gt9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR);
+
+auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 /** Event handler for Ethernet events */
@@ -175,7 +172,7 @@ void Device_Sleep_Status(bool status)
     {
         printf("device sleep start\n");
 
-        ICM20948->sleep(true);
+        Icm20948->sleep(true);
 
         Cpp_Bus_Driver::Es8311::Power_Status ps =
             {
@@ -190,118 +187,85 @@ void Device_Sleep_Status(bool status)
                     },
                 .vmid = Cpp_Bus_Driver::Es8311::Vmid::POWER_DOWN,
             };
-        ES8311->set_power_status(ps);
-        ES8311->set_pga_power(false);
-        ES8311->set_adc_power(false);
-        ES8311->set_dac_power(false);
+        Es8311->set_power_status(ps);
+        Es8311->set_pga_power(false);
+        Es8311->set_adc_power(false);
+        Es8311->set_dac_power(false);
 
-        ES8311->software_reset(true);
-
-        if (ESP32C6_AT->set_deep_sleep(100000) == false)
-        {
-            printf("esp32c6-at failed to enter deep sleep mode\n");
-        }
-        else
-        {
-            printf("esp32c6-at successfully entered deep sleep mode\n");
-        }
-
-        // if (ESP32C6_AT->set_sleep(Cpp_Bus_Driver::Esp_At::Sleep_Mode::POWER_DOWN) == false)
-        // {
-        //     printf("esp32c6-at failed to enter sleep mode\n");
-        // }
-        // else
-        // {
-        //     printf("esp32c6-at successfully entered sleep mode\n");
-        // }
+        Es8311->software_reset(true);
 
 #if defined CONFIG_CAMERA_TYPE_SC2336
-        SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
-        SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
+        Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
+        Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
 #elif (defined CONFIG_CAMERA_TYPE_OV2710) || (defined CONFIG_CAMERA_TYPE_OV5645)
-        SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
-        SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
-        SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
+        Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
+        Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
+        Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         printf("stop and deinitialize Ethernet network...\n");
-        // Stop Ethernet driver state machine and destroy netif
-        for (int i = 0; i < eth_port_cnt; i++)
-        {
-            ESP_ERROR_CHECK(esp_eth_stop(eth_handles[i]));
-            ESP_ERROR_CHECK(esp_eth_del_netif_glue(eth_netif_glues[i]));
-            esp_netif_destroy(eth_netifs[i]);
-        }
-        esp_netif_deinit();
-        ESP_ERROR_CHECK(example_eth_deinit(eth_handles, eth_port_cnt));
-        ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_ETH_GOT_IP, got_ip_event_handler));
-        ESP_ERROR_CHECK(esp_event_handler_unregister(ETH_EVENT, ESP_EVENT_ANY_ID, eth_event_handler));
-        ESP_ERROR_CHECK(esp_event_loop_delete_default());
 
-        SX1262->set_sleep();
+        esp_eth_stop(eth_handles[0]);
+        // esp_eth_del_netif_glue(eth_netif_glues[0]);
+        esp_netif_destroy(eth_netif);
+        ethernet_deinit_all(eth_handles);
+
+        Sx1262->set_sleep();
 
 #if defined USE_SCREEN
         printf("esp_lcd_panel_disp_off\n");
-        esp_lcd_panel_disp_off(Screen_Mipi_Dpi_Panel, true);
-        printf("esp_lcd_panel_disp_sleep\n");
-        esp_lcd_panel_disp_sleep(Screen_Mipi_Dpi_Panel, true);
 
-        esp_lcd_panel_del(Screen_Mipi_Dpi_Panel);
-        printf("esp_lcd_panel_del\n");
+        Screen->set_screen_off(true);
+        Screen->set_sleep(true);
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
-        XL9535->pin_mode(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9535->pin_mode(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        Xl9535->pin_write(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-        GT9895->set_sleep();
+        Gt9895->set_sleep();
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 #endif
 
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 
-        // XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        // XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        // XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        XL9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-#if defined USE_SCREEN
-        XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-#endif
-        // XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        // XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        // Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        // Xl9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        // Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        // Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        // Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+        Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+
+        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 #if !defined USE_SCREEN
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO4, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO4, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 #endif
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO5, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO6, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO7, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO10, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO11, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO12, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO13, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO14, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO15, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO16, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        XL9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO17, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO5, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO6, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO7, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO10, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO11, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO12, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO13, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO14, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO15, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO16, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO17, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
     }
     else
     {
@@ -313,8 +277,8 @@ void sleep_task(void *args)
 {
     while (true)
     {
-        XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
         Device_Sleep_Status(true);
 
@@ -322,33 +286,33 @@ void sleep_task(void *args)
         {
             if ((i == SX1262_BUSY) || (i == SX1262_CS))
             {
-                // ESP32P4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::DISABLE);
+                // Esp32p4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::DISABLE);
             }
             else
             {
-                ESP32P4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+                Esp32p4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
             }
         }
 
-        ESP32P4->pin_mode(IIC_1_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-        ESP32P4->pin_mode(IIC_1_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+        Esp32p4->pin_mode(IIC_1_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+        Esp32p4->pin_mode(IIC_1_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-        ESP32P4->pin_mode(IIC_2_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-        ESP32P4->pin_mode(IIC_2_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+        Esp32p4->pin_mode(IIC_2_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+        Esp32p4->pin_mode(IIC_2_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-        // ESP32P4->pin_mode(SDIO_1_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // ESP32P4->pin_mode(SDIO_1_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // ESP32P4->pin_mode(SDIO_1_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // ESP32P4->pin_mode(SDIO_1_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // ESP32P4->pin_mode(SDIO_1_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // ESP32P4->pin_mode(SDIO_1_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        // Esp32p4->pin_mode(SDIO_1_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 
-        ESP32P4->pin_mode(SDIO_2_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        ESP32P4->pin_mode(SDIO_2_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        ESP32P4->pin_mode(SDIO_2_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        ESP32P4->pin_mode(SDIO_2_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        ESP32P4->pin_mode(SDIO_2_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        ESP32P4->pin_mode(SDIO_2_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+        Esp32p4->pin_mode(SDIO_2_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
 
         printf("entering sleep\n");
         /* To make sure the complete line is printed before entering sleep mode,
@@ -408,9 +372,9 @@ void sleep_task(void *args)
 
 void ES8311_Init(void)
 {
-    ES8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
+    Es8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
 
-    if (ES8311->begin(50000) == true)
+    if (Es8311->begin(50000) == true)
     {
         printf("es8311 initialization success\n");
     }
@@ -419,16 +383,16 @@ void ES8311_Init(void)
         printf("es8311 initialization fail\n");
     }
 
-    ES8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
+    Es8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
 
-    ES8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
+    Es8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
 
-    ES8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
+    Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
 
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
     Cpp_Bus_Driver::Es8311::Power_Status ps =
         {
             .contorl =
@@ -442,49 +406,49 @@ void ES8311_Init(void)
                 },
             .vmid = Cpp_Bus_Driver::Es8311::Vmid::START_UP_VMID_NORMAL_SPEED_CHARGE,
         };
-    ES8311->set_power_status(ps);
-    ES8311->set_pga_power(true);
-    ES8311->set_adc_power(true);
-    ES8311->set_dac_power(true);
-    ES8311->set_output_to_hp_drive(true);
-    ES8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
-    ES8311->set_adc_hpf_stage2_coeff(10);
-    ES8311->set_dac_equalizer(false);
+    Es8311->set_power_status(ps);
+    Es8311->set_pga_power(true);
+    Es8311->set_adc_power(true);
+    Es8311->set_dac_power(true);
+    Es8311->set_output_to_hp_drive(true);
+    Es8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
+    Es8311->set_adc_hpf_stage2_coeff(10);
+    Es8311->set_dac_equalizer(false);
 
-    ES8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
-    ES8311->set_adc_auto_volume_control(false);
-    ES8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
-    ES8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
+    Es8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
+    Es8311->set_adc_auto_volume_control(false);
+    Es8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
+    Es8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
 
-    ES8311->set_adc_volume(191);
-    ES8311->set_dac_volume(210);
+    Es8311->set_adc_volume(191);
+    Es8311->set_dac_volume(210);
 
     // 将ADC的数据自动输出到DAC上
-    // ES8311->set_adc_data_to_dac(true);
+    // Es8311->set_adc_data_to_dac(true);
 }
 
 bool ICM20948_Init(void)
 {
     Wire1.begin(ICM20948_SDA, ICM20948_SCL);
-    if (ICM20948->init() == false)
+    if (Icm20948->init() == false)
     {
         printf("ICM20948 AG initialization failed\n");
         return false;
     }
 
-    if (ICM20948->initMagnetometer() == false)
+    if (Icm20948->initMagnetometer() == false)
     {
         printf("ICM20948 M initialization failed\n");
         return false;
     }
 
     printf("Position your ICM20948 flat and don't move it - calibrating...\n");
-    ICM20948->autoOffsets();
+    Icm20948->autoOffsets();
     printf("Done!\n");
 
-    ICM20948->setAccRange(ICM20948_ACC_RANGE_2G);
-    ICM20948->setAccDLPF(ICM20948_DLPF_6);
-    ICM20948->setMagOpMode(AK09916_CONT_MODE_20HZ);
+    Icm20948->setAccRange(ICM20948_ACC_RANGE_2G);
+    Icm20948->setAccDLPF(ICM20948_DLPF_6);
+    Icm20948->setMagOpMode(AK09916_CONT_MODE_20HZ);
 
     return true;
 }
@@ -492,7 +456,7 @@ bool ICM20948_Init(void)
 void Iic_Scan(void)
 {
     std::vector<uint8_t> address_1;
-    if (XL9535_IIC_Bus->scan_7bit_address(&address_1) == true)
+    if (Xl9535_Iic_Bus->scan_7bit_address(&address_1) == true)
     {
         for (size_t i = 0; i < address_1.size(); i++)
         {
@@ -501,7 +465,7 @@ void Iic_Scan(void)
     }
 
     std::vector<uint8_t> address_2;
-    if (SGM38121_IIC_Bus->scan_7bit_address(&address_2) == true)
+    if (Sgm38121_Iic_Bus->scan_7bit_address(&address_2) == true)
     {
         for (size_t i = 0; i < address_2.size(); i++)
         {
@@ -512,122 +476,119 @@ void Iic_Scan(void)
 
 void Ethernet_Init(void)
 {
-    // Initialize Ethernet driver
-    ESP_ERROR_CHECK(example_eth_init(&eth_handles, &eth_port_cnt));
+    char if_key_str[10];
+    char if_desc_str[10];
+    esp_netif_config_t cfg;
+    esp_netif_inherent_config_t eth_netif_cfg;
 
-    // Initialize TCP/IP network interface aka the esp-netif (should be called only once in application)
-    ESP_ERROR_CHECK(esp_netif_init());
-    // Create default event loop that running in background
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    // Create instance(s) of esp-netif for Ethernet(s)
-    if (eth_port_cnt == 1)
-    {
-        // Use ESP_NETIF_DEFAULT_ETH when just one Ethernet interface is used and you don't need to modify
-        // default esp-netif configuration parameters.
-        esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
-        eth_netifs[0] = esp_netif_new(&cfg);
-        eth_netif_glues[0] = esp_eth_new_netif_glue(eth_handles[0]);
-        // Attach Ethernet driver to TCP/IP stack
-        ESP_ERROR_CHECK(esp_netif_attach(eth_netifs[0], eth_netif_glues[0]));
-    }
-    else
-    {
-        // Use ESP_NETIF_INHERENT_DEFAULT_ETH when multiple Ethernet interfaces are used and so you need to modify
-        // esp-netif configuration parameters for each interface (name, priority, etc.).
-        esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
-        esp_netif_config_t cfg_spi = {
-            .base = &esp_netif_config,
-            .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH};
-        char if_key_str[10];
-        char if_desc_str[10];
-        char num_str[3];
-        for (int i = 0; i < eth_port_cnt; i++)
-        {
-            itoa(i, num_str, 10);
-            strcat(strcpy(if_key_str, "ETH_"), num_str);
-            strcat(strcpy(if_desc_str, "eth"), num_str);
-            esp_netif_config.if_key = if_key_str;
-            esp_netif_config.if_desc = if_desc_str;
-            esp_netif_config.route_prio -= i * 5;
-            eth_netifs[i] = esp_netif_new(&cfg_spi);
-            eth_netif_glues[i] = esp_eth_new_netif_glue(eth_handles[0]);
-            // Attach Ethernet driver to TCP/IP stack
-            ESP_ERROR_CHECK(esp_netif_attach(eth_netifs[i], eth_netif_glues[i]));
-        }
-    }
+    ethernet_init_all(&eth_handles, &eth_port_cnt);
 
     // Register user defined event handers
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
 
-    // Start Ethernet driver state machine
+    if (eth_port_cnt == 1)
+    {
+        // Use default config when using one interface
+        eth_netif_cfg = *(ESP_NETIF_BASE_DEFAULT_ETH);
+    }
+    else
+    {
+        // Set config to support multiple interfaces
+        eth_netif_cfg = (esp_netif_inherent_config_t)ESP_NETIF_INHERENT_DEFAULT_ETH();
+    }
+    cfg = (esp_netif_config_t){
+        .base = &eth_netif_cfg,
+        .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH};
     for (int i = 0; i < eth_port_cnt; i++)
     {
-        ESP_ERROR_CHECK(esp_eth_start(eth_handles[i]));
+        sprintf(if_key_str, "ETH_%d", i);
+        sprintf(if_desc_str, "eth%d", i);
+        eth_netif_cfg.if_key = if_key_str;
+        eth_netif_cfg.if_desc = if_desc_str;
+        eth_netif_cfg.route_prio -= i * 5;
+        eth_netif = esp_netif_new(&cfg);
+        ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
+        esp_eth_start(eth_handles[i]);
     }
 }
 
-void Esp32c6_At_Init(void)
+void wifi_event_handler(void *arg, esp_event_base_t event_base,
+                        int32_t event_id, void *event_data)
 {
-    ESP32C6_AT->begin();
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
+    {
+        printf("wifi started\n");
 
-    // 开启falsh保存
-    if (ESP32C6_AT->set_flash_save(true) == true)
-    {
-        printf("set_flash_save success\n");
+        // esp_wifi_connect();
     }
-    else
+    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
-        printf("set_flash_save fail\n");
+        printf("wifi disconnected / connect failed, retrying...\n");
+        esp_wifi_connect();
     }
-
-    if (ESP32C6_AT->set_wifi_mode(Cpp_Bus_Driver::Esp_At::Wifi_Mode::STATION) == true)
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
-        printf("set_wifi_mode success\n");
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        char ip_str[64];
+        sprintf(ip_str, "wifi ip:" IPSTR ":", IP2STR(&event->ip_info.ip));
+        printf("got ip: %s\n", ip_str);
     }
-    else
-    {
-        printf("set_wifi_mode fail\n");
-    }
-
-    std::vector<uint8_t> buffer_wifi_scan;
-    if (ESP32C6_AT->wifi_scan(buffer_wifi_scan) == true)
-    {
-        printf("wifi_scan: \n[%s]\n", buffer_wifi_scan.data());
-    }
-    else
-    {
-        printf("wifi_scan fail\n");
-    }
-
-    // std::string ssid = "xinyuandianzi";
-    // std::string password = "AA15994823428";
-    // if (ESP32C6_AT->set_wifi_connect(ssid, password) == true)
-    // {
-    //     printf("set_wifi_connect success\nconnected to wifi ssid: [%s],password: [%s]\n", ssid.c_str(), password.c_str());
-    // }
-    // else
-    // {
-    //     printf("set_wifi_connect fail\n");
-    // }
-
-    // Cpp_Bus_Driver::Esp_At::Real_Time rt;
-    // if (ESP32C6_AT->get_real_time(rt) == true)
-    // {
-    //     printf("get_real_time success\n");
-    //     printf("real_time week: [%s] day: [%d] month: [%d] year: [%d] time: [%d:%d:%d] time zone: [%s] china time: [%d:%d:%d]\n",
-    //            rt.week.c_str(), rt.day, rt.month, rt.year, rt.hour, rt.minute, rt.second, rt.time_zone.c_str(),
-    //            (rt.hour + 8 + 24) % 24, rt.minute, rt.second);
-    // }
-    // else
-    // {
-    //     printf("get_real_time fail\n");
-    // }
 }
 
-void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
-                                  size_t camera_buf_len, void *user_data)
+bool Wifi_Init_Connect(void)
+{
+    // esp_err_t ret = nvs_flash_init();
+    // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    // {
+    //     ESP_ERROR_CHECK(nvs_flash_erase());
+    //     ret = nvs_flash_init();
+    // }
+    // ESP_ERROR_CHECK(ret);
+
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                                        &wifi_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                                        &wifi_event_handler, NULL, NULL));
+
+    wifi_config_t wifi_config =
+        {
+            .sta =
+                {
+                    .ssid = WIFI_SSID,
+                    .password = WIFI_PASSWORD,
+                },
+        };
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    printf("connecting to wifi: %s\n", WIFI_SSID);
+    ESP_ERROR_CHECK(esp_wifi_connect());
+
+    // Wait for connection
+    for (int i = 0; i < 10; i++)
+    {
+        wifi_ap_record_t ap_info;
+        // Check connection status
+        if ((esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) && (ap_info.ssid[0] != 0))
+        {
+            printf("wifi connected\n");
+            return true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    return false;
+}
+
+void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves, size_t camera_buf_len)
 {
     fps_count++;
     if (fps_count == 50)
@@ -639,82 +600,10 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
 
         printf("camera_buf_hes: %lu, camera_buf_ves: %lu, camera_buf_len: %d KB\n", camera_buf_hes, camera_buf_ves, camera_buf_len / 1024);
     }
-
-    ppa_srm_oper_config_t srm_config =
-        {
-            .in =
-                {
-                    .buffer = camera_buf,
-                    .pic_w = camera_buf_hes,
-                    .pic_h = camera_buf_ves,
-                    .block_w = camera_buf_hes,
-                    .block_h = camera_buf_ves,
-                    .block_offset_x = (camera_buf_hes > SCREEN_WIDTH) ? (camera_buf_hes - SCREEN_WIDTH) / 2 : 0,
-                    .block_offset_y = (camera_buf_ves > SCREEN_HEIGHT) ? (camera_buf_ves - SCREEN_HEIGHT) / 2 : 0,
-                    .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
-                },
-
-            .out =
-                {
-                    .buffer = lcd_buffer[camera_buf_index],
-                    .buffer_size = ALIGN_UP(SCREEN_WIDTH * SCREEN_HEIGHT * (APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? 2 : 3), data_cache_line_size),
-                    .pic_w = SCREEN_WIDTH,
-                    .pic_h = SCREEN_HEIGHT,
-                    .block_offset_x = 0,
-                    .block_offset_y = 0,
-                    .srm_cm = APP_VIDEO_FMT == APP_VIDEO_FMT_RGB565 ? PPA_SRM_COLOR_MODE_RGB565 : PPA_SRM_COLOR_MODE_RGB888,
-                },
-
-            .rotation_angle = PPA_SRM_ROTATION_ANGLE_0,
-            .scale_x = 1,
-            .scale_y = 1,
-            .mirror_x = true,
-            .mirror_y = true,
-            .rgb_swap = false,
-            .byte_swap = false,
-            .mode = PPA_TRANS_MODE_BLOCKING,
-        };
-
-    if (camera_buf_hes > SCREEN_WIDTH || camera_buf_ves > SCREEN_HEIGHT)
-    {
-        // The resolution of the camera does not match the LCD resolution. Image processing can be done using PPA, but there will be some frame rate loss
-
-        srm_config.in.block_w = (camera_buf_hes > SCREEN_WIDTH) ? SCREEN_WIDTH : camera_buf_hes;
-        srm_config.in.block_h = (camera_buf_ves > SCREEN_HEIGHT) ? SCREEN_HEIGHT : camera_buf_ves;
-
-        esp_err_t assert = ppa_do_scale_rotate_mirror(ppa_srm_handle, &srm_config);
-        if (assert != ESP_OK)
-        {
-            printf("ppa_do_scale_rotate_mirror fail (error code: %#X)\n", assert);
-        }
-
-        assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, (SCREEN_HEIGHT - srm_config.in.block_h) / 2 + 120,
-                                           srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2 - 120, lcd_buffer[camera_buf_index]);
-        if (assert != ESP_OK)
-        {
-            printf("esp_lcd_panel_draw_bitmap fail (error code: %#X)\n", assert);
-        }
-    }
-    else
-    {
-        // esp_err_t assert = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, camera_buf_hes, camera_buf_ves, camera_buf);
-        // if (assert != ESP_OK)
-        // {
-        //     printf("esp_lcd_panel_draw_bitmap fail (error code: %#X)\n", assert);
-        // }
-    }
 }
 
-bool App_Video_Init()
+bool App_Video_Init(void)
 {
-    esp_lcd_panel_handle_t mipi_dpi_panel = NULL;
-
-    if (Camera_Init(&mipi_dpi_panel) == false)
-    {
-        printf("Camera_Init fail\n");
-        return false;
-    }
-
     ppa_client_config_t ppa_srm_config =
         {
             .oper_type = PPA_OPERATION_SRM,
@@ -732,63 +621,61 @@ bool App_Video_Init()
         return false;
     }
 
-    assert = app_video_main(SGM38121_IIC_Bus->get_bus_handle());
+    esp_video_init_csi_config_t csi_config =
+        {
+            .sccb_config = {
+                .init_sccb = false,
+                .i2c_handle = Sgm38121_Iic_Bus->get_bus_handle(),
+                .freq = static_cast<uint32_t>(100000),
+            },
+            .reset_pin = gpio_num_t ::GPIO_NUM_NC,
+            .pwdn_pin = gpio_num_t ::GPIO_NUM_NC,
+
+            .dont_init_ldo = true,
+        };
+
+    esp_video_init_config_t cam_config =
+        {
+            .csi = &csi_config,
+        };
+
+    assert = esp_video_init(&cam_config);
     if (assert != ESP_OK)
     {
-        printf("video_init fail (error code: %#X)\n", assert);
+        printf("esp_video_init fail (error code: %#X)\n", assert);
         return false;
     }
 
-    video_cam_fd0 = app_video_open(EXAMPLE_CAM_DEV_PATH, APP_VIDEO_FMT);
+#if (defined CONFIG_CAMERA_TYPE_SC2336) || (defined CONFIG_CAMERA_TYPE_OV2710)
+#if defined CONFIG_SCREEN_PIXEL_FORMAT_RGB565
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB565);
     if (video_cam_fd0 < 0)
     {
         printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
         return false;
     }
-
-#if CONFIG_EXAMPLE_CAM_BUF_COUNT == 2
-    assert = esp_lcd_dpi_panel_get_frame_buffer(mipi_dpi_panel, 2, &lcd_buffer[0], &lcd_buffer[1]);
-#else
-    assert = esp_lcd_dpi_panel_get_frame_buffer(mipi_dpi_panel, 3, &lcd_buffer[0], &lcd_buffer[1], &lcd_buffer[2]);
-#endif
-    if (assert != ESP_OK)
+#elif defined CONFIG_SCREEN_PIXEL_FORMAT_RGB888
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB888);
+    if (video_cam_fd0 < 0)
     {
-        printf("esp_lcd_dpi_panel_get_frame_buffer fail (error code: %#X)\n", assert);
+        printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
         return false;
     }
+#else
+#error "no macro definition is set"
+#endif
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB565);
+    if (video_cam_fd0 < 0)
+    {
+        printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
+        return false;
+    }
+#else
+#error "no macro definition is set"
+#endif
 
-    // #if CONFIG_EXAMPLE_USE_MEMORY_MAPPING
-    //     ESP_LOGI(TAG, "Using map buffer");
-    //     // When setting the camera video buffer, it can be written as NULL to automatically allocate the buffer using mapping
-    //     assert = app_video_set_bufs(app_video_set_bufs(video_cam_fd0, EXAMPLE_CAM_BUF_NUM, NULL));
-    //     if (assert != ESP_OK)
-    //     {
-    //         printf("app_video_set_bufs fail (error code: %#X)\n", assert);
-    //         return false;
-    //     }
-    // #elif CONFIG_CAMERA_CAMERA_MIPI_RAW8_1280X720_30FPS
-    //     printf("using user defined buffer\n");
-    //     assert = app_video_set_bufs(video_cam_fd0, CONFIG_EXAMPLE_CAM_BUF_COUNT, (const void **)lcd_buffer);
-    //     if (assert != ESP_OK)
-    //     {
-    //         printf("app_video_set_bufs fail (error code: %#X)\n", assert);
-    //         return false;
-    //     }
-    // #else
-    //     void *camera_buf[EXAMPLE_CAM_BUF_NUM];
-    //     for (int i = 0; i < EXAMPLE_CAM_BUF_NUM; i++)
-    //     {
-    //         camera_buf[i] = heap_caps_aligned_calloc(data_cache_line_size, 1, app_video_get_buf_size(), MALLOC_CAP_SPIRAM);
-    //     }
-    //     assert = app_video_set_bufs(video_cam_fd0, EXAMPLE_CAM_BUF_NUM, (const void **)camera_buf);
-    //     if (assert != ESP_OK)
-    //     {
-    //         printf("app_video_set_bufs fail (error code: %#X)\n", assert);
-    //         return false;
-    //     }
-    // #endif
-
-    assert = app_video_set_bufs(video_cam_fd0, CONFIG_EXAMPLE_CAM_BUF_COUNT, (const void **)lcd_buffer);
+    assert = app_video_set_bufs(video_cam_fd0, CAMERA_BUFFER_COUNT, NULL);
     if (assert != ESP_OK)
     {
         printf("app_video_set_bufs fail (error code: %#X)\n", assert);
@@ -803,14 +690,15 @@ bool App_Video_Init()
         return false;
     }
 
-    assert = app_video_stream_task_start(video_cam_fd0, 0, NULL);
+    assert = app_video_stream_task_start(video_cam_fd0, 0);
     if (assert != ESP_OK)
     {
+
         printf("app_video_stream_task_start fail (error code: %#X)\n", assert);
         return false;
     }
 
-    app_video_stream_task_stop(video_cam_fd0);
+    // app_video_stream_task_stop(video_cam_fd0);
 
     // // Get the initial time for frame rate statistics
     // start_time = esp_timer_get_time();
@@ -822,103 +710,116 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-    // Hardware_Usb_Cdc_Init();
+    Xl9535->begin();
 
-    XL9535->begin();
+    Xl9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-#if defined USE_SCREEN
-    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
-    XL9535->pin_mode(XL9535_TOUCH_INT, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    Esp32p4->pin_mode(ETHERNET_MDC, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+    Esp32p4->pin_mode(ETHERNET_MDIO, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    if (Sgm38121->begin() == false)
+    {
+        printf("sgm38121 init fail\n");
+    }
+
+#if defined CONFIG_CAMERA_TYPE_SC2336
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
+#elif defined CONFIG_CAMERA_TYPE_OV2710
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1700);
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 3000);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
+#elif defined CONFIG_CAMERA_TYPE_OV5645
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
+    Sgm38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
+    Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
+#else
+#error "no macro definition is set"
 #endif
 
-    XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    // 开关3.3v电压时候必须先将GPS断电
-    XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    // 开关3.3v电压时候必须先将ESP32C6断电
-    XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Lilygo_Device_Driver::Init_Ldo_Channel_Power(3, 2500);
 
-    XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Lilygo_Device_Driver::Init_Ldo_Channel_Power(4, 3300);
 
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_5_0_V_POWER_EN ON\n");
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_5_0_V_POWER_EN OFF\n");
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_5_0_V_POWER_EN ON\n");
+#if defined USE_SCREEN
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+#endif
+    Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(100));
+#if defined USE_SCREEN
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+#endif
+    Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(100));
+#if defined USE_SCREEN
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+#endif
+    Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
-    // vTaskDelay(pdMS_TO_TICKS(1000));
+    // Initialize TCP/IP network interface aka the esp-netif (should be called only once in application)
+    ESP_ERROR_CHECK(esp_netif_init());
+    // Create default event loop that running in background
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_3_3_V_POWER_EN ON\n");
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_3_3_V_POWER_EN OFF\n");
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    printf("XL9535_3_3_V_POWER_EN ON\n");
-
-    XL9535->pin_mode(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
     Ethernet_Init();
 
 #if defined USE_SCREEN
 #if defined CONFIG_SCREEN_TYPE_HI8561
     // 这个必须放在以太网后面
-    ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Screen->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 #endif
-
-    SGM38121->begin();
-#if defined CONFIG_CAMERA_TYPE_SC2336
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
-#elif defined CONFIG_CAMERA_TYPE_OV2710
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 3100);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
-#elif defined CONFIG_CAMERA_TYPE_OV5645
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, 1500);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, 1800);
-    SGM38121->set_output_voltage(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, 2800);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::DVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::ON);
-    SGM38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::ON);
-#else
-#error "unknown macro definition, please select the correct macro definition."
-#endif
-
-    Init_Ldo_Channel_Power(3, 1830);
-
-    vTaskDelay(pdMS_TO_TICKS(100));
 
     if (App_Video_Init() == false)
     {
@@ -926,111 +827,78 @@ extern "C" void app_main(void)
     }
 
 #if defined USE_SCREEN
-    Screen_Init(&Screen_Mipi_Dpi_Panel);
 
-    esp_err_t assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
-    if (assert != ESP_OK)
-    {
-        printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
-    }
-
-    XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    Screen->begin(SCREEN_MIPI_DSI_DPI_CLK_MHZ, SCREEN_LANE_BIT_RATE_MBPS);
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    HI8561_T_IIC_Bus->set_bus_handle(XL9535_IIC_Bus->get_bus_handle());
+    Hi8561_Iic_Touch_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
-    HI8561_T->begin();
+    Hi8561_Touch->begin();
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-    GT9895_IIC_Bus->set_bus_handle(XL9535_IIC_Bus->get_bus_handle());
+    Gt9895_Touch_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
-    GT9895->begin();
+    Gt9895->begin();
 
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 #endif
+    if (Wifi_Init_Connect() == false)
+    {
+        printf("Wifi_Init_Connect fail\n");
+    }
 
-    XL9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    XL9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    // if (Sdmmc_Init(SD_BASE_PATH) == false)
-    // {
-    //     printf("Sdmmc_Init fail\n");
-    // }
+    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
+    {
+        printf("Sdmmc_Init fail\n");
+    }
 
-    // if (Sdspi_Init(SD_BASE_PATH) == false)
-    // {
-    //     printf("Sdspi_Init fail\n");
-    // }
+    Pcf8563_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
+    Pcf8563->begin();
 
-    PCF8563_IIC_Bus->set_bus_handle(XL9535_IIC_Bus->get_bus_handle());
-    PCF8563->begin();
-
-    // ESP32C6复位模式
-    // XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Esp32c6_At_Init();
-
-    BQ27220_IIC_Bus->set_bus_handle(XL9535_IIC_Bus->get_bus_handle());
-    BQ27220->begin();
+    Bq27220_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
+    Bq27220->begin();
 
     // 设置的电池容量会在没有电池插入的时候自动还原为默认值
-    BQ27220->set_design_capacity(2000);
-    BQ27220->set_temperature_mode(Cpp_Bus_Driver::Bq27220xxxx::Temperature_Mode::EXTERNAL_NTC);
-    BQ27220->set_sleep_current_threshold(50);
+    Bq27220->set_design_capacity(1000);
+    Bq27220->set_temperature_mode(Cpp_Bus_Driver::Bq27220xxxx::Temperature_Mode::EXTERNAL_NTC);
+    Bq27220->set_sleep_current_threshold(50);
 
-    AW86224_IIC_Bus->set_bus_handle(SGM38121_IIC_Bus->get_bus_handle());
-    AW86224->begin(500000);
-    // printf("AW86224 input voltage: %.06f V\n", AW86224->get_input_voltage());
+    Aw86224_Iic_Bus->set_bus_handle(Sgm38121_Iic_Bus->get_bus_handle());
+    Aw86224->begin(500000);
+    // printf("AW86224 input voltage: %.06f V\n", Aw86224->get_input_voltage());
 
     // RAM播放
-    AW86224->init_ram_mode(Cpp_Bus_Driver::aw862xx_haptic_ram_12k_0809_170, sizeof(Cpp_Bus_Driver::aw862xx_haptic_ram_12k_0809_170));
+    Aw86224->init_ram_mode(Cpp_Bus_Driver::aw862xx_haptic_ram_12k_0809_170, sizeof(Cpp_Bus_Driver::aw862xx_haptic_ram_12k_0809_170));
 
-    ES8311_IIC_Bus->set_bus_handle(SGM38121_IIC_Bus->get_bus_handle());
+    Es8311_Iic_Bus->set_bus_handle(Sgm38121_Iic_Bus->get_bus_handle());
     ES8311_Init();
 
-    Wire1._bus->set_bus_handle(SGM38121_IIC_Bus->get_bus_handle());
+    Wire1._bus->set_bus_handle(Sgm38121_Iic_Bus->get_bus_handle());
     ICM20948_Init();
 
-    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    L76K->begin();
-    printf("get_baud_rate:%ld\n", L76K->get_baud_rate());
-    L76K->set_baud_rate(Cpp_Bus_Driver::L76k::Baud_Rate::BR_115200_BPS);
-    printf("set_baud_rate:%ld\n", L76K->get_baud_rate());
-    L76K->set_update_frequency(Cpp_Bus_Driver::L76k::Update_Freq::FREQ_5HZ);
-    L76K->clear_rx_buffer_data();
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    L76k->begin();
+    printf("get_baud_rate:%ld\n", L76k->get_baud_rate());
+    L76k->set_baud_rate(Cpp_Bus_Driver::L76k::Baud_Rate::BR_115200_BPS);
+    printf("set_baud_rate:%ld\n", L76k->get_baud_rate());
+    L76k->set_update_frequency(Cpp_Bus_Driver::L76k::Update_Freq::FREQ_5HZ);
+    L76k->clear_rx_buffer_data();
 
-    XL9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    Xl9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
     // LORA复位
-    XL9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    SX1262->begin(10000000);
-    // SX1262->config_lora_params(920.0, Cpp_Bus_Driver::Sx126x::Lora_Bw::BW_125000Hz, 140, 22);
-    // SX1262->clear_buffer();
-
-    // SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
-    // SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE,
-    //                          Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE,
-    //                          Cpp_Bus_Driver::Sx126x::Irq_Flag::DISABLE);
-    // SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Flag::RX_DONE);
+    Sx1262->begin(10000000);
 
 #if defined USE_SCREEN
 
@@ -1038,58 +906,56 @@ extern "C" void app_main(void)
     // 设置整个屏幕为白色
     size_t screen_size = SCREEN_WIDTH * SCREEN_HEIGHT * 2; // RGB565: 2 bytes per pixel
     size_t data_cache_line_size = 16;                      // 通常16或32，具体可查芯片手册
-    void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
-    if (white_buf)
+    void *color_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
+    if (color_buf)
     {
-        uint16_t *p = (uint16_t *)white_buf;
+        uint16_t *p = (uint16_t *)color_buf;
         for (size_t i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
         {
             p[i] = 0xFFFF; // RGB565白色
         }
-        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf);
-        if (err != ESP_OK)
+        if (Screen->send_color_stream_coordinate(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color_buf) == false)
         {
-            printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
+            printf("send_color_stream_coordinate fail\n");
         }
-        heap_caps_free(white_buf);
+        heap_caps_free(color_buf);
     }
 #elif defined CONFIG_SCREEN_PIXEL_FORMAT_RGB888
 
     // 设置整个屏幕为白色
     size_t screen_size = SCREEN_WIDTH * SCREEN_HEIGHT * 3; // RGB888: 3 bytes per pixel
     size_t data_cache_line_size = 16;                      // 通常16或32，具体可查芯片手册
-    void *white_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
-    if (white_buf)
+    void *color_buf = heap_caps_aligned_calloc(data_cache_line_size, 1, screen_size, MALLOC_CAP_SPIRAM);
+    if (color_buf)
     {
-        uint8_t *p = (uint8_t *)white_buf;
+        uint8_t *p = (uint8_t *)color_buf;
         for (size_t i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
         {
             p[i * 3 + 0] = 0xFF; // R
             p[i * 3 + 1] = 0xFF; // G
             p[i * 3 + 2] = 0xFF; // B
         }
-        esp_err_t err = esp_lcd_panel_draw_bitmap(Screen_Mipi_Dpi_Panel, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, white_buf);
-        if (err != ESP_OK)
+        if (Screen->send_color_stream_coordinate(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color_buf) == false)
         {
-            printf("esp_lcd_panel_draw_bitmap (white) fail (error code: %#X)\n", err);
+            printf("send_color_stream_coordinate fail\n");
         }
-        heap_caps_free(white_buf);
+        heap_caps_free(color_buf);
     }
 
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    ESP32P4->start_pwm_gradient_time(100, 500);
+    Esp32p4->start_pwm_gradient_time(100, 500);
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
     for (uint8_t i = 0; i < 255; i += 5)
     {
-        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        Screen->set_brightness(i);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 #endif
