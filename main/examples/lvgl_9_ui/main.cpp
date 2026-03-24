@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-24 16:17:51
+ * @LastEditTime: 2026-03-24 16:31:49
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -776,7 +776,8 @@ bool Play_Mp3_File(const char *file_path)
     size_t cycle_time = 0;
     size_t cycle_time_2 = 0;
 
-    auto pcm_buf = std::make_unique<uint8_t[]>(20 * 1024);
+    // 解码输出的音频数据缓冲区大小必须比压缩的大
+    auto pcm_buf = std::make_unique<uint8_t[]>(50 * 1024);
 
     Music_Play_End_Flag = false;
 
@@ -801,9 +802,9 @@ bool Play_Mp3_File(const char *file_path)
             if (Music_File.good())
             {
                 const auto current_buf_size = Iis_Transmission_Data_Stream.size();
-                if (current_buf_size < 1024 * 40)
+                if (current_buf_size < 1024 * 20)
                 {
-                    size_t read_request = 1024 * 20;
+                    size_t read_request = 1024 * 10;
                     Iis_Transmission_Data_Stream.resize(current_buf_size + read_request);
                     Music_File.read((char *)(Iis_Transmission_Data_Stream.data() + current_buf_size), read_request);
 
@@ -921,7 +922,7 @@ bool Play_Mp3_File(const char *file_path)
                     .len = available_mp3_bytes};
                 esp_audio_dec_out_frame_t out_frame = {
                     .buffer = pcm_buf.get(),
-                    .len = 20 * 1024};
+                    .len = 50 * 1024};
 
                 esp_audio_err_t err = esp_audio_dec_process(decoder, &in_raw, &out_frame);
 
