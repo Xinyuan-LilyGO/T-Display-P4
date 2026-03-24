@@ -2,7 +2,7 @@
  * @Description: screen_camera
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:45:00
- * @LastEditTime: 2026-03-12 11:03:13
+ * @LastEditTime: 2026-03-24 17:44:13
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -325,7 +325,7 @@ extern "C" void app_main(void)
 #endif
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 #else

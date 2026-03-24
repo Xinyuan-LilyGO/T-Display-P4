@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2026-03-23 15:18:01
+ * @LastEditTime: 2026-03-24 17:44:31
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -379,7 +379,7 @@ extern "C" void app_main(void)
     Screen->begin(SCREEN_MIPI_DSI_DPI_CLK_MHZ, SCREEN_LANE_BIT_RATE_MBPS);
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
     Hi8561_Iic_Touch_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 

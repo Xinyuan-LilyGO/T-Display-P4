@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2026-03-23 15:45:46
+ * @LastEditTime: 2026-03-24 17:44:45
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -582,7 +582,7 @@ extern "C" void app_main(void)
     Screen->begin(SCREEN_MIPI_DSI_DPI_CLK_MHZ, SCREEN_LANE_BIT_RATE_MBPS);
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
     Hi8561_Iic_Touch_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
@@ -625,7 +625,7 @@ extern "C" void app_main(void)
     Tca8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
     Tca8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
 
-    Tca8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
+    Tca8418->create_pwm(KEYBOARD_BL, ledc_timer_t::LEDC_TIMER_1, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
                         0, ledc_mode_t::LEDC_LOW_SPEED_MODE, ledc_timer_bit_t ::LEDC_TIMER_5_BIT);
     Tca8418->start_pwm_gradient_time(30, 1000);
 

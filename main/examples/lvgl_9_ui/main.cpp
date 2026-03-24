@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-24 16:31:49
+ * @LastEditTime: 2026-03-24 17:42:32
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -3272,7 +3272,14 @@ void Lvgl_Init(void)
     lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
                             {
                                 lv_display_rotation_t rotation = lv_display_get_rotation(disp);
-                                esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+                                auto screen = (Cpp_Bus_Driver::Hi8561 *)lv_display_get_user_data(disp);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+                                auto screen = (Cpp_Bus_Driver::Rm69a10 *)lv_display_get_user_data(disp);
+#else
+#error "no macro definition is set"
+#endif
 
                                 int32_t offsetx1 = area->x1;
                                 int32_t offsetx2 = area->x2;
@@ -3299,7 +3306,8 @@ void Lvgl_Init(void)
                                     // 计算实际需要的缓冲区大小
                                     size_t output_buffer_size = output_img_width * output_img_height * (SCREEN_BITS_PER_PIXEL / 8);
                                     auto output_buffer = std::unique_ptr<uint8_t[], std::function<void(uint8_t *)>>(
-                                        (uint8_t *)heap_caps_malloc(output_buffer_size, MALLOC_CAP_SPIRAM),
+                                        (uint8_t *)heap_caps_aligned_calloc(data_cache_line_size_2, 1, ALIGN_UP(output_buffer_size, data_cache_line_size_2)
+                                        , MALLOC_CAP_SPIRAM),
                                         [](uint8_t *p)
                                         { heap_caps_free(p); });
                                     if (output_buffer == NULL)
@@ -3430,7 +3438,7 @@ void Lvgl_Init(void)
                                         rotated_offsety2 = temp;
                                     }
 
-                                    Screen->send_color_stream_coordinate(rotated_offsetx1, rotated_offsety1,rotated_offsetx2 + 1, rotated_offsety2 + 1, output_buffer.get());
+                                    screen->send_color_stream_coordinate(rotated_offsetx1, rotated_offsety1,rotated_offsetx2 + 1, rotated_offsety2 + 1, output_buffer.get());
 
 #else
                                     lv_area_t rotated_area;
@@ -3457,12 +3465,12 @@ void Lvgl_Init(void)
                                     offsety1 = area->y1;
                                     offsety2 = area->y2;
 
-                                    Screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
+                                    screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
 #endif
                                 }
                                 else
                                 {
-                                    Screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
+                                    screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
                                 } });
 
     lv_indev_t *indev = lv_indev_create();
@@ -4667,7 +4675,7 @@ extern "C" void app_main(void)
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
     // 这个必须放在以太网后面
-    Screen->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Screen->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 #else
@@ -4782,7 +4790,7 @@ extern "C" void app_main(void)
     Tca8418->set_irq_pin_mode(Cpp_Bus_Driver::Tca8418::Irq_Mask::KEY_EVENTS);
     Tca8418->clear_irq_flag(Cpp_Bus_Driver::Tca8418::Irq_Flag::KEY_EVENTS);
 
-    Tca8418->create_pwm(KEYBOARD_BL, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
+    Tca8418->create_pwm(KEYBOARD_BL, ledc_timer_t::LEDC_TIMER_1, ledc_channel_t::LEDC_CHANNEL_1, 1000000,
                         0, ledc_mode_t::LEDC_LOW_SPEED_MODE, ledc_timer_bit_t ::LEDC_TIMER_5_BIT);
     Tca8418->start_pwm_gradient_time(30, 1000);
 
