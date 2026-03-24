@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-03-24 14:37:51
+ * @LastEditTime: 2026-03-24 15:57:06
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -98,7 +98,7 @@ namespace Lvgl_Ui
 #error "no macro definition is set"
 #endif
 
-            {"firmware build date:\n     ", "202603241136"},
+            {"firmware build date:\n     ", "202603241556"},
     };
 
     void System::begin()
@@ -2584,97 +2584,6 @@ namespace Lvgl_Ui
         set_esp32c6_test(true);
     }
 
-    // void System::init_win_cit_sleep_test(void)
-    // {
-    //     // 主界面
-    //     _registry.win.cit.sleep_test = lv_obj_create(NULL);
-    //     lv_obj_set_style_bg_color(_registry.win.cit.sleep_test, lv_color_hex(0xFF7F58), (lv_style_selector_t)LV_PART_MAIN);
-    //     lv_obj_set_size(_registry.win.cit.sleep_test, _width, _height);
-    //     lv_obj_set_scrollbar_mode(_registry.win.cit.sleep_test, LV_SCROLLBAR_MODE_OFF);
-
-    //     // 创建标题
-    //     lv_obj_t *title_label = lv_label_create(_registry.win.cit.sleep_test);
-    //     lv_label_set_text(title_label, "Sleep");
-    //     lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_size(title_label, _width - 100, 50);
-    //     lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
-
-    //     // 创建容器
-    //     lv_obj_t *container = lv_obj_create(_registry.win.cit.sleep_test);
-    //     lv_obj_set_size(container, _width, _height - 50 - 80 - 140);
-    //     lv_obj_align(container, LV_ALIGN_TOP_MID, 0, 50 + 80);
-    //     lv_obj_set_style_bg_color(container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
-    //     lv_obj_set_style_radius(container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_border_width(container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
-
-    //     // 创建NORMAL_SLEEP按键
-    //     lv_obj_t *light_sleep_button = lv_button_create(container);
-    //     lv_obj_set_size(light_sleep_button, 250, 80);
-    //     lv_obj_align(light_sleep_button, LV_ALIGN_RIGHT_MID, -10, 0);
-    //     lv_obj_set_style_radius(light_sleep_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_shadow_width(light_sleep_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
-    //     lv_obj_set_style_bg_color(light_sleep_button, lv_color_hex(0xFF6A6A), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_align(light_sleep_button, LV_ALIGN_CENTER, 0, -50);
-
-    //     lv_obj_t *light_sleep_label = lv_label_create(light_sleep_button);
-    //     lv_obj_set_style_text_font(light_sleep_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_label_set_text(light_sleep_label, "NORMAL SLEEP");
-    //     lv_obj_center(light_sleep_label);
-
-    //     lv_obj_add_event_cb(light_sleep_button, [](lv_event_t *e)
-    //                         {
-    //                             System *self = static_cast<System *>(lv_event_get_user_data(e));
-    //                             lv_event_code_t code = lv_event_get_code(e);
-
-    //                             switch (code)
-    //                             {
-    //                             case LV_EVENT_CLICKED:
-
-    //                                 break;
-    //                             default:
-    //                                 break;
-    //                             } }, LV_EVENT_ALL, this);
-
-    //     // 创建LIGHT_SLEEP按键
-    //     lv_obj_t *deep_sleep_button = lv_button_create(container);
-    //     lv_obj_set_size(deep_sleep_button, 250, 80);
-    //     lv_obj_align(deep_sleep_button, LV_ALIGN_RIGHT_MID, -10, 0);
-    //     lv_obj_set_style_radius(deep_sleep_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_shadow_width(deep_sleep_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
-    //     lv_obj_set_style_bg_color(deep_sleep_button, lv_color_hex(0xFF6A6A), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_align(deep_sleep_button, LV_ALIGN_CENTER, 0, 50);
-
-    //     lv_obj_t *deep_sleep_label = lv_label_create(deep_sleep_button);
-    //     lv_obj_set_style_text_font(deep_sleep_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_label_set_text(deep_sleep_label, "LIGHT SLEEP");
-    //     lv_obj_center(deep_sleep_label);
-
-    //     lv_obj_add_event_cb(deep_sleep_button, [](lv_event_t *e)
-    //                         {
-    //                             System *self = static_cast<System *>(lv_event_get_user_data(e));
-    //                             lv_event_code_t code = lv_event_get_code(e);
-
-    //                             switch (code)
-    //                             {
-    //                             case LV_EVENT_CLICKED:
-    //                             self->start_sleep_test(Sleep_Mode::LIGHT_SLEEP);
-
-    //                                 break;
-    //                             default:
-    //                                 break;
-    //                             } }, LV_EVENT_ALL, this);
-
-    //     add_win_cit_test_item_pass_fail_button(_registry.win.cit.sleep_test);
-
-    //     add_event_cb_win_return_to_cit(_registry.win.cit.sleep_test);
-
-    //     init_status_bar(_registry.win.cit.sleep_test);
-
-    //     lv_obj_update_layout(_registry.win.cit.sleep_test);
-    // }
-
     void System::init_win_camera(void)
     {
         // 主界面
@@ -2684,9 +2593,19 @@ namespace Lvgl_Ui
         lv_obj_set_size(_registry.win.camera.root, _width, _height);
         lv_obj_set_scrollbar_mode(_registry.win.camera.root, LV_SCROLLBAR_MODE_OFF);
 
-        // // 创建画布来显示摄像头数据
+        // 创建画布来显示摄像头数据
         // _registry.win.camera.canvas = lv_canvas_create(_registry.win.camera.root);
-        // lv_canvas_set_buffer(_registry.win.camera.canvas, _lv_color_win_draw_buf.get(), _width, _height, LVGL_COLOR_FORMAT);
+        // lv_canvas_set_buffer(_registry.win.camera.canvas, _lv_color_win_draw_buf.get(), _width, 720, [](uint8_t format) -> lv_color_format_t
+        //                      {
+        //                     switch (format)
+        //                     {
+        //                     case 16:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     case 24:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+        //                     default:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     } }(SCREEN_BITS_PER_PIXEL));
         // lv_canvas_fill_bg(_registry.win.camera.canvas, lv_color_black(), LV_OPA_COVER);
         // lv_obj_center(_registry.win.camera.canvas);
 

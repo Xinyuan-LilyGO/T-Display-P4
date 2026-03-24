@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-24 15:06:27
+ * @LastEditTime: 2026-03-24 15:50:06
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -290,6 +290,8 @@ uint8_t Rf_Send_Package[255] = {0};
 bool Device_Rf_Task_Stop_Flag = false;
 
 QueueHandle_t app_queue;
+
+size_t Camera_Refresh_Flag = true;
 
 // IIC 1
 auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
@@ -4029,6 +4031,13 @@ void hardware_usb_cdc_task(void *arg)
 
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves, size_t camera_buf_len)
 {
+    if (System_Ui->_registry.system_message_box.occupancy_flag == true)
+    {
+        Camera_Refresh_Flag = false;
+        fps_count = 0;
+        return;
+    }
+
     fps_count++;
     if (fps_count == 50)
     {
@@ -4037,7 +4046,14 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
         start_time = end_time;
         fps_count = 0;
 
+        Camera_Refresh_Flag = true;
+
         printf("camera_buf_hes: %lu, camera_buf_ves: %lu, camera_buf_len: %d KB\n", camera_buf_hes, camera_buf_ves, camera_buf_len / 1024);
+    }
+
+    if (Camera_Refresh_Flag == false)
+    {
+        return;
     }
 
     uint32_t input_img_block_width = (camera_buf_hes - SCREEN_WIDTH) / 2;
@@ -4142,9 +4158,19 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
             return;
         }
         // _lock_acquire(&lvgl_api_lock);
-        // lv_canvas_set_buffer(System_Ui->_registry.win.camera.canvas, lcd_buffer[camera_buf_index],
-        //                      srm_config.in.block_w, srm_config.in.block_h + (SCREEN_HEIGHT - srm_config.in.block_h) / 2,
-        //                      LCD_COLOR_PIXEL_FORMAT_RGB565);
+        // lv_canvas_set_buffer(System_Ui->_registry.win.camera.canvas, output_buffer.get(),
+        //                      SCREEN_WIDTH, 720,
+        //                      [](uint8_t format) -> lv_color_format_t
+        //                      {
+        //                     switch (format)
+        //                     {
+        //                     case 16:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     case 24:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+        //                     default:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     } }(SCREEN_BITS_PER_PIXEL));
         // _lock_release(&lvgl_api_lock);
     }
 }
@@ -4430,6 +4456,20 @@ void System_Startup_Message_Init(void)
 
         _lock_acquire(&lvgl_api_lock);
         System_Ui->create_system_message_box(lv_screen_active(), "device massage", "bq27220 init fail");
+        _lock_release(&lvgl_api_lock);
+
+        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
+        {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+
+    if (Sys_Status.aw86224.init_flag == false)
+    {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        _lock_acquire(&lvgl_api_lock);
+        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "aw86224 init fail");
         _lock_release(&lvgl_api_lock);
 
         while (System_Ui->_registry.system_message_box.occupancy_flag == true)
