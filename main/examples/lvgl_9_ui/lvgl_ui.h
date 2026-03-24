@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-01-14 11:11:47
+ * @LastEditTime: 2026-03-24 14:29:43
  * @License: GPL 3.0
  */
 #pragma once
@@ -229,10 +229,14 @@ namespace Lvgl_Ui
                         lv_obj_t *root;
                         lv_obj_t *data_label;
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
                         lv_obj_t *otg_label;
                         bool otg_switch_status = false;
                         lv_obj_t *otg_switch;
+
+                        lv_obj_t *hcc_label;
+                        bool hcc_switch_status = false;
+                        lv_obj_t *hcc_switch;
 #endif
                     } battery_health_test;
 
@@ -612,8 +616,10 @@ namespace Lvgl_Ui
 
         void (*_set_music_current_time_s_callback)(double current_time_s) = nullptr;
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
         void (*_win_cit_otg_switch_callback)(bool status) = nullptr;
+
+        void (*_win_cit_hcc_switch_callback)(bool status) = nullptr;
 #endif
 
         System(uint32_t width, uint32_t height)
@@ -708,6 +714,12 @@ namespace Lvgl_Ui
 
         void create_system_message_box(lv_obj_t *parent, std::string message_title, std::string message_data);
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+        void set_otg_switch_status(bool status);
+
+        void set_hcc_switch_status(bool status);
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
         void (*_win_cit_nfc_test_callback)(bool status) = nullptr;
 
@@ -726,8 +738,6 @@ namespace Lvgl_Ui
 
         bool set_config_rf_params(Device_Cc1101 device_cc1101);
         bool set_config_rf_params(Device_Nrf24l01 device_nrf24l01);
-
-        void set_otg_switch_status(bool status);
 #endif
     };
 

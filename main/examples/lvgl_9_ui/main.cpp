@@ -2,19 +2,21 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-23 16:12:02
+ * @LastEditTime: 2026-03-24 15:06:27
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
 #include "lilygo_device_driver_library.h"
-#include "lvgl.h"
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
 #include "st25r3916_driver.h"
-#include "RadioLib.h"
 #include "radiolib_bridge_driver.h"
-#include "kode_bq25896.h"
+#include "lvgl_keyboard_config.h"
 #endif
+
+#include "lvgl.h"
 #include "lvgl_ui.h"
+
 #include "Icm20948_WE.h"
 
 #include "esp_netif.h"
@@ -42,6 +44,10 @@
 
 #include "esp_audio_dec.h"
 #include "esp_audio_dec_default.h"
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#include "kode_bq25896.h"
+#endif
 
 #define SD_FILE_PATH_MUSIC "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Nocturne, Op.9 No.2 in E-flat major-Aya Higuchi (piano).mp3"
 
@@ -164,7 +170,9 @@ struct System_Status
     {
         bool init_flag = false;
     } nrf24l01;
+#endif
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
     struct
     {
         bool init_flag = false;
@@ -363,6 +371,15 @@ auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
 #error "no macro definition is set"
 #endif
 
+auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
+Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
+
+auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
 
 enum class Nfc_Mode
@@ -387,13 +404,9 @@ TaskHandle_t Nfc_Task_Handle = NULL;
 
 Nfc_Mode St25r3916_Nfc_Mode = Nfc_Mode::TEST;
 
-auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
-Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
-
 //  Software IIC
 auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(XL9555_SDA, XL9555_SCL);
 auto Tca8418_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(TCA8418_SDA, TCA8418_SCL);
-auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(BQ25896_SDA, BQ25896_SCL);
 
 // SPI
 auto Cc1101_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_CC1101_MOSI, T_MIXRF_CC1101_SCLK, T_MIXRF_CC1101_MISO, SPI2_HOST, 0);
@@ -412,8 +425,6 @@ nRF24 Nrf24l01 = new Module(Nrf24l01_Radiolib_Hal, static_cast<uint32_t>(RADIOLI
                             static_cast<uint32_t>(T_MIXRF_NRF24L01_INT), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
 
 #endif
-
-auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 typedef struct
 {
@@ -1456,7 +1467,7 @@ void device_battery_health_task(void *arg)
                     battery_health_data_str += "discharge flag: " + std::to_string(bs.flag.dsg) + "\n";
                 }
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
 
                 battery_health_data_str += "\nbq25896 data:\n";
                 uint8_t part_number = 0;
@@ -1534,11 +1545,19 @@ void device_battery_health_task(void *arg)
                 // 更新数据的标签
                 lv_label_set_text(System_Ui->_registry.win.cit.battery_health_test.data_label, battery_health_data_str.c_str());
                 lv_obj_align(System_Ui->_registry.win.cit.battery_health_test.data_label, LV_ALIGN_TOP_MID, 0, 10);
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
                 if ((vbus_stat == Kode_Bq25896::BQ25896_VBUS_STAT_ADAPTER) || (vbus_stat == Kode_Bq25896::BQ25896_VBUS_STAT_USB_HOST))
                 {
                     lv_obj_add_flag(System_Ui->_registry.win.cit.battery_health_test.otg_label, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_add_flag(System_Ui->_registry.win.cit.battery_health_test.otg_switch, LV_OBJ_FLAG_HIDDEN);
+
+                    lv_obj_remove_flag(System_Ui->_registry.win.cit.battery_health_test.hcc_label, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_remove_flag(System_Ui->_registry.win.cit.battery_health_test.hcc_switch, LV_OBJ_FLAG_HIDDEN);
+
+                    lv_obj_align_to(System_Ui->_registry.win.cit.battery_health_test.hcc_label,
+                                    System_Ui->_registry.win.cit.battery_health_test.data_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+                    lv_obj_align_to(System_Ui->_registry.win.cit.battery_health_test.hcc_switch,
+                                    System_Ui->_registry.win.cit.battery_health_test.hcc_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
                 }
                 else
                 {
@@ -1549,6 +1568,9 @@ void device_battery_health_task(void *arg)
                                     System_Ui->_registry.win.cit.battery_health_test.data_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
                     lv_obj_align_to(System_Ui->_registry.win.cit.battery_health_test.otg_switch,
                                     System_Ui->_registry.win.cit.battery_health_test.otg_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+                    lv_obj_add_flag(System_Ui->_registry.win.cit.battery_health_test.hcc_label, LV_OBJ_FLAG_HIDDEN);
+                    lv_obj_add_flag(System_Ui->_registry.win.cit.battery_health_test.hcc_switch, LV_OBJ_FLAG_HIDDEN);
                 }
 #endif
 
@@ -1852,7 +1874,7 @@ void device_esp32c6_task(void *arg)
                                (rt.hour + 8 + 24) % 24, rt.minute, rt.second);
 
                         // 读取At数据
-                        std::string data_str = "esp32c6 at time data:\n";
+                        std::string data_str = "esp32c6 wifi time data:\n";
                         char buffer[200];
                         snprintf(buffer, sizeof(buffer),
                                  "week: [%s]\ndata: [%d/%d/%d]\nchina time: [%02d:%02d:%02d]\n",
@@ -2928,7 +2950,13 @@ void System_Ui_Callback_Init(void)
 #endif
             if (status == true)
             {
-                esp_err_t assert = app_video_stream_task_start(video_cam_fd0, 0);
+                esp_err_t assert = app_video_set_bufs(video_cam_fd0, CAMERA_BUFFER_COUNT, NULL);
+                if (assert != ESP_OK)
+                {
+                    printf("app_video_set_bufs fail (error code: %#X)\n", assert);
+                }
+
+                assert = app_video_stream_task_start(video_cam_fd0, 0);
                 if (assert != ESP_OK)
                 {
                     printf("app_video_stream_task_start fail (error code: %#X)\n", assert);
@@ -3031,6 +3059,32 @@ void System_Ui_Callback_Init(void)
 
         Set_Music_Current_Time_S_Flag = true;
     };
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+    System_Ui->_win_cit_otg_switch_callback = [](bool status)
+    {
+        if (status == true)
+        {
+            Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+        }
+        else
+        {
+            Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_DISABLE);
+        }
+    };
+
+    System_Ui->_win_cit_hcc_switch_callback = [](bool status)
+    {
+        if (status == true)
+        {
+            Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_2048MA);
+        }
+        else
+        {
+            Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+        }
+    };
+#endif
 
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     System_Ui->_win_cit_nfc_test_callback = [](bool status)
@@ -3175,18 +3229,6 @@ void System_Ui_Callback_Init(void)
 
         printf("config_nrf24l01_params finish start nrf24l01 transmit\n");
         return true;
-    };
-
-    System_Ui->_win_cit_otg_switch_callback = [](bool status)
-    {
-        if (status == true)
-        {
-            Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
-        }
-        else
-        {
-            Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_DISABLE);
-        }
     };
 
 #endif
@@ -4073,7 +4115,7 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
 #else
 #error "no macro definition is set"
 #endif
-#elif defined SCREEN_ROTATION_DIRECTION == 90
+#elif SCREEN_ROTATION_DIRECTION == 90
             .mirror_y = false,
 #else
 #error "no macro definition is set"
@@ -4279,6 +4321,22 @@ void System_Startup_Message_Init(void)
         }
     }
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+    if (Sys_Status.bq25896.init_flag == false)
+    {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+        _lock_acquire(&lvgl_api_lock);
+        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "bq25896 init fail");
+        _lock_release(&lvgl_api_lock);
+
+        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
+        {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
 
     if (Sys_Status.xl9555.init_flag == false)
@@ -4343,20 +4401,6 @@ void System_Startup_Message_Init(void)
 
         _lock_acquire(&lvgl_api_lock);
         System_Ui->create_system_message_box(lv_screen_active(), "device massage", "nrf24l01 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
-    }
-
-    if (Sys_Status.bq25896.init_flag == false)
-    {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "bq25896 init fail");
         _lock_release(&lvgl_api_lock);
 
         while (System_Ui->_registry.system_message_box.occupancy_flag == true)
@@ -4469,8 +4513,31 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
+    if (assert != ESP_OK)
+    {
+        Sys_Status.bq25896.init_flag = false;
+        printf("bq25896 init fail (error code: %#X)\n", assert);
+    }
+    else
+    {
+        Sys_Status.bq25896.init_flag = true;
+        printf("bq25896 init success\n");
+
+        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
+        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
+        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
+        Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
+        Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
+        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    }
+#endif
+
     Hardware_Usb_Cdc_Init();
 
+    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
     Xl9535->begin();
 
     Xl9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -4711,9 +4778,9 @@ extern "C" void app_main(void)
     Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    ESP32P4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+    Esp32p4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    ESP32P4->create_gpio_interrupt(T_MIXRF_CC1101_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
+    Esp32p4->create_gpio_interrupt(T_MIXRF_CC1101_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
                                    [](void *arg) -> IRAM_ATTR void
                                    {
                                        Cc1101_Interrupt_Flag = true;
@@ -4747,34 +4814,13 @@ extern "C" void app_main(void)
         printf("nrf24l01 init fail (error code: %d)\n", assert_2);
     }
 
-    ESP32P4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
+    Esp32p4->create_gpio_interrupt(T_MIXRF_NRF24L01_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
                                    [](void *arg) -> IRAM_ATTR void
                                    {
                                        Nrf24l01_Interrupt_Flag = true;
                                    });
 
     System_Ui->set_config_rf_params(System_Ui->_device_nrf24l01);
-
-    assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
-    if (assert != ESP_OK)
-    {
-        Sys_Status.bq25896.init_flag = false;
-        printf("bq25896 init fail (error code: %#X)\n", assert);
-    }
-    else
-    {
-        Sys_Status.bq25896.init_flag = true;
-        printf("bq25896 init success\n");
-
-        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
-        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
-
-        Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
-        Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
-
-        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
-    }
-
 #endif
 
 #if defined CONFIG_SCREEN_TYPE_HI8561

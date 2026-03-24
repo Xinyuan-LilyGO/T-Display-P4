@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-03-19 14:02:30
+ * @LastEditTime: 2026-03-24 14:37:51
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -39,8 +39,7 @@ namespace Lvgl_Ui
             {"gps test", LV_SYMBOL_WARNING, 0xFFA500},
             {"ethernet test", LV_SYMBOL_WARNING, 0xFFA500},
             {"rtc test", LV_SYMBOL_WARNING, 0xFFA500},
-            {"esp32c6 at test", LV_SYMBOL_WARNING, 0xFFA500},
-// {"sleep test", LV_SYMBOL_WARNING, 0xFFA500},
+            {"esp32c6 wifi test", LV_SYMBOL_WARNING, 0xFFA500},
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             {"keyboard test", LV_SYMBOL_WARNING, 0xFFA500},
             {"nfc test", LV_SYMBOL_WARNING, 0xFFA500},
@@ -59,7 +58,13 @@ namespace Lvgl_Ui
             {"espidf version:\n     ", ""},
             {"company: ", "lilygo"},
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4
-            {"board name: ", "t-display-p4"},
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_0
+            {"board name: ", "t-display-p4_v1.0"},
+#elif defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+            {"board name: ", "t-display-p4_v1.1"},
+#else
+#error "no macro definition is set"
+#endif
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             {"board name: ", "t-display-p4-keyboard"},
 #else
@@ -93,7 +98,7 @@ namespace Lvgl_Ui
 #error "no macro definition is set"
 #endif
 
-            {"firmware build date:\n     ", "202601211405"},
+            {"firmware build date:\n     ", "202603241136"},
     };
 
     void System::begin()
@@ -1987,7 +1992,7 @@ namespace Lvgl_Ui
         lv_label_set_text(_registry.win.cit.battery_health_test.data_label, "battery health data:");
         lv_obj_align(_registry.win.cit.battery_health_test.data_label, LV_ALIGN_CENTER, 0, 0);
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
 
         _registry.win.cit.battery_health_test.otg_label = lv_label_create(container);
         lv_label_set_text(_registry.win.cit.battery_health_test.otg_label, "OTG");
@@ -2027,6 +2032,46 @@ namespace Lvgl_Ui
                                 else
                                 {
                                     self->set_otg_switch_status(false);
+                                } }, LV_EVENT_VALUE_CHANGED, this);
+
+        _registry.win.cit.battery_health_test.hcc_label = lv_label_create(container);
+        lv_label_set_text(_registry.win.cit.battery_health_test.hcc_label, "HCC");
+        lv_obj_set_style_text_font(_registry.win.cit.battery_health_test.hcc_label, &lv_font_montserrat_26, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(_registry.win.cit.battery_health_test.hcc_label, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_align_to(_registry.win.cit.battery_health_test.hcc_label, _registry.win.cit.battery_health_test.data_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+        _registry.win.cit.battery_health_test.hcc_switch = lv_switch_create(container);
+        lv_obj_set_size(_registry.win.cit.battery_health_test.hcc_switch, 90, 50);
+        lv_obj_align_to(_registry.win.cit.battery_health_test.hcc_switch, _registry.win.cit.battery_health_test.hcc_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+        if (_registry.win.cit.battery_health_test.hcc_switch_status == true)
+        {
+            lv_obj_add_state(_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+            set_hcc_switch_status(true);
+        }
+        else
+        {
+            lv_obj_remove_state(_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+            set_hcc_switch_status(false);
+        }
+
+        lv_obj_add_flag(_registry.win.cit.battery_health_test.hcc_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(_registry.win.cit.battery_health_test.hcc_switch, LV_OBJ_FLAG_HIDDEN);
+
+        lv_obj_add_event_cb(_registry.win.cit.battery_health_test.hcc_switch, [](lv_event_t *e)
+                            {
+                                System *self = static_cast<System *>(lv_event_get_user_data(e));
+                                self->_registry.win.cit.battery_health_test.hcc_switch_status = lv_obj_has_state(self->_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+                                if (self->_registry.win.cit.battery_health_test.hcc_switch_status == true)
+                                {
+                                    self->set_hcc_switch_status(true);
+                                }
+                                else
+                                {
+                                    self->set_hcc_switch_status(false);
                                 } }, LV_EVENT_VALUE_CHANGED, this);
 
 #endif
@@ -2411,7 +2456,7 @@ namespace Lvgl_Ui
 
         // 创建标题
         lv_obj_t *title_label = lv_label_create(_registry.win.cit.esp32c6_test.root);
-        lv_label_set_text(title_label, "Esp32c6 At");
+        lv_label_set_text(title_label, "Esp32c6 Wifi");
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
@@ -2431,7 +2476,7 @@ namespace Lvgl_Ui
         _registry.win.cit.esp32c6_test.data_label = lv_label_create(container);
         lv_obj_set_style_text_color(_registry.win.cit.esp32c6_test.data_label, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(_registry.win.cit.esp32c6_test.data_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_label_set_text(_registry.win.cit.esp32c6_test.data_label, "esp32c6 at time data:");
+        lv_label_set_text(_registry.win.cit.esp32c6_test.data_label, "esp32c6 wifi time data:");
         lv_obj_align(_registry.win.cit.esp32c6_test.data_label, LV_ALIGN_CENTER, 0, 0);
 
         // 创建一个容器来存放两个按键
@@ -5101,6 +5146,24 @@ namespace Lvgl_Ui
         _registry.system_message_box.occupancy_flag = true;
     }
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+    void System::set_otg_switch_status(bool status)
+    {
+        if (_win_cit_otg_switch_callback != nullptr)
+        {
+            _win_cit_otg_switch_callback(status);
+        }
+    }
+
+    void System::set_hcc_switch_status(bool status)
+    {
+        if (_win_cit_hcc_switch_callback != nullptr)
+        {
+            _win_cit_hcc_switch_callback(status);
+        }
+    }
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     void System::init_win_cit_keyboard_test(void)
     {
@@ -6121,14 +6184,6 @@ namespace Lvgl_Ui
         }
 
         return false;
-    }
-
-    void System::set_otg_switch_status(bool status)
-    {
-        if (_win_cit_otg_switch_callback != nullptr)
-        {
-            _win_cit_otg_switch_callback(status);
-        }
     }
 
 #endif

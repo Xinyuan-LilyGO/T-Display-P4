@@ -108,4 +108,4 @@ dependencies:
   kode_bq25896:
     override_path: "../libraries/kode_bq25896"
     matches:
-      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{BOARD_VERSION_T_DISPLAY_P4_V1_1} == True && $CONFIG{EXAMPLE_BUILD_ES8311} == True"
+      - if: "$CONFIG{BOARD_VERSION_T_DISPLAY_P4_V1_1} == True"
