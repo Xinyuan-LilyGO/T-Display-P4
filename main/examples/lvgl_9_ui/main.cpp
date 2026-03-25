@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-24 17:42:32
+ * @LastEditTime: 2026-03-25 09:06:25
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -4312,63 +4312,41 @@ bool Ppa_Screen_Rotation_Init(void)
 }
 #endif
 
+static void Lvgl_Show_Device_Message(const char *msg)
+{
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    _lock_acquire(&lvgl_api_lock);
+    System_Ui->create_system_message_box(lv_screen_active(), "device message", msg);
+    _lock_release(&lvgl_api_lock);
+
+    while (System_Ui->_registry.system_message_box.occupancy_flag == true)
+    {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
 void System_Startup_Message_Init(void)
 {
     if (Sys_Status.sgm38121.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "sgm38121 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("sgm38121 init fail");
     }
 
     if (Sys_Status.camera.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "camera init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("camera init fail");
     }
 
     if (Sys_Status.esp32c6.wifi_connect_status == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "system massage", "esp32c6 connect wifi fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("esp32c6 connect wifi fail");
     }
 
 #if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
     if (Sys_Status.bq25896.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "bq25896 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("bq25896 init fail");
     }
 #endif
 
@@ -4376,171 +4354,64 @@ void System_Startup_Message_Init(void)
 
     if (Sys_Status.xl9555.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "xl9555 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("xl9555 init fail");
     }
 
     if (Sys_Status.tca8418.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "tca8418 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("tca8418 init fail");
     }
 
     if (Sys_Status.st25r3916.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "st25r3916 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("st25r3916 init fail");
     }
 
     if (Sys_Status.cc1101.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "cc1101 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("cc1101 init fail");
     }
 
     if (Sys_Status.nrf24l01.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "nrf24l01 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("nrf24l01 init fail");
     }
+
 #endif
 
     if (Sys_Status.pcf8563.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "pcf8563 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("pcf8563 init fail");
     }
 
     if (Sys_Status.bq27220.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "bq27220 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("bq27220 init fail");
     }
 
     if (Sys_Status.aw86224.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "aw86224 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("aw86224 init fail");
     }
 
     if (Sys_Status.es8311.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "es8311 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("es8311 init fail");
     }
 
     if (Sys_Status.icm20948.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "icm20948 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("icm20948 init fail");
     }
 
     if (Sys_Status.l76k.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "l76k init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("l76k init fail");
     }
 
     if (Sys_Status.sx1262.init_flag == false)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-
-        _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "sx1262 init fail");
-        _lock_release(&lvgl_api_lock);
-
-        while (System_Ui->_registry.system_message_box.occupancy_flag == true)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
+        Lvgl_Show_Device_Message("sx1262 init fail");
     }
 }
 
