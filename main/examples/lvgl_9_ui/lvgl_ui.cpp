@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-03-24 16:22:21
+ * @LastEditTime: 2026-03-26 13:40:51
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -98,7 +98,7 @@ namespace Lvgl_Ui
 #error "no macro definition is set"
 #endif
 
-            {"firmware build date:\n     ", "202603241622"},
+            {"firmware build date:\n     ", "202603261340"},
     };
 
     void System::begin()
@@ -4367,7 +4367,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, 0, 50);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, -320, 0);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, -330, 20);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4384,7 +4391,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 30, 590);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 540, 70);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 560, 70);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4475,7 +4489,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 30, 795);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 540, 210);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 560, 210);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4532,7 +4553,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.music.slider, 460, 8);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_set_size(_registry.win.music.slider, 600, 8);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_set_size(_registry.win.music.slider, 640, 8);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4542,7 +4570,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 40, 860);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 540, 270);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 560, 270);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4574,7 +4609,15 @@ namespace Lvgl_Ui
         lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 0, -30);
 #elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(bottom_bar_btn, _width / 2 + 20, 70);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 255, -20);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 260, -30);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4631,7 +4674,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 0, -130);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 255, -110);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 260, -130);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
@@ -4646,7 +4696,14 @@ namespace Lvgl_Ui
 #if SCREEN_ROTATION_DIRECTION == 0
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 0, -142);
 #elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 255, -122);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 260, -142);
+#else
+#error "no macro definition is set"
+#endif
+
 #else
 #error "no macro definition is set"
 #endif
