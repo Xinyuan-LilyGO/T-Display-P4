@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-25 09:06:25
+ * @LastEditTime: 2026-03-26 11:22:02
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -364,7 +364,7 @@ auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(Gt9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_SDA, GT9895_SCL, I2C_NUM_0);
 
 auto Gt9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR);
 
@@ -1532,6 +1532,40 @@ void device_battery_health_task(void *arg)
                 battery_health_data_str += "battery voltage: " + std::to_string(bat_voltage) + "mv\n";
                 battery_health_data_str += "system voltage: " + std::to_string(sys_voltage) + "mv\n";
                 battery_health_data_str += "vbus voltage: " + std::to_string(vbus_voltage) + "mv\n\n";
+
+                float ts_percentage = 0.0;
+                Kode_Bq25896::bq25896_get_ts_voltage_percentage(Bq25896_Handle, &ts_percentage);
+
+                battery_health_data_str += "ts voltage: " + std::to_string(ts_percentage) + "%% of regn\n";
+
+                Kode_Bq25896::bq25896_ntc_fault_t ntc_fault;
+
+                Kode_Bq25896::bq25896_get_ntc_fault(Bq25896_Handle, &ntc_fault);
+
+                std::string ntc_fault_str;
+                switch (ntc_fault)
+                {
+                case Kode_Bq25896::BQ25896_NTC_FAULT_NORMAL:
+                    ntc_fault_str = "normal";
+                    break;
+                case Kode_Bq25896::BQ25896_NTC_FAULT_TS_WARM:
+                    ntc_fault_str = "ts warm";
+                    break;
+                case Kode_Bq25896::BQ25896_NTC_FAULT_TS_COOL:
+                    ntc_fault_str = "ts cool";
+                    break;
+                case Kode_Bq25896::BQ25896_NTC_FAULT_TS_COLD:
+                    ntc_fault_str = "ts cold";
+                    break;
+                case Kode_Bq25896::BQ25896_NTC_FAULT_TS_HOT:
+                    ntc_fault_str = "ts hot";
+                    break;
+                default:
+                    ntc_fault_str = "unknown";
+                    break;
+                }
+
+                battery_health_data_str += "ntc fault: " + ntc_fault_str + "\n\n";
 
                 uint16_t charge_current = 0;
                 uint16_t ico_current_limit = 0;
@@ -4442,8 +4476,11 @@ extern "C" void app_main(void)
 #endif
 
     Hardware_Usb_Cdc_Init();
+    xTaskCreate(hardware_usb_cdc_task, "hardware_usb_cdc_task", 4 * 1024, NULL, 3, NULL);
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
     Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
+#endif
     Xl9535->begin();
 
     Xl9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -4592,6 +4629,22 @@ extern "C" void app_main(void)
 #error "no macro definition is set"
 #endif
 
+    Lvgl_Init();
+    Lvgl_Startup();
+    xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+    Screen->start_pwm_gradient_time(100, 500);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+    for (uint8_t i = 0; i < 255; i += 5)
+    {
+        Screen->set_brightness(i);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+#else
+#error "no macro definition is set"
+#endif
+
     // SDMMC_HOST_SLOT_1必须要先于SDMMC_HOST_SLOT_0初始化
 
     if (Wifi_Init_Connect() == false)
@@ -4605,14 +4658,14 @@ extern "C" void app_main(void)
         Sys_Status.esp32c6.wifi_connect_status = true;
     }
 
+    _lock_acquire(&lvgl_api_lock);
+    Set_Lvgl_Startup_Progress_Bar(10);
+    _lock_release(&lvgl_api_lock);
+
     if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
     {
         printf("Sdmmc_Init fail\n");
     }
-
-    Lvgl_Init();
-    Lvgl_Startup();
-    xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
 
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     if (Xl9555->begin() == false)
@@ -4729,17 +4782,9 @@ extern "C" void app_main(void)
     System_Ui->set_config_rf_params(System_Ui->_device_nrf24l01);
 #endif
 
-#if defined CONFIG_SCREEN_TYPE_HI8561
-    Screen->start_pwm_gradient_time(100, 500);
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-    for (uint8_t i = 0; i < 255; i += 5)
-    {
-        Screen->set_brightness(i);
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-#else
-#error "no macro definition is set"
-#endif
+    _lock_acquire(&lvgl_api_lock);
+    Set_Lvgl_Startup_Progress_Bar(20);
+    _lock_release(&lvgl_api_lock);
 
     Pcf8563_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
@@ -4755,7 +4800,7 @@ extern "C" void app_main(void)
     }
 
     _lock_acquire(&lvgl_api_lock);
-    Set_Lvgl_Startup_Progress_Bar(20);
+    Set_Lvgl_Startup_Progress_Bar(30);
     _lock_release(&lvgl_api_lock);
 
     Wifi_Get_Real_Time();
@@ -4897,7 +4942,6 @@ extern "C" void app_main(void)
     System_Ui->begin();
     _lock_release(&lvgl_api_lock);
 
-    xTaskCreate(hardware_usb_cdc_task, "hardware_usb_cdc_task", 4 * 1024, NULL, 3, NULL);
     xTaskCreate(device_vibration_task, "device_vibration_task", 4 * 1024, NULL, 2, &Vibration_Task_Handle);
     xTaskCreate(device_speaker_task, "device_speaker_task", 4 * 1024, NULL, 3, &Speaker_Task_Handle);
     xTaskCreate(device_microphone_task, "device_microphone_task", 4 * 1024, NULL, 3, &Microphone_Task_Handle);
