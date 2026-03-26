@@ -2,7 +2,7 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2026-03-24 17:44:31
+ * @LastEditTime: 2026-03-26 10:31:05
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -59,9 +59,9 @@ auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(Gt9895_Touch_TOUCH_SDA, Gt9895_Touch_TOUCH_SCL, I2C_NUM_0);
+auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_SDA, GT9895_SCL, I2C_NUM_0);
 
-auto Gt9895_Touch = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, Gt9895_Touch_IIC_ADDRESS, -1, Gt9895_Touch_X_SCALE_FACTOR, Gt9895_Touch_Y_SCALE_FACTOR);
+auto Gt9895_Touch = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR);
 
 auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
 

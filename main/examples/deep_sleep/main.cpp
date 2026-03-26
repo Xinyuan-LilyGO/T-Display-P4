@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-03-23 14:47:25
+ * @LastEditTime: 2026-03-26 10:30:09
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -112,7 +112,7 @@ auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_SDA, GT9895_SCL, I2C_NUM_0);
 
 auto Gt9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR);
 
@@ -813,7 +813,7 @@ extern "C" void app_main(void)
 #if defined USE_SCREEN
 #if defined CONFIG_SCREEN_TYPE_HI8561
     // 这个必须放在以太网后面
-    Screen->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Screen->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 #else
