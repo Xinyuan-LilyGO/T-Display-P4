@@ -72,7 +72,6 @@ dependencies:
   espressif/esp_tinyusb:
     version: "^1"
     matches:
-      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_TUSB_SERIAL_DEVICE} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
 
   espressif/ethernet_init:

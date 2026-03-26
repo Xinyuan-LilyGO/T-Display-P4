@@ -143,9 +143,6 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE
                 bool "sx1262_tx_continuous_wave"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_TUSB_SERIAL_DEVICE
-                bool "tusb_serial_device"
-                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_XL9535
                 bool "xl9535"
                 depends on BOARD_TYPE_T_DISPLAY_P4
