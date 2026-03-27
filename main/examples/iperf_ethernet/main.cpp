@@ -1,8 +1,8 @@
 /*
- * @Description: None
+ * @Description: iperf_ethernet
  * @Author: LILYGO_L
  * @Date: 2026-01-26 14:42:15
- * @LastEditTime: 2026-03-26 15:00:46
+ * @LastEditTime: 2026-03-27 11:09:55
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -222,13 +222,61 @@ extern "C" void app_main(void)
     // Esp32p4->pin_mode(ETHERNET_MDC, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
     // Esp32p4->pin_mode(ETHERNET_MDIO, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    // 睡眠测试
-    // esp_eth_driver_t *eth_driver = (esp_eth_driver_t *)eth_handles[0];
-    // phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(eth_driver->phy);
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
-    // uint32_t buffer = 0;
-    // esp_eth_phy_802_3_read_mmd_register(phy_802_3, 0x1F, 0x0080, &buffer);
-    // printf("buffer: %#lX\n", buffer);
-    // buffer |= 0B1100000000000000;
-    // esp_eth_phy_802_3_write_mmd_register(phy_802_3, 0x1F, 0x0080, buffer);
+    // 断电测试
+    esp_eth_handle_t eth_handle = eth_handles[0];
+    uint32_t reg_value = 0;
+    esp_eth_phy_reg_rw_data_t read_data =
+        {
+            .reg_addr = 0, // Register 0
+            .reg_value_p = &reg_value,
+        };
+
+    esp_err_t err = esp_eth_ioctl(eth_handle, ETH_CMD_READ_PHY_REG, &read_data);
+    if (err != ESP_OK)
+    {
+        printf("esp_eth_ioctl fail (error code: %s)\n", esp_err_to_name(err));
+    }
+
+    printf("register 0: %#lX\n", reg_value);
+
+    reg_value |= (1UL << 11);
+
+    esp_eth_phy_reg_rw_data_t write_data =
+        {
+            .reg_addr = 0,
+            .reg_value_p = &reg_value,
+        };
+
+    err = esp_eth_ioctl(eth_handle, ETH_CMD_WRITE_PHY_REG, &write_data);
+    if (err != ESP_OK)
+    {
+        printf("esp_eth_ioctl fail (error code: %s)\n", esp_err_to_name(err));
+    }
+
+    printf("ip101g off\n");
+
+    vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // 唤醒
+    reg_value = 0;
+    read_data =
+        {
+            .reg_addr = 0,
+            .reg_value_p = &reg_value,
+        };
+    esp_eth_ioctl(eth_handle, ETH_CMD_READ_PHY_REG, &read_data);
+    printf("register 0: %#lX\n", reg_value);
+
+    reg_value &= ~(1UL << 11);
+
+    write_data =
+        {
+            .reg_addr = 0,
+            .reg_value_p = &reg_value,
+        };
+    esp_eth_ioctl(eth_handle, ETH_CMD_WRITE_PHY_REG, &write_data);
+
+    printf("ip101g on\n");
 }
