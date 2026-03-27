@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-03-26 14:59:11
+ * @LastEditTime: 2026-03-27 10:43:39
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -14,6 +14,7 @@
 #include "esp_eth.h"
 #include "esp_event.h"
 #include "ethernet_init.h"
+#include "esp_private/wifi.h"
 
 #include "app_video.h"
 #include "driver/ppa.h"
@@ -35,7 +36,7 @@
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 44100
 
-#define USE_SCREEN
+// #define USE_SCREEN
 
 #define WIFI_SSID "xinyuandianzi"
 #define WIFI_PASSWORD "AA15994823428"
@@ -177,6 +178,29 @@ void got_ip_event_handler(void *arg, esp_event_base_t event_base,
     printf("~~~~~~~~~~~\n");
 }
 
+void wifi_cleanup(void)
+{
+    esp_wifi_disconnect();
+    vTaskDelay(pdMS_TO_TICKS(200));
+
+    /* Post disconnect/stop events to clean up netif state */
+    wifi_event_sta_disconnected_t disconnect_event = {0};
+    disconnect_event.reason = WIFI_REASON_ASSOC_LEAVE;
+    esp_event_post(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
+                   &disconnect_event, sizeof(wifi_event_sta_disconnected_t), portMAX_DELAY);
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    esp_event_post(WIFI_EVENT, WIFI_EVENT_STA_STOP, NULL, 0, portMAX_DELAY);
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    esp_wifi_internal_reg_rxcb(WIFI_IF_STA, NULL);
+    esp_wifi_internal_reg_rxcb(WIFI_IF_AP, NULL);
+
+    esp_wifi_stop();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_wifi_deinit();
+}
+
 void Device_Sleep_Status(bool status)
 {
     if (status == true)
@@ -203,8 +227,6 @@ void Device_Sleep_Status(bool status)
         Es8311->set_adc_power(false);
         Es8311->set_dac_power(false);
 
-        Es8311->software_reset(true);
-
 #if defined CONFIG_CAMERA_TYPE_SC2336
         Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_1, Cpp_Bus_Driver::Sgm38121::Status::OFF);
         Sgm38121->set_channel_status(Cpp_Bus_Driver::Sgm38121::Channel::AVDD_2, Cpp_Bus_Driver::Sgm38121::Status::OFF);
@@ -216,7 +238,40 @@ void Device_Sleep_Status(bool status)
 #error "no macro definition is set"
 #endif
 
+        wifi_cleanup();
+
+        ESP_ERROR_CHECK(esp_hosted_deinit());
+
         printf("stop and deinitialize Ethernet network...\n");
+        esp_eth_handle_t eth_handle = eth_handles[0];
+        uint32_t reg_value = 0;
+        esp_eth_phy_reg_rw_data_t read_data =
+            {
+                .reg_addr = 0, // Register 0
+                .reg_value_p = &reg_value,
+            };
+
+        esp_err_t err = esp_eth_ioctl(eth_handle, ETH_CMD_READ_PHY_REG, &read_data);
+        if (err != ESP_OK)
+        {
+            printf("esp_eth_ioctl fail (error code: %s)\n", esp_err_to_name(err));
+        }
+
+        printf("register 0: %#lX\n", reg_value);
+
+        reg_value |= (1UL << 11);
+
+        esp_eth_phy_reg_rw_data_t write_data =
+            {
+                .reg_addr = 0,
+                .reg_value_p = &reg_value,
+            };
+
+        err = esp_eth_ioctl(eth_handle, ETH_CMD_WRITE_PHY_REG, &write_data);
+        if (err != ESP_OK)
+        {
+            printf("esp_eth_ioctl fail (error code: %s)\n", esp_err_to_name(err));
+        }
 
         esp_eth_stop(eth_handles[0]);
         // esp_eth_del_netif_glue(eth_netif_glues[0]);
@@ -243,142 +298,13 @@ void Device_Sleep_Status(bool status)
 #endif
 #endif
 
-        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO_PORT1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-
-        // Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        Xl9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
         Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        // Xl9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        // Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        Xl9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-
-        // Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        // Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-        Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-
-        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO0, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-#if !defined USE_SCREEN
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO2, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO3, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO4, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-#endif
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO5, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO6, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO7, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO10, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO11, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO12, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO13, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO14, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO15, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        // Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO16, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-        Xl9535->pin_mode(Cpp_Bus_Driver::Xl95x5::Pin::IO17, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+        Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     }
     else
     {
         printf("device sleep close\n");
     }
-}
-
-void sleep_task(void *args)
-{
-    while (true)
-    {
-        Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-        Device_Sleep_Status(true);
-
-        for (size_t i = 0; i < gpio_num_t::GPIO_NUM_MAX; i++)
-        {
-            if ((i == SX1262_BUSY) || (i == SX1262_CS))
-            {
-                // Esp32p4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::DISABLE);
-            }
-            else
-            {
-                Esp32p4->pin_mode(i, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-            }
-        }
-
-        Esp32p4->pin_mode(IIC_1_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-        Esp32p4->pin_mode(IIC_1_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-
-        Esp32p4->pin_mode(IIC_2_SDA, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-        Esp32p4->pin_mode(IIC_2_SCL, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
-
-        // Esp32p4->pin_mode(SDIO_1_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // Esp32p4->pin_mode(SDIO_1_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // Esp32p4->pin_mode(SDIO_1_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // Esp32p4->pin_mode(SDIO_1_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // Esp32p4->pin_mode(SDIO_1_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        // Esp32p4->pin_mode(SDIO_1_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-
-        Esp32p4->pin_mode(SDIO_2_CLK, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        Esp32p4->pin_mode(SDIO_2_CMD, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        Esp32p4->pin_mode(SDIO_2_D0, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        Esp32p4->pin_mode(SDIO_2_D1, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        Esp32p4->pin_mode(SDIO_2_D2, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-        Esp32p4->pin_mode(SDIO_2_D3, Cpp_Bus_Driver::Tool::Pin_Mode::DISABLE, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
-
-        printf("entering sleep\n");
-        /* To make sure the complete line is printed before entering sleep mode,
-         * need to wait until UART TX FIFO is empty:
-         */
-        uart_wait_tx_idle_polling((uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM);
-
-        /* Get timestamp before entering sleep */
-        int64_t t_before_us = esp_timer_get_time();
-
-        esp_deep_sleep_start();
-
-        /* Get timestamp after waking up from sleep */
-        int64_t t_after_us = esp_timer_get_time();
-
-        /* Determine wake up reason */
-        const char *wakeup_reason;
-        switch (esp_sleep_get_wakeup_cause())
-        {
-        case ESP_SLEEP_WAKEUP_TIMER:
-            wakeup_reason = "timer";
-            break;
-        case ESP_SLEEP_WAKEUP_GPIO:
-            wakeup_reason = "pin";
-            break;
-        case ESP_SLEEP_WAKEUP_UART:
-            wakeup_reason = "uart";
-            /* Hang-up for a while to switch and execute the uart task
-             * Otherwise the chip may fall sleep again before running uart task */
-            vTaskDelay(1);
-            break;
-#if TOUCH_LSLEEP_SUPPORTED
-        case ESP_SLEEP_WAKEUP_TOUCHPAD:
-            wakeup_reason = "touch";
-            break;
-#endif
-        default:
-            wakeup_reason = "other";
-            break;
-        }
-#if CONFIG_NEWLIB_NANO_FORMAT
-        /* printf in newlib-nano does not support %ll format, causing example test fail */
-        printf("Returned from light sleep, reason: %s, t=%d ms, slept for %d ms\n",
-               wakeup_reason, (int)(t_after_us / 1000), (int)((t_after_us - t_before_us) / 1000));
-#else
-        printf("Returned from light sleep, reason: %s, t=%lld ms, slept for %lld ms\n",
-               wakeup_reason, t_after_us / 1000, (t_after_us - t_before_us) / 1000);
-#endif
-        if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_GPIO)
-        {
-            /* Waiting for the gpio inactive, or the chip will continuously trigger wakeup*/
-            example_wait_gpio_inactive();
-        }
-    }
-    vTaskDelete(NULL);
 }
 
 void ES8311_Init(void)
@@ -462,27 +388,6 @@ bool ICM20948_Init(void)
     Icm20948->setMagOpMode(AK09916_CONT_MODE_20HZ);
 
     return true;
-}
-
-void Iic_Scan(void)
-{
-    std::vector<uint8_t> address_1;
-    if (Xl9535_Iic_Bus->scan_7bit_address(&address_1) == true)
-    {
-        for (size_t i = 0; i < address_1.size(); i++)
-        {
-            printf("Discovered IIC 1 devices[%u]: %#x\n", i, address_1[i]);
-        }
-    }
-
-    std::vector<uint8_t> address_2;
-    if (Sgm38121_Iic_Bus->scan_7bit_address(&address_2) == true)
-    {
-        for (size_t i = 0; i < address_2.size(); i++)
-        {
-            printf("Discovered IIC 2 devices[%u]: %#x\n", i, address_2[i]);
-        }
-    }
 }
 
 void Ethernet_Init(void)
@@ -745,8 +650,10 @@ extern "C" void app_main(void)
 
     Xl9535->begin();
 
+#if defined USE_SCREEN
     Xl9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+#endif
     Xl9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
@@ -754,25 +661,27 @@ extern "C" void app_main(void)
     Xl9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9535->pin_mode(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9535->pin_mode(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_EXTERNAL_SENSOR_INT, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+#if defined USE_SCREEN
     Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+#endif
     Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     Xl9535->pin_write(XL9535_ETHERNET_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     Xl9535->pin_write(XL9535_SD_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     Esp32p4->pin_mode(ETHERNET_MDC, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
     Esp32p4->pin_mode(ETHERNET_MDIO, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(200));
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(200));
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(200));
 
@@ -913,7 +822,6 @@ extern "C" void app_main(void)
     Wire1._bus->set_bus_handle(Sgm38121_Iic_Bus->get_bus_handle());
     ICM20948_Init();
 
-    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     L76k->begin();
     printf("get_baud_rate:%ld\n", L76k->get_baud_rate());
     L76k->set_baud_rate(Cpp_Bus_Driver::L76k::Baud_Rate::BR_115200_BPS);
@@ -995,8 +903,6 @@ extern "C" void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    // Iic_Scan();
-
     /* Enable wakeup from light sleep by gpio */
     // example_register_gpio_wakeup();
     //     /* Enable wakeup from light sleep by timer */
@@ -1008,5 +914,61 @@ extern "C" void app_main(void)
     //     example_register_touch_wakeup();
     // #endif
 
-    xTaskCreate(sleep_task, "sleep_task", 4 * 1024, NULL, 6, NULL);
+    while (1)
+    {
+        Device_Sleep_Status(true);
+
+        printf("entering sleep\n");
+        /* To make sure the complete line is printed before entering sleep mode,
+         * need to wait until UART TX FIFO is empty:
+         */
+        uart_wait_tx_idle_polling((uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM);
+
+        /* Get timestamp before entering sleep */
+        int64_t t_before_us = esp_timer_get_time();
+
+        esp_deep_sleep_start();
+
+        /* Get timestamp after waking up from sleep */
+        int64_t t_after_us = esp_timer_get_time();
+
+        /* Determine wake up reason */
+        const char *wakeup_reason;
+        switch (esp_sleep_get_wakeup_cause())
+        {
+        case ESP_SLEEP_WAKEUP_TIMER:
+            wakeup_reason = "timer";
+            break;
+        case ESP_SLEEP_WAKEUP_GPIO:
+            wakeup_reason = "pin";
+            break;
+        case ESP_SLEEP_WAKEUP_UART:
+            wakeup_reason = "uart";
+            /* Hang-up for a while to switch and execute the uart task
+             * Otherwise the chip may fall sleep again before running uart task */
+            vTaskDelay(1);
+            break;
+#if TOUCH_LSLEEP_SUPPORTED
+        case ESP_SLEEP_WAKEUP_TOUCHPAD:
+            wakeup_reason = "touch";
+            break;
+#endif
+        default:
+            wakeup_reason = "other";
+            break;
+        }
+#if CONFIG_NEWLIB_NANO_FORMAT
+        /* printf in newlib-nano does not support %ll format, causing example test fail */
+        printf("Returned from light sleep, reason: %s, t=%d ms, slept for %d ms\n",
+               wakeup_reason, (int)(t_after_us / 1000), (int)((t_after_us - t_before_us) / 1000));
+#else
+        printf("Returned from light sleep, reason: %s, t=%lld ms, slept for %lld ms\n",
+               wakeup_reason, t_after_us / 1000, (t_after_us - t_before_us) / 1000);
+#endif
+        if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_GPIO)
+        {
+            /* Waiting for the gpio inactive, or the chip will continuously trigger wakeup*/
+            example_wait_gpio_inactive();
+        }
+    }
 }

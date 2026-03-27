@@ -92,8 +92,8 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_BQ27220
                 bool "bq27220"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_DEEP_SLEEP
-                bool "deep_sleep"
+            config EXAMPLE_BUILD_SLEEP
+                bool "sleep"
                 depends on BOARD_TYPE_T_DISPLAY_P4 || BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_ES8311
                 bool "es8311"
