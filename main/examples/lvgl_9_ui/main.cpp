@@ -45,7 +45,7 @@
 #include "esp_audio_dec.h"
 #include "esp_audio_dec_default.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 #include "kode_bq25896.h"
 #endif
 
@@ -172,7 +172,7 @@ struct System_Status
     } nrf24l01;
 #endif
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     struct
     {
         bool init_flag = false;
@@ -375,7 +375,7 @@ auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
 
 auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
@@ -1470,7 +1470,7 @@ void device_battery_health_task(void *arg)
                     battery_health_data_str += "discharge flag: " + std::to_string(bs.flag.dsg) + "\n";
                 }
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 
                 battery_health_data_str += "\nbq25896 data:\n";
                 uint8_t part_number = 0;
@@ -1582,7 +1582,7 @@ void device_battery_health_task(void *arg)
                 // 更新数据的标签
                 lv_label_set_text(System_Ui->_registry.win.cit.battery_health_test.data_label, battery_health_data_str.c_str());
                 lv_obj_align(System_Ui->_registry.win.cit.battery_health_test.data_label, LV_ALIGN_TOP_MID, 0, 10);
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
                 if ((vbus_stat == Kode_Bq25896::BQ25896_VBUS_STAT_ADAPTER) || (vbus_stat == Kode_Bq25896::BQ25896_VBUS_STAT_USB_HOST))
                 {
                     lv_obj_add_flag(System_Ui->_registry.win.cit.battery_health_test.otg_label, LV_OBJ_FLAG_HIDDEN);
@@ -3097,7 +3097,7 @@ void System_Ui_Callback_Init(void)
         Set_Music_Current_Time_S_Flag = true;
     };
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     System_Ui->_win_cit_otg_switch_callback = [](bool status)
     {
         if (status == true)
@@ -4377,7 +4377,7 @@ void System_Startup_Message_Init(void)
         Lvgl_Show_Device_Message("esp32c6 connect wifi fail");
     }
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     if (Sys_Status.bq25896.init_flag == false)
     {
         Lvgl_Show_Device_Message("bq25896 init fail");
@@ -4453,7 +4453,7 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
     if (assert != ESP_OK)
     {
@@ -4478,7 +4478,7 @@ extern "C" void app_main(void)
     Hardware_Usb_Cdc_Init();
     xTaskCreate(hardware_usb_cdc_task, "hardware_usb_cdc_task", 4 * 1024, NULL, 3, NULL);
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
 #endif
     Xl9535->begin();

@@ -229,7 +229,7 @@ namespace Lvgl_Ui
                         lv_obj_t *root;
                         lv_obj_t *data_label;
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
                         lv_obj_t *otg_label;
                         bool otg_switch_status = false;
                         lv_obj_t *otg_switch;
@@ -616,7 +616,7 @@ namespace Lvgl_Ui
 
         void (*_set_music_current_time_s_callback)(double current_time_s) = nullptr;
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
         void (*_win_cit_otg_switch_callback)(bool status) = nullptr;
 
         void (*_win_cit_hcc_switch_callback)(bool status) = nullptr;
@@ -714,7 +714,7 @@ namespace Lvgl_Ui
 
         void create_system_message_box(lv_obj_t *parent, std::string message_title, std::string message_data);
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
         void set_otg_switch_status(bool status);
 
         void set_hcc_switch_status(bool status);

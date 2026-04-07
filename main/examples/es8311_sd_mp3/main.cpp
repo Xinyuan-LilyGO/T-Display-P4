@@ -11,7 +11,7 @@
 #include "esp_audio_dec_default.h"
 #include "esp_audio_dec.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 #include "kode_bq25896.h"
 #endif
 
@@ -31,7 +31,7 @@ auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_
                                                                      i2s_port_t::I2S_NUM_0, Cpp_Bus_Driver::Hardware_Iis::Data_Mode::INPUT_OUTPUT, Cpp_Bus_Driver::Hardware_Iis::Iis_Mode::STD,
                                                                      i2s_clock_src_t::I2S_CLK_SRC_APLL);
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
@@ -333,7 +333,7 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
     if (assert != ESP_OK)
     {

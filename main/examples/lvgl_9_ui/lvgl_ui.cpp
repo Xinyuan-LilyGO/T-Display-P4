@@ -60,8 +60,8 @@ namespace Lvgl_Ui
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4
 #if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_0
             {"board name: ", "t-display-p4_v1.0"},
-#elif defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
-            {"board name: ", "t-display-p4_v1.1"},
+#elif defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+            {"board name: ", "t-display-p4_v2.0"},
 #else
 #error "no macro definition is set"
 #endif
@@ -1992,7 +1992,7 @@ namespace Lvgl_Ui
         lv_label_set_text(_registry.win.cit.battery_health_test.data_label, "battery health data:");
         lv_obj_align(_registry.win.cit.battery_health_test.data_label, LV_ALIGN_CENTER, 0, 0);
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 
         _registry.win.cit.battery_health_test.otg_label = lv_label_create(container);
         lv_label_set_text(_registry.win.cit.battery_health_test.otg_label, "OTG");
@@ -5122,7 +5122,7 @@ namespace Lvgl_Ui
         _registry.system_message_box.occupancy_flag = true;
     }
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     void System::set_otg_switch_status(bool status)
     {
         if (_win_cit_otg_switch_callback != nullptr)

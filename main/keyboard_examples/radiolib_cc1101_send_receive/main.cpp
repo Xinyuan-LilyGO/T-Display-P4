@@ -9,7 +9,7 @@
 #include "cpp_bus_driver_library.h"
 #include "radiolib_bridge_driver.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 #include "kode_bq25896.h"
 #endif
 
@@ -65,7 +65,7 @@ auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SD
 
 auto Cc1101_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_CC1101_MOSI, T_MIXRF_CC1101_SCLK, T_MIXRF_CC1101_MISO, SPI2_HOST, 0);
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
@@ -106,7 +106,7 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
     if (assert != ESP_OK)
     {

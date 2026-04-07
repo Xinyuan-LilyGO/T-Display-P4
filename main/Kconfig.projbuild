@@ -69,18 +69,18 @@ menu "Example Configuration"
         prompt "Board type"
         default BOARD_TYPE_T_DISPLAY_P4
         config BOARD_TYPE_T_DISPLAY_P4
-            bool "t_display_p4"
+            bool "t-display-p4"
         config BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
-            bool "t_display_p4_keyboard"
+            bool "t-display-p4-keyboard"
     endchoice
 
     choice BOARD_VERSION_T_DISPLAY_P4
         prompt "Board version T-Display-P4"
-        default BOARD_VERSION_T_DISPLAY_P4_V1_1
+        default BOARD_VERSION_T_DISPLAY_P4_V2_0
         config BOARD_VERSION_T_DISPLAY_P4_V1_0
-            bool "t_display_p4_v1_0"
-        config BOARD_VERSION_T_DISPLAY_P4_V1_1
-            bool "t_display_p4_v1_1"
+            bool "t-display-p4_v1.0"
+        config BOARD_VERSION_T_DISPLAY_P4_V2_0
+            bool "t-display-p4_v2.0"
     endchoice
 
     choice
@@ -175,7 +175,7 @@ menu "Example Configuration"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_BQ25896
                 bool "bq25896"
-                depends on BOARD_TYPE_T_DISPLAY_P4 && BOARD_VERSION_T_DISPLAY_P4_V1_1
+                depends on BOARD_TYPE_T_DISPLAY_P4 && BOARD_VERSION_T_DISPLAY_P4_V2_0
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
                 depends on BOARD_TYPE_T_DISPLAY_P4

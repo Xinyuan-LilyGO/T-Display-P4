@@ -10,7 +10,7 @@
 #include "lvgl.h"
 #include <cmath>
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 #include "kode_bq25896.h"
 #endif
 
@@ -34,7 +34,7 @@ auto Screen_Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WI
                                                                         return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
                                                                     } }(SCREEN_BITS_PER_PIXEL));
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
 Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
@@ -392,7 +392,7 @@ extern "C" void app_main(void)
 {
     printf("Ciallo\n");
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_1
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
     int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
     if (assert != ESP_OK)
     {

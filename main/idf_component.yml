@@ -107,4 +107,4 @@ dependencies:
   kode_bq25896:
     override_path: "../libraries/kode_bq25896"
     matches:
-      - if: "$CONFIG{BOARD_VERSION_T_DISPLAY_P4_V1_1} == True"
+      - if: "$CONFIG{BOARD_VERSION_T_DISPLAY_P4_V2_0} == True"
