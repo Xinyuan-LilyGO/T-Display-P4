@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-03-27 10:43:39
+ * @LastEditTime: 2026-04-02 17:36:36
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -300,6 +300,8 @@ void Device_Sleep_Status(bool status)
 
         Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+        Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     }
     else
     {
