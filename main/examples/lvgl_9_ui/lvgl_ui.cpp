@@ -98,7 +98,7 @@ namespace Lvgl_Ui
 #error "no macro definition is set"
 #endif
 
-            {"firmware build date:\n     ", "202603261340"},
+            {"firmware build date:\n     ", "202604071529"},
     };
 
     void System::begin()

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-27 11:18:09
+ * @LastEditTime: 2026-04-07 18:04:16
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -2425,9 +2425,7 @@ void device_rf_task(void *arg)
                 }
                 else
                 {
-                    float buffer_rssi = Nrf24l01.getRSSI();
-                    float buffer_lqi = Nrf24l01.getSNR();
-                    printf("nrf24l01 receive rssi: %.01f snr: %.01f\n", buffer_rssi, buffer_lqi);
+                    printf("nrf24l01 receive rssi: none snr: none\n");
 
                     for (uint8_t i = 0; i < length_buffer; i++)
                     {
@@ -2449,7 +2447,7 @@ void device_rf_task(void *arg)
                     message_str += '\0';
 
                     char buffer_data_info[30];
-                    snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[%.01f] snr[%.01f]", buffer_rssi, buffer_lqi);
+                    snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[none] snr[none]");
 
                     Lvgl_Ui::System::Win_Rf_Chat_Message wlcm =
                         {
