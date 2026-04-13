@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-04-07 18:04:16
+ * @LastEditTime: 2026-04-13 17:28:28
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -53,7 +53,7 @@
 
 #define LVGL_TICK_PERIOD_MS 1
 
-#define AUDIO_MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
+#define AUDIO_MCLK_MULTIPLE 256
 #define AUDIO_SAMPLE_RATE 44100
 #define AUDIO_BITS_PER_SAMPLE 16
 #define AUDIO_NUM_CHANNEL 2
@@ -306,7 +306,7 @@ auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SD
 // IIS
 auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK,
                                                                      i2s_port_t::I2S_NUM_0, Cpp_Bus_Driver::Hardware_Iis::Data_Mode::INPUT_OUTPUT, Cpp_Bus_Driver::Hardware_Iis::Iis_Mode::STD,
-                                                                     i2s_clock_src_t::I2S_CLK_SRC_APLL);
+                                                                     i2s_clock_src_t::I2S_CLK_SRC_DEFAULT);
 
 // UART
 auto L76k_Uart_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Uart>(GPS_RX, GPS_TX, UART_NUM_1);
@@ -3599,29 +3599,19 @@ void Set_Lvgl_Startup_Progress_Bar(uint8_t percentage)
 
 void Es8311_Init(void)
 {
-    Es8311->begin(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
-
-    if (Es8311->begin(50000) == true)
+    if (Es8311->begin() == true)
     {
-        printf("Es8311 initialization success\n");
+        printf("Es8311->begin success\n");
         Sys_Status.es8311.init_flag = true;
     }
     else
     {
-        printf("Es8311 initialization fail\n");
+        printf("Es8311->begin fail\n");
         Sys_Status.es8311.init_flag = false;
     }
 
-    Es8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
-    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
-    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
+    Es8311->begin(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE, AUDIO_BITS_PER_SAMPLE);
 
-    Es8311->set_clock_coeff(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE);
-
-    Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
-
-    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
-    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
     Cpp_Bus_Driver::Es8311::Power_Status ps =
         {
             .contorl =

@@ -2,7 +2,7 @@
  * @Description: es8311
  * @Author: LILYGO_L
  * @Date: 2024-12-23 15:18:58
- * @LastEditTime: 2026-03-26 14:59:18
+ * @LastEditTime: 2026-04-13 17:28:13
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -13,15 +13,16 @@
 #include "kode_bq25896.h"
 #endif
 
-#define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
-#define SAMPLE_RATE 44100
+#define AUDIO_MCLK_MULTIPLE 256
+#define AUDIO_BITS_PER_SAMPLE 16
+#define AUDIO_SAMPLE_RATE 44100
 
 auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_0);
 auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_1);
 
 auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK,
                                                                      i2s_port_t::I2S_NUM_0, Cpp_Bus_Driver::Hardware_Iis::Data_Mode::INPUT_OUTPUT, Cpp_Bus_Driver::Hardware_Iis::Iis_Mode::STD,
-                                                                     i2s_clock_src_t::I2S_CLK_SRC_APLL);
+                                                                     i2s_clock_src_t::I2S_CLK_SRC_DEFAULT);
 
 #if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
@@ -82,32 +83,17 @@ extern "C" void app_main(void)
     Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
-    Es8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
-
-    while (1)
+    if (Es8311->begin() == true)
     {
-        if (Es8311->begin(50000) == true)
-        {
-            printf("es8311 initialization success\n");
-            break;
-        }
-        else
-        {
-            printf("es8311 initialization fail\n");
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
+        printf("Es8311->begin success\n");
+    }
+    else
+    {
+        printf("Es8311->begin fail\n");
     }
 
-    Es8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
-    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
-    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
+    Es8311->begin(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE, AUDIO_BITS_PER_SAMPLE);
 
-    Es8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
-
-    Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
-
-    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
-    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
     Cpp_Bus_Driver::Es8311::Power_Status ps =
         {
             .contorl =
