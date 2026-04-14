@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2026-02-25 09:09:45
- * @LastEditTime: 2026-04-13 17:08:47
+ * @LastEditTime: 2026-04-14 09:57:06
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -449,7 +449,7 @@ extern "C" void app_main(void)
     Es8311->set_adc_volume(191);
     Es8311->set_dac_volume(191);
 
-    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
+    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH, SDMMC_FREQ_52M) == false)
     {
         printf("Sdmmc_Init fail\n");
     }

@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-04-13 17:28:28
+ * @LastEditTime: 2026-04-14 09:57:40
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -4651,7 +4651,7 @@ extern "C" void app_main(void)
     Set_Lvgl_Startup_Progress_Bar(10);
     _lock_release(&lvgl_api_lock);
 
-    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
+    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH, SDMMC_FREQ_52M) == false)
     {
         printf("Sdmmc_Init fail\n");
     }

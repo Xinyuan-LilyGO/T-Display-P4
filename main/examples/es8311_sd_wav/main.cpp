@@ -2,7 +2,7 @@
  * @Description: es8311_sd_wav
  * @Author: LILYGO_L
  * @Date: 2025-03-31 15:23:33
- * @LastEditTime: 2026-04-13 17:28:24
+ * @LastEditTime: 2026-04-14 09:57:29
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -251,7 +251,7 @@ extern "C" void app_main(void)
     // 将ADC的数据自动输出到DAC上
     // Es8311->set_adc_data_to_dac(true);
 
-    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
+    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH, SDMMC_FREQ_52M) == false)
     {
         printf("Sdmmc_Init fail\n");
     }
