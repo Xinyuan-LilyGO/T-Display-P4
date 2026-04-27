@@ -2,179 +2,113 @@
  * @Description: pcf8563
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:45:08
- * @LastEditTime: 2026-03-26 15:01:03
+ * @LastEditTime: 2026-04-25 10:03:07
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
-#include "cpp_bus_driver_library.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-#include "kode_bq25896.h"
-#endif
+extern "C" void app_main(void) {
+  printf("Ciallo\n");
 
-auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto Pcf8563_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(PCF8563_SDA, PCF8563_SCL, I2C_NUM_0);
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  driver.Init();
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
-if (assert != ESP_OK)
-{
-    printf("bq25896 init fail (error code: %#X)\n", assert);
-}
-else
-{
-    printf("bq25896 init success\n");
+  auto xl9535 = driver.chip().xl9535.get();
+  auto pcf8563 = driver.chip().pcf8563.get();
+  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-    Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
-    // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
-    Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
-    // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
-    // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
-    Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
-    // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
-}
+  volatile bool interrupt_flag = false;
 
-Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
-#endif
+  esp32p4->InitGpioInterrupt(
+      XL9535_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
+      [](void* arg) {
+        auto* flag = static_cast<volatile bool*>(arg);
+        *flag = true;
+      },
+      (void*)&interrupt_flag  // 这里的第四个参数需要确认你的 InitGpioInterrupt
+                              // 是否支持
+  );
 
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
-auto Pcf8563 = std::make_unique<Cpp_Bus_Driver::Pcf8563x>(Pcf8563_Iic_Bus, PCF8563_IIC_ADDRESS);
+  pcf8563->SetClockFrequencyOutput(
+      cpp_bus_driver::Pcf8563x::OutFreq ::kClockOff);
 
-volatile bool Interrupt_Flag = false;
+  pcf8563->SetClock(false);
+  pcf8563->StopTimer();
+  pcf8563->StopScheduledAlarm();
 
-void Iic_Scan(void)
-{
-    std::vector<uint8_t> address;
-    if (Xl9535_Iic_Bus->scan_7bit_address(&address) == true)
+  cpp_bus_driver::Pcf8563x::Time t = {
+      .second = 55,
+      .minute = 59,
+      .hour = 23,
+      .day = 31,
+      .week = cpp_bus_driver::Pcf8563x::Week::kSunday,
+      .month = 12,
+      .year = 99,
+  };
+
+  cpp_bus_driver::Pcf8563x::TimeAlarm ta = {
+      .minute =
+          {
+              .value = 0,
+              .alarm_flag = true,
+          },
+      .hour =
+          {
+              .value = 0,
+              .alarm_flag = true,
+          },
+      .day =
+          {
+              .value = 1,
+              .alarm_flag = true,
+          },
+      .week =
+          {
+              .value = cpp_bus_driver::Pcf8563x::Week::kSunday,
+              .alarm_flag = false,
+          },
+  };
+
+  pcf8563->SetTime(t);
+  // 定时10秒产生定时器中断
+  pcf8563->RunTimer(10, cpp_bus_driver::Pcf8563x::TimerFreq::kClock1Hz);
+  pcf8563->RunScheduledAlarm(ta);
+  pcf8563->SetClock(true);
+
+  xl9535->ClearIrqFlag();
+
+  while (1) {
+    if (pcf8563->CheckClockIntegrityFlag())  // 检查时钟完整
     {
-        for (size_t i = 0; i < address.size(); i++)
-        {
-            printf("discovered iic devices[%u]: %#X\n", i, address[i]);
-        }
+      if (pcf8563->GetTime(t)) {
+        printf(
+            "Pcf8563 year:[%d] month:[%d] day:[%d] time:[%d:%d:%d] week:[%d]\n",
+            t.year, t.month, t.day, t.hour, t.minute, t.second,
+            static_cast<uint8_t>(t.week));
+      }
+    } else {
+      printf("Pcf8563 integrity of the clock information is not guaranteed\n");
+
+      pcf8563->ClearClockIntegrityFlag();
     }
-}
 
-extern "C" void app_main(void)
-{
-    printf("Ciallo\n");
-
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-    auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
-    Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
-
-    auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
-#endif
-
-    Xl9535->create_gpio_interrupt(XL9535_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::FALLING,
-                                  [](void *arg) IRAM_ATTR
-                                  {
-                                      Interrupt_Flag = true;
-                                  });
-
-    Xl9535->begin();
-    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    Xl9535->pin_mode(XL9535_RTC_INT, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-
-    Pcf8563_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
-    Pcf8563->begin();
-
-    // Pcf8563->set_clock_frequency_output(Cpp_Bus_Driver::PCF8563x::Clock_Frequency::OUTPUT_OFF);
-
-    Pcf8563->set_clock(false);
-    Pcf8563->stop_timer();
-    Pcf8563->stop_scheduled_alarm();
-
-    Cpp_Bus_Driver::Pcf8563x::Time t =
-        {
-            .second = 55,
-            .minute = 59,
-            .hour = 23,
-            .day = 31,
-            .week = Cpp_Bus_Driver::Pcf8563x::Week::SUNDAY,
-            .month = 12,
-            .year = 99,
-        };
-
-    Cpp_Bus_Driver::Pcf8563x::Time_Alarm ta =
-        {
-            .minute =
-                {
-                    .value = 0,
-                    .alarm_flag = true,
-                },
-            .hour =
-                {
-                    .value = 0,
-                    .alarm_flag = true,
-                },
-            .day =
-                {
-                    .value = 1,
-                    .alarm_flag = true,
-                },
-            .week =
-                {
-                    .value = Cpp_Bus_Driver::Pcf8563x::Week::SUNDAY,
-                    .alarm_flag = false,
-                },
-        };
-
-    Pcf8563->set_time(t);
-    // 定时10秒产生定时器中断
-    Pcf8563->run_timer(10, Cpp_Bus_Driver::Pcf8563x::Timer_Freq::CLOCK_1HZ);
-    Pcf8563->run_scheduled_alarm(ta);
-    Pcf8563->set_clock(true);
-
-    Xl9535->clear_irq_flag();
-
-    while (1)
-    {
-        // Iic_Scan();
-        printf("pcf8563 ID: %#X\n", Pcf8563->get_device_id());
-
-        if (Pcf8563->check_clock_integrity_flag() == true) // 检查时钟完整
-        {
-            if (Pcf8563->get_time(t) == true)
-            {
-                printf("pcf8563 year:[%d] month:[%d] day:[%d] time:[%d:%d:%d] week:[%d]\n", t.year, t.month, t.day,
-                       t.hour, t.minute, t.second, static_cast<uint8_t>(t.week));
-            }
-        }
-        else
-        {
-            printf("pcf8563 integrity of the clock information is not guaranteed\n");
-
-            Pcf8563->clear_clock_integrity_flag();
+    if (interrupt_flag) {
+      if (xl9535->PinRead(XL9535_RTC_INT) == 0) {
+        if (pcf8563->CheckTimerFlag()) {
+          printf("Pcf8563 timer_flag triggered\n");
+          pcf8563->ClearTimerFlag();
         }
 
-        if (Interrupt_Flag == true)
-        {
-            if (Xl9535->pin_read(XL9535_RTC_INT) == 0)
-            {
-                if (Pcf8563->check_timer_flag() == true)
-                {
-                    printf("pcf8563 timer_flag triggered\n");
-                    Pcf8563->clear_timer_flag();
-                }
-
-                if (Pcf8563->check_scheduled_alarm_flag() == true)
-                {
-                    printf("pcf8563 scheduled_alarm_flag triggered\n");
-                    Pcf8563->clear_scheduled_alarm_flag();
-                }
-            }
-
-            Xl9535->clear_irq_flag();
-            Interrupt_Flag = false;
+        if (pcf8563->CheckScheduledAlarmFlag()) {
+          printf("Pcf8563 scheduled_alarm_flag triggered\n");
+          pcf8563->ClearScheduledAlarmFlag();
         }
+      }
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+      xl9535->ClearIrqFlag();
+      interrupt_flag = false;
     }
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
 }

@@ -2,145 +2,94 @@
  * @Description: radiolib_sx1262_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-03-26 14:41:24
+ * @LastEditTime: 2026-04-25 16:44:07
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
-#include "cpp_bus_driver_library.h"
-#include "radiolib_bridge_driver.h"
+#include "radiolib_cpp_bus_driver_library.h"
+
+extern "C" void app_main(void) {
+  printf("Ciallo\n");
+
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  driver.CreateDrivers();
 
 #if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-#include "kode_bq25896.h"
+  driver.InitBq25896();
+  driver.bus().xl9535_i2c_bus->set_bus_handle(
+      driver.bus().bq25896_i2c_bus->bus_handle());
 #endif
 
-uint8_t Send_Package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+  driver.InitXl9535();
+  driver.InitPower();
+  driver.ConfigXl9535();
 
-auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+  auto xl9535 = driver.chip().xl9535.get();
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
-Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
+  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
-#endif
+  auto sx1262_spi_bus = std::make_shared<cpp_bus_driver::HardwareSpi>(
+      SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI2_HOST, 0);
 
-auto Sx1262_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI2_HOST, 0);
+  RadioLibHal* radiolib_hal =
+      new RadiolibCppBusDriverHal(sx1262_spi_bus, 10000000, SX1262_CS);
+  SX1262 sx1262 = new Module(radiolib_hal, static_cast<uint32_t>(RADIOLIB_NC),
+                             static_cast<uint32_t>(RADIOLIB_NC),
+                             static_cast<uint32_t>(RADIOLIB_NC), SX1262_BUSY);
 
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+  const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Sx1262_Spi_Bus, 10000000, SX1262_CS);
-SX1262 Sx1262 = new Module(Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                           static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), SX1262_BUSY);
+  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput);
 
-auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+  esp32p4->SetPinMode(SX1262_BUSY, cpp_bus_driver::Tool::PinMode::kInput,
+                      cpp_bus_driver::Tool::PinStatus ::kPulldown);
 
-extern "C" void app_main(void)
-{
-    printf("Ciallo\n");
+  int16_t result = sx1262.begin(920.0, 125.0, 12, 7,
+                                RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
+  // int16_t result = sx1262.beginFSK(850.0, 200.0, 10, 467.0, 22, 16);
+  if (result == RADIOLIB_ERR_NONE) {
+    printf("Sx1262 init success\n");
+  } else {
+    printf("Sx1262 init failed (error code: %d)\n", result);
+  }
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
-    if (assert != ESP_OK)
-    {
-        printf("bq25896 init fail (error code: %#X)\n", assert);
-    }
-    else
-    {
-        printf("bq25896 init success\n");
+  result = sx1262.setCurrentLimit(140);
+  if (result != RADIOLIB_ERR_NONE) {
+    printf("setCurrentLimit failed (error code: %d)\n", result);
+  }
 
-        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
-        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
-        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
-        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
-        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
-        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
-        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
-    }
+  sx1262.startReceive();
 
-    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
-#endif
+  while (1) {
+    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+      vTaskDelay(pdMS_TO_TICKS(300));
 
-    Xl9535->begin();
-    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+      printf("SX1262 send package\n");
 
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+      result = sx1262.transmit(send_package, 9);
+      if (result != RADIOLIB_ERR_NONE) {
+        printf("transmit failed (error code: %d)\n", result);
+      }
 
-    vTaskDelay(pdMS_TO_TICKS(10));
-
-    Esp32p4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
-
-    Esp32p4->pin_mode(SX1262_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status ::PULLDOWN);
-    Xl9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
-
-    // 默认使用RF1天线
-    Xl9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-
-    // LORA复位
-    Xl9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(10));
-    Xl9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(10));
-
-    int16_t status = Sx1262.begin(920.0, 125.0, 12, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
-    // int16_t status = Sx1262.beginFSK(850.0, 200.0, 10, 467.0, 22, 16);
-    if (status == RADIOLIB_ERR_NONE)
-    {
-        printf("sx1262 init success\n");
-    }
-    else
-    {
-        printf("sx1262 init fail (error code: %d)\n", status);
+      result = sx1262.startReceive();
+      if (result != RADIOLIB_ERR_NONE) {
+        printf("startReceive failed (error code: %d)\n", result);
+      }
     }
 
-    status = Sx1262.setCurrentLimit(140);
-    if (status != RADIOLIB_ERR_NONE)
+    if (xl9535->PinRead(XL9535_SX1262_DIO1) == 1)  // 接收完成中断
     {
-        printf("setCurrentLimit fail (error code: %d)\n", status);
-    }
+      uint8_t receive_package[255] = {0};
+      if (sx1262.readData(receive_package, 9) == RADIOLIB_ERR_NONE) {
+        printf("Sx1262 rssi: %.2f dBm, snr: %.2f dB\n", sx1262.getRSSI(),
+               sx1262.getSNR());
 
-    Sx1262.startReceive();
-
-    while (1)
-    {
-        if (Esp32p4->pin_read(ESP32P4_BOOT) == 0)
-        {
-            vTaskDelay(pdMS_TO_TICKS(300));
-
-            printf("SX1262 send package\n");
-
-            status = Sx1262.transmit(Send_Package, 9);
-            if (status != RADIOLIB_ERR_NONE)
-            {
-                printf("transmit fail (error code: %d)\n", status);
-            }
-
-            status = Sx1262.startReceive();
-            if (status != RADIOLIB_ERR_NONE)
-            {
-                printf("startReceive fail (error code: %d)\n", status);
-            }
+        for (uint8_t i = 0; i < 9; i++) {
+          printf("Get sx1262 data[%d]: %d\n", i, receive_package[i]);
         }
-
-        if (Xl9535->pin_read(XL9535_SX1262_DIO1) == 1) // 接收完成中断
-        {
-            uint8_t receive_package[255] = {0};
-            if (Sx1262.readData(receive_package, 9) == RADIOLIB_ERR_NONE)
-            {
-                printf("SX1262 rssi: %.2f dBm, snr: %.2f dB\n", Sx1262.getRSSI(), Sx1262.getSNR());
-
-                for (uint8_t i = 0; i < 9; i++)
-                {
-                    printf("get SX1262 data[%d]: %d\n", i, receive_package[i]);
-                }
-            }
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(10));
+      }
     }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }

@@ -715,9 +715,9 @@ extern "C" void app_main(void)
 #error "no macro definition is set"
 #endif
 
-    Lilygo_Device_Driver::Init_Ldo_Channel_Power(3, 2500);
+    lilygo_device_driver::InitLdoChannelPower(3, 2500);
 
-    Lilygo_Device_Driver::Init_Ldo_Channel_Power(4, 3300);
+    lilygo_device_driver::InitLdoChannelPower(4, 3300);
 
 #if defined USE_SCREEN
     Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
@@ -795,7 +795,7 @@ extern "C" void app_main(void)
         printf("Wifi_Init_Connect fail\n");
     }
 
-    if (Lilygo_Device_Driver::Sdmmc_Init(SD_BASE_PATH) == false)
+    if (lilygo_device_driver::InitSdmmc(SD_BASE_PATH) == false)
     {
         printf("Sdmmc_Init fail\n");
     }
