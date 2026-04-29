@@ -21,15 +21,15 @@ extern "C" void app_main(void) {
   auto xl9535 = driver.chip().xl9535.get();
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput,
-                      cpp_bus_driver::Tool::PinStatus::kPullup);
+  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
+                      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   sx1262->ConfigLoraParams(920.0, cpp_bus_driver::Sx126x::LoraBw::kBw125000Hz,
                            140, 22);
   sx1262->ClearBuffer();
 
   sx1262->StartLoraTransmit(cpp_bus_driver::Sx126x::ChipMode::kRx);
-  sx1262->SetIrqPinMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
+  sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
   sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
 
   printf("Sx1262 start lora transmit\n");
@@ -79,17 +79,17 @@ extern "C" void app_main(void) {
       cycle_time = esp_log_timestamp() + 1000;
     }
 
-    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       sx1262->StartLoraTransmit(cpp_bus_driver::Sx126x::ChipMode::kTx, 0,
                                 cpp_bus_driver::Sx126x::FallbackMode::kFs);
-      sx1262->SetIrqPinMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
+      sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
       sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
 
       printf("Sx1262 send start\n");
       uint16_t timeout_count = 0;
       if (sx1262->SendData(send_package, sizeof(send_package))) {
         while (1) {
-          if (xl9535->PinRead(XL9535_SX1262_DIO1) == 1) {
+          if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
             cpp_bus_driver::Sx126x::IrqStatus irq_status;
             if (!sx1262->ParseIrqStatus(sx1262->GetIrqFlag(), irq_status)) {
               printf("Parse irq status failed\n");
@@ -111,11 +111,11 @@ extern "C" void app_main(void) {
       }
 
       sx1262->StartLoraTransmit(cpp_bus_driver::Sx126x::ChipMode::kRx);
-      sx1262->SetIrqPinMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
+      sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
       sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
     }
 
-    if (xl9535->PinRead(XL9535_SX1262_DIO1) == 1) {
+    if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
       cpp_bus_driver::Sx126x::IrqStatus irq_status;
       if (!sx1262->ParseIrqStatus(sx1262->GetIrqFlag(), irq_status)) {
         printf("Parse irq status failed\n");

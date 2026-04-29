@@ -46,7 +46,7 @@ extern "C" void app_main(void) {
   auto nrf24l01 = driver.chip().nrf24l01;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput);
+  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput);
 
   int16_t status = nrf24l01->begin(2400.0, 1000.0, 0);
   if (status == RADIOLIB_ERR_NONE) {
@@ -71,7 +71,7 @@ extern "C" void app_main(void) {
   }
 
   while (1) {
-    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
 
       printf("Nrf24l01 send package\n");

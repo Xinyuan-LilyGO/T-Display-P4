@@ -23,7 +23,7 @@ extern "C" void app_main(void) {
   auto esp32c6_at = std::make_unique<cpp_bus_driver::EspAt>(
       esp32c6_at_sdio_bus, [](bool value) -> void {
         // ESP32C6复位
-        driver.chip().xl9535->PinWrite(
+        driver.chip().xl9535->GpioWrite(
             XL9535_ESP32C6_EN,
             static_cast<cpp_bus_driver::Xl95x5::Value>(value));
       });

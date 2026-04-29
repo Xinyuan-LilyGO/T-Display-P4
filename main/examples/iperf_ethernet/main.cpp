@@ -135,10 +135,10 @@ extern "C" void app_main(void) {
 
   esp_console_start_repl(repl);
 
-  // esp32p4->SetPinMode(ETHERNET_MDC, cpp_bus_driver::Tool::PinMode::kInput,
-  //                     cpp_bus_driver::Tool::PinStatus::kPulldown);
-  // esp32p4->SetPinMode(ETHERNET_MDIO, cpp_bus_driver::Tool::PinMode::kInput,
-  //                     cpp_bus_driver::Tool::PinStatus::kPulldown);
+  // esp32p4->SetGpioMode(ETHERNET_MDC, cpp_bus_driver::Tool::GpioMode::kInput,
+  //                     cpp_bus_driver::Tool::GpioStatus::kPulldown);
+  // esp32p4->SetGpioMode(ETHERNET_MDIO, cpp_bus_driver::Tool::GpioMode::kInput,
+  //                     cpp_bus_driver::Tool::GpioStatus::kPulldown);
 
   // vTaskDelay(pdMS_TO_TICKS(5000));
 

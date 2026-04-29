@@ -326,12 +326,12 @@ extern "C" void app_main(void) {
 
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput,
-                      cpp_bus_driver::Tool::PinStatus::kPullup);
+  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
+                      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   while (1) {
     // 监测按键，按下后触发 MP3 解码播放
-    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
       printf("play_mp3 start\n");
 

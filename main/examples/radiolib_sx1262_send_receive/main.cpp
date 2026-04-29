@@ -39,10 +39,10 @@ extern "C" void app_main(void) {
 
   const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput);
+  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput);
 
-  esp32p4->SetPinMode(SX1262_BUSY, cpp_bus_driver::Tool::PinMode::kInput,
-                      cpp_bus_driver::Tool::PinStatus ::kPulldown);
+  esp32p4->SetGpioMode(SX1262_BUSY, cpp_bus_driver::Tool::GpioMode::kInput,
+                      cpp_bus_driver::Tool::GpioStatus ::kPulldown);
 
   int16_t result = sx1262.begin(920.0, 125.0, 12, 7,
                                 RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 22, 8);
@@ -61,7 +61,7 @@ extern "C" void app_main(void) {
   sx1262.startReceive();
 
   while (1) {
-    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
 
       printf("SX1262 send package\n");
@@ -77,7 +77,7 @@ extern "C" void app_main(void) {
       }
     }
 
-    if (xl9535->PinRead(XL9535_SX1262_DIO1) == 1)  // 接收完成中断
+    if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1)  // 接收完成中断
     {
       uint8_t receive_package[255] = {0};
       if (sx1262.readData(receive_package, 9) == RADIOLIB_ERR_NONE) {

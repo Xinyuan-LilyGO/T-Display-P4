@@ -15,23 +15,23 @@ extern "C" void app_main(void) {
 
   auto xl9555 = driver.chip().xl9555.get();
 
-  xl9555->SetPinMode(cpp_bus_driver::Xl95x5::Pin::kIo7,
+  xl9555->SetGpioMode(cpp_bus_driver::Xl95x5::Pin::kIo7,
                      cpp_bus_driver::Xl95x5::Mode::kInput);
   xl9555->ClearIrqFlag();
 
   while (1) {
-    xl9555->PinWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kHigh);
-    xl9555->PinWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kHigh);
-    xl9555->PinWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kHigh);
+    xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kHigh);
+    xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kHigh);
+    xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kHigh);
     printf("Xl9555 io7: %d\n",
-           xl9555->PinRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
+           xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    xl9555->PinWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
-    xl9555->PinWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
-    xl9555->PinWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
+    xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
+    xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
+    xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
     printf("Xl9555 io7: %d\n",
-           xl9555->PinRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
+           xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

@@ -19,9 +19,9 @@ extern "C" void app_main(void) {
   auto tca8418 = driver.chip().tca8418.get();
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  xl9555->PinWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
-  xl9555->PinWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
-  xl9555->PinWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
+  xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
+  xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
+  xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
 
   esp32p4->InitGpioInterrupt(
       TCA8418_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,

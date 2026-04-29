@@ -46,7 +46,7 @@ extern "C" void app_main(void) {
   auto cc1101 = driver.chip().cc1101;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetPinMode(ESP32P4_BOOT, cpp_bus_driver::Tool::PinMode::kInput);
+  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput);
 
   esp32p4->InitGpioInterrupt(
       T_MIXRF_CC1101_INT, cpp_bus_driver::Tool::InterruptMode::kRising,
@@ -72,7 +72,7 @@ extern "C" void app_main(void) {
   g_interrupt_flag = false;
 
   while (1) {
-    if (esp32p4->PinRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
 
       printf("Cc1101 send package\n");

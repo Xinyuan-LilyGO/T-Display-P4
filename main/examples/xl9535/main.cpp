@@ -23,9 +23,9 @@ extern "C" void app_main(void) {
       XL9535_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) -> void { g_interrupt_flag = true; });
 
-  xl9535->SetPinMode(cpp_bus_driver::Xl95x5::Pin::kIo2,
+  xl9535->SetGpioMode(cpp_bus_driver::Xl95x5::Pin::kIo2,
                      cpp_bus_driver::Xl95x5::Mode::kOutput);
-  xl9535->SetPinMode(cpp_bus_driver::Xl95x5::Pin::kIo3,
+  xl9535->SetGpioMode(cpp_bus_driver::Xl95x5::Pin::kIo3,
                      cpp_bus_driver::Xl95x5::Mode::kInput);
 
   xl9535->ClearIrqFlag();
@@ -38,15 +38,15 @@ extern "C" void app_main(void) {
       g_interrupt_flag = false;
     }
 
-    xl9535->PinWrite(cpp_bus_driver::Xl95x5::Pin::kIo2,
+    xl9535->GpioWrite(cpp_bus_driver::Xl95x5::Pin::kIo2,
                      cpp_bus_driver::Xl95x5::Value::kHigh);
     printf("Xl9535 io3: %d\n",
-           xl9535->PinRead(cpp_bus_driver::Xl95x5::Pin::kIo3));
+           xl9535->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo3));
     vTaskDelay(pdMS_TO_TICKS(1000));
-    xl9535->PinWrite(cpp_bus_driver::Xl95x5::Pin::kIo2,
+    xl9535->GpioWrite(cpp_bus_driver::Xl95x5::Pin::kIo2,
                      cpp_bus_driver::Xl95x5::Value::kLow);
     printf("Xl9535 io3: %d\n",
-           xl9535->PinRead(cpp_bus_driver::Xl95x5::Pin::kIo3));
+           xl9535->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo3));
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

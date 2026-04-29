@@ -128,9 +128,9 @@ void MyKeyboardRead(lv_indev_t* indev, lv_indev_data_t* data) {
                     auto led_value = caps_lock_flag
                                          ? cpp_bus_driver::Xl95x5::Value::kLow
                                          : cpp_bus_driver::Xl95x5::Value::kHigh;
-                    g_xl9555->PinWrite(XL9555_LED_1, led_value);
-                    g_xl9555->PinWrite(XL9555_LED_2, led_value);
-                    g_xl9555->PinWrite(XL9555_LED_3, led_value);
+                    g_xl9555->GpioWrite(XL9555_LED_1, led_value);
+                    g_xl9555->GpioWrite(XL9555_LED_2, led_value);
+                    g_xl9555->GpioWrite(XL9555_LED_3, led_value);
                   }
 
                   if (key_valid) {

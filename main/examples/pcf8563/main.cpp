@@ -93,7 +93,7 @@ extern "C" void app_main(void) {
     }
 
     if (interrupt_flag) {
-      if (xl9535->PinRead(XL9535_RTC_INT) == 0) {
+      if (xl9535->GpioRead(XL9535_RTC_INT) == 0) {
         if (pcf8563->CheckTimerFlag()) {
           printf("Pcf8563 timer_flag triggered\n");
           pcf8563->ClearTimerFlag();
