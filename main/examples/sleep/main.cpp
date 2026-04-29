@@ -2,16 +2,11 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-04-28 17:54:58
+ * @LastEditTime: 2026-04-29 10:10:27
  * @License: GPL 3.0
  */
-#include <cstdio>
-#include <cstring>
-
 #include "app_video.h"
-#include "driver/gpio.h"
 #include "driver/ppa.h"
-#include "driver/uart.h"
 #include "esp_eth.h"
 #include "esp_event.h"
 #include "esp_hosted.h"
@@ -19,13 +14,10 @@
 #include "esp_private/esp_cache_private.h"
 #include "esp_private/wifi.h"
 #include "esp_sleep.h"
-#include "esp_timer.h"
 #include "esp_video_init.h"
 #include "esp_wifi.h"
 #include "esp_wifi_remote.h"
 #include "ethernet_init.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "lilygo_device_driver_library.h"
 
 constexpr char kWifiSsid[] = "xinyuandianzi";
@@ -266,7 +258,29 @@ void CameraVideoFrameOperation(uint8_t* camera_buf, uint8_t camera_buf_index,
   }
 }
 
-void AppVideoCleanup();
+void AppVideoCleanup() {
+  if (!g_app_video_initialized && g_video_cam_fd0 < 0) {
+    return;
+  }
+
+  if (g_app_video_stream_started) {
+    esp_err_t ret = app_video_stream_task_stop(g_video_cam_fd0);
+    if (ret != ESP_OK) {
+      printf("app_video_stream_task_stop failed (error code: %#X)\n", ret);
+    }
+    g_app_video_stream_started = false;
+  }
+
+  if (g_video_cam_fd0 >= 0) {
+    esp_err_t ret = app_video_close(g_video_cam_fd0);
+    if (ret != ESP_OK) {
+      printf("app_video_close failed (error code: %#X)\n", ret);
+    }
+  }
+
+  g_video_cam_fd0 = -1;
+  g_app_video_initialized = false;
+}
 
 bool InitAppVideo() {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
@@ -359,32 +373,8 @@ bool InitAppVideo() {
   return true;
 }
 
-void AppVideoCleanup() {
-  if (!g_app_video_initialized && g_video_cam_fd0 < 0) {
-    return;
-  }
-
-  if (g_app_video_stream_started) {
-    esp_err_t ret = app_video_stream_task_stop(g_video_cam_fd0);
-    if (ret != ESP_OK) {
-      printf("app_video_stream_task_stop failed (error code: %#X)\n", ret);
-    }
-    g_app_video_stream_started = false;
-  }
-
-  if (g_video_cam_fd0 >= 0) {
-    esp_err_t ret = app_video_close(g_video_cam_fd0);
-    if (ret != ESP_OK) {
-      printf("app_video_close failed (error code: %#X)\n", ret);
-    }
-  }
-
-  g_video_cam_fd0 = -1;
-  g_app_video_initialized = false;
-}
-
 extern "C" void app_main(void) {
-  printf("Sleep example start\n");
+  printf("Ciallo\n");
 
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
