@@ -2,7 +2,7 @@
  * @Description: xl9555
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-04-27 00:00:00
+ * @LastEditTime: 2026-04-30 10:31:53
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -13,10 +13,10 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto xl9555 = driver.chip().xl9555.get();
+  auto& xl9555 = driver.chip().xl9555;
 
-  xl9555->SetGpioMode(cpp_bus_driver::Xl95x5::Pin::kIo7,
-                     cpp_bus_driver::Xl95x5::Mode::kInput);
+  xl9555->SetGpioMode(
+      cpp_bus_driver::Xl95x5::Pin::kIo7, cpp_bus_driver::Xl95x5::Mode::kInput);
   xl9555->ClearIrqFlag();
 
   while (1) {
@@ -24,14 +24,14 @@ extern "C" void app_main(void) {
     xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kHigh);
     xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kHigh);
     printf("Xl9555 io7: %d\n",
-           xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
+        xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));
 
     xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
     xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
     xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
     printf("Xl9555 io7: %d\n",
-           xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
+        xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

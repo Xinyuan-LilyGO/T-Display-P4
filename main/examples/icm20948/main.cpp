@@ -2,7 +2,7 @@
  * @Description: icm20948
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:59:51
- * @LastEditTime: 2026-04-25 16:43:14
+ * @LastEditTime: 2026-04-30 10:30:53
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -13,7 +13,7 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto icm20948 = driver.chip().icm20948.get();
+  auto& icm20948 = driver.chip().icm20948;
 
   while (1) {
     icm20948->readSensor();
@@ -33,7 +33,7 @@ extern "C" void app_main(void) {
     printf("gValue (x,y,z): %f , %f , %f\n", gValue.x, gValue.y, gValue.z);
     printf("angle (x,y,z): %f , %f , %f\n", angle.x, angle.y, angle.z);
     printf("magValues (x,y,z): %f , %f , %f\n", magValues.x, magValues.y,
-           magValues.z);
+        magValues.z);
 
     printf("Euler angles (pitch,Roll,Yaw): %f , %f , %f\n", pitch, roll, yaw);
 

@@ -13,8 +13,8 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto xl9535 = driver.chip().xl9535.get();
-  auto pcf8563 = driver.chip().pcf8563.get();
+  auto& xl9535 = driver.chip().xl9535;
+  auto& pcf8563 = driver.chip().pcf8563;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   volatile bool interrupt_flag = false;

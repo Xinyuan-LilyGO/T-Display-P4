@@ -2,7 +2,7 @@
  * @Description: l76k
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:32:01
- * @LastEditTime: 2026-04-25 16:43:35
+ * @LastEditTime: 2026-04-30 10:30:59
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -13,7 +13,7 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto l76k = driver.chip().l76k.get();
+  auto& l76k = driver.chip().l76k;
 
   while (1) {
     std::unique_ptr<uint8_t[]> buffer;
@@ -32,14 +32,14 @@ extern "C" void app_main(void) {
 
         if (rmc.data.update_flag) {
           printf("Utc data: %d/%d/%d\n", rmc.data.year + 2000, rmc.data.month,
-                 rmc.data.day);
+              rmc.data.day);
           rmc.data.update_flag = false;
         }
         if (rmc.utc.update_flag) {
           printf("Utc time: %d:%d:%.03f\n", rmc.utc.hour, rmc.utc.minute,
-                 rmc.utc.second);
+              rmc.utc.second);
           printf("China time: %d:%d:%.03f\n", (rmc.utc.hour + 8 + 24) % 24,
-                 rmc.utc.minute, rmc.utc.second);
+              rmc.utc.minute, rmc.utc.second);
           rmc.utc.update_flag = false;
         }
 

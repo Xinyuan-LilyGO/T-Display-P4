@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2026-04-25 16:53:58
+ * @LastEditTime: 2026-04-30 10:31:24
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -17,12 +17,12 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto sx1262 = driver.chip().sx1262.get();
-  auto xl9535 = driver.chip().xl9535.get();
+  auto& sx1262 = driver.chip().sx1262;
+  auto& xl9535 = driver.chip().xl9535;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
-                      cpp_bus_driver::Tool::GpioStatus::kPullup);
+      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   sx1262->ConfigGfskParams(
       850.0, 200.0, cpp_bus_driver::Sx126x::GfskBw::kBw467000Hz, 140, 22);
@@ -81,7 +81,7 @@ extern "C" void app_main(void) {
 
     if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       sx1262->StartGfskTransmit(cpp_bus_driver::Sx126x::ChipMode::kTx, 0,
-                                cpp_bus_driver::Sx126x::FallbackMode::kFs);
+          cpp_bus_driver::Sx126x::FallbackMode::kFs);
       sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
       sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
 
@@ -129,8 +129,8 @@ extern "C" void app_main(void) {
         } else {
           cpp_bus_driver::Sx126x::GfskPacketStatus gfsk_packet_status;
           uint32_t packet_buffer = sx1262->GetGfskPacketStatus();
-          if (!sx1262->ParseGfskPacketStatus(packet_buffer,
-                                             gfsk_packet_status)) {
+          if (!sx1262->ParseGfskPacketStatus(
+                  packet_buffer, gfsk_packet_status)) {
             printf("ParseGfskPacketStatus failed\n");
           } else {
             if (gfsk_packet_status.abort_error_flag) {
@@ -155,8 +155,8 @@ extern "C" void app_main(void) {
                 sx1262->ParseGfskPacketMetrics(packet_buffer, packet_metrics);
 
                 printf("Sx1262 receive rssi_average: %.01f rssi_sync: %.01f\n",
-                       packet_metrics.gfsk.rssi_average,
-                       packet_metrics.gfsk.rssi_sync);
+                    packet_metrics.gfsk.rssi_average,
+                    packet_metrics.gfsk.rssi_sync);
 
                 for (uint8_t i = 0; i < length_buffer; i++) {
                   printf("Get sx1262 data[%d]: %d\n", i, receive_package[i]);

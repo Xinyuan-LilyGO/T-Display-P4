@@ -2,7 +2,7 @@
  * @Description: tca8418
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-04-27 16:36:52
+ * @LastEditTime: 2026-04-30 10:31:48
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -15,16 +15,16 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto xl9555 = driver.chip().xl9555.get();
-  auto tca8418 = driver.chip().tca8418.get();
+  auto& xl9555 = driver.chip().xl9555;
+  auto& tca8418 = driver.chip().tca8418;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
   xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
   xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
 
-  esp32p4->InitGpioInterrupt(
-      TCA8418_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
+  esp32p4->InitGpioInterrupt(TCA8418_INT,
+      cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) -> void { g_interrupt_flag = true; });
 
   driver.chip().tca8418_backlight->StartGradientTime(30, 1000);
@@ -58,7 +58,7 @@ extern "C" void app_main(void) {
                       sizeof(Tca8418_Map) / sizeof(std::string);
                   if ((tp.info[i].num > 0) && (tp.info[i].num <= key_count)) {
                     printf("   Touch string: %s\n",
-                           Tca8418_Map[tp.info[i].num - 1].c_str());
+                        Tca8418_Map[tp.info[i].num - 1].c_str());
                   }
                 }
 
@@ -68,7 +68,7 @@ extern "C" void app_main(void) {
               case cpp_bus_driver::Tca8418::EventType::kGpio:
                 printf("Gpio event\n");
                 printf("   Touch num:[%d] num: %d press flag: %d\n", i + 1,
-                       tp.info[i].num, tp.info[i].press_flag);
+                    tp.info[i].num, tp.info[i].press_flag);
                 break;
 
               default:

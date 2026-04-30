@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2026-02-25 09:09:45
- * @LastEditTime: 2026-04-25 16:41:35
+ * @LastEditTime: 2026-04-30 10:30:23
  * @License: GPL 3.0
  */
 #include "esp_audio_dec.h"
@@ -137,15 +137,13 @@ size_t parse_and_print_id3v2(FILE* f) {
       }
 
       static const uint32_t sr_tbl[4][4] = {{11025, 12000, 8000, 0},
-                                            {0, 0, 0, 0},
-                                            {22050, 24000, 16000, 0},
-                                            {44100, 48000, 32000, 0}};
+          {0, 0, 0, 0}, {22050, 24000, 16000, 0}, {44100, 48000, 32000, 0}};
       sample_rate = sr_tbl[m_idx][sr_idx];
 
       static const uint16_t br_tbl[2][16] = {
           {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},
           {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320,
-           0}};
+              0}};
       bitrate_kbps = br_tbl[(m_idx == 3) ? 1 : 0][br_idx];
 
       if (sample_rate > 0 && bitrate_kbps > 0) {
@@ -200,19 +198,18 @@ size_t parse_and_print_id3v2(FILE* f) {
     double s = duration - (h * 3600) - (m * 60);
 
     printf("  Duration: %02d:%02d:%05.2f, start: 0.000000, bitrate: %lu kb/s\n",
-           h, m, s, bitrate_kbps);
+        h, m, s, bitrate_kbps);
     printf("  Stream #0:0: Audio: mp3, %lu Hz, %s, fltp, %lu kb/s\n",
-           sample_rate, channel_str, bitrate_kbps);
+        sample_rate, channel_str, bitrate_kbps);
     printf("    Metadata:\n");
     printf("      encoder         : Lavc60.3\n");
 
     if (sample_rate != g_audio_sample_rate) {
       printf("match sample rate %ldhz -> %ldhz\n", g_audio_sample_rate,
-             sample_rate);
+          sample_rate);
 
-      auto es8311 = lilygo_device_driver::TDisplayP4Driver::GetInstance()
-                        .chip()
-                        .es8311.get();
+      auto& es8311 =
+          lilygo_device_driver::TDisplayP4Driver::GetInstance().chip().es8311;
 
       es8311->SetI2sChannelEnable(false);
 
@@ -322,12 +319,12 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto es8311 = driver.chip().es8311.get();
+  auto& es8311 = driver.chip().es8311;
 
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
-                      cpp_bus_driver::Tool::GpioStatus::kPullup);
+      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   while (1) {
     // 监测按键，按下后触发 MP3 解码播放
@@ -377,17 +374,17 @@ extern "C" void app_main(void) {
           // 流式读取与解码循环
           while (1) {
             size_t read_bytes = fread(read_buf.get() + remain_bytes, 1,
-                                      (4 * 1024) - remain_bytes, f_in);
+                (4 * 1024) - remain_bytes, f_in);
             size_t total_bytes = remain_bytes + read_bytes;
 
             if (total_bytes == 0) {
               break;  // 读取完毕
             }
 
-            esp_audio_dec_in_raw_t in_raw = {.buffer = read_buf.get(),
-                                             .len = total_bytes};
-            esp_audio_dec_out_frame_t out_frame = {.buffer = pcm_buf.get(),
-                                                   .len = 8 * 1024};
+            esp_audio_dec_in_raw_t in_raw = {
+                .buffer = read_buf.get(), .len = total_bytes};
+            esp_audio_dec_out_frame_t out_frame = {
+                .buffer = pcm_buf.get(), .len = 8 * 1024};
 
             while (in_raw.len > 0) {
               esp_audio_err_t assert =
@@ -417,7 +414,7 @@ extern "C" void app_main(void) {
 
                   if (total_duration > 0) {
                     printf(" / %.2fs  (%.1f%%)\n", total_duration,
-                           (current_time / total_duration) * 100.0f);
+                        (current_time / total_duration) * 100.0f);
                   } else {
                     printf("\n");
                   }

@@ -2,7 +2,7 @@
  * @Description: sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:57:12
- * @LastEditTime: 2026-04-25 16:54:07
+ * @LastEditTime: 2026-04-30 10:31:31
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -17,15 +17,15 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto sx1262 = driver.chip().sx1262.get();
-  auto xl9535 = driver.chip().xl9535.get();
+  auto& sx1262 = driver.chip().sx1262;
+  auto& xl9535 = driver.chip().xl9535;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
-                      cpp_bus_driver::Tool::GpioStatus::kPullup);
+      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
-  sx1262->ConfigLoraParams(920.0, cpp_bus_driver::Sx126x::LoraBw::kBw125000Hz,
-                           140, 22);
+  sx1262->ConfigLoraParams(
+      920.0, cpp_bus_driver::Sx126x::LoraBw::kBw125000Hz, 140, 22);
   sx1262->ClearBuffer();
 
   sx1262->StartLoraTransmit(cpp_bus_driver::Sx126x::ChipMode::kRx);
@@ -81,7 +81,7 @@ extern "C" void app_main(void) {
 
     if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
       sx1262->StartLoraTransmit(cpp_bus_driver::Sx126x::ChipMode::kTx, 0,
-                                cpp_bus_driver::Sx126x::FallbackMode::kFs);
+          cpp_bus_driver::Sx126x::FallbackMode::kFs);
       sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
       sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
 

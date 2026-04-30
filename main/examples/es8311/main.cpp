@@ -2,7 +2,7 @@
  * @Description: es8311
  * @Author: LILYGO_L
  * @Date: 2024-12-23 15:18:58
- * @LastEditTime: 2026-04-25 16:41:14
+ * @LastEditTime: 2026-04-30 10:29:42
  * @License: GPL 3.0
  */
 #include "New Notification 010_c2_b16_s44100.h"
@@ -14,7 +14,7 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto es8311 = driver.chip().es8311.get();
+  auto& es8311 = driver.chip().es8311;
 
   // 将ADC的数据自动输出到DAC上
   // es8311->SetAdcDataToDac(true);
@@ -22,7 +22,7 @@ extern "C" void app_main(void) {
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
-                      cpp_bus_driver::Tool::GpioStatus::kPullup);
+      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   size_t play_count = 1;
 
@@ -46,8 +46,8 @@ extern "C" void app_main(void) {
     if (esp32p4->Tool::GpioRead(ESP32P4_BOOT) == 0) {
       uint8_t buffer = 0;
       for (size_t i = 0; i < 256; i++) {
-        driver.bus().es8311_i2c_bus->BusI2cGuide::Read(static_cast<uint8_t>(i),
-                                                       &buffer);
+        driver.bus().es8311_i2c_bus->BusI2cGuide::Read(
+            static_cast<uint8_t>(i), &buffer);
         printf("Es8311 register[%d]: %#X\n", i, buffer);
       }
 

@@ -13,7 +13,7 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto aw86224 = driver.chip().aw86224.get();
+  auto& aw86224 = driver.chip().aw86224;
 
   // 等待F0校准
   while (1) {

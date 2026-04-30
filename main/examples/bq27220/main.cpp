@@ -13,9 +13,7 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.Init();
 
-  auto bq27220 = driver
-                     .chip()
-                     .bq27220.get();
+  auto& bq27220 = driver.chip().bq27220;
 
   while (1) {
     printf("////////////////////////////////////////////////////\n");
