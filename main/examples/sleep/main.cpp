@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-04-29 18:21:14
+ * @LastEditTime: 2026-04-30 15:37:17
  * @License: GPL 3.0
  */
 #include "app_video.h"
@@ -25,7 +25,7 @@ constexpr char kWifiPassword[] = "AA15994823428";
 
 #define EXAMPLE_SLEEP_MODE_DEEP_SLEEP 0
 #define EXAMPLE_SLEEP_MODE_LIGHT_SLEEP 1
-#define EXAMPLE_SLEEP_MODE EXAMPLE_SLEEP_MODE_LIGHT_SLEEP
+#define EXAMPLE_SLEEP_MODE EXAMPLE_SLEEP_MODE_DEEP_SLEEP
 
 uint8_t g_eth_port_count = 0;
 esp_eth_handle_t* g_eth_handles = nullptr;
