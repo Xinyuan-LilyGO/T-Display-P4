@@ -2,7 +2,7 @@
  * @Description: deep_sleep
  * @Author: LILYGO_L
  * @Date: 2025-05-12 14:08:31
- * @LastEditTime: 2026-04-29 10:10:27
+ * @LastEditTime: 2026-04-29 18:21:14
  * @License: GPL 3.0
  */
 #include "app_video.h"
@@ -417,6 +417,12 @@ extern "C" void app_main(void) {
   uart_wait_tx_idle_polling((uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM);
   esp_deep_sleep_start();
 #elif EXAMPLE_SLEEP_MODE == EXAMPLE_SLEEP_MODE_LIGHT_SLEEP
+  if (!driver.SetSleep(
+          lilygo_device_driver::TDisplayP4Driver::SleepLevel::kPowerOff,
+          true)) {
+    printf("SetSleep failed\n");
+  }
+
   gpio_config_t boot_config = {
       .pin_bit_mask = 1ULL << ESP32P4_BOOT,
       .mode = GPIO_MODE_INPUT,
@@ -440,12 +446,6 @@ extern "C" void app_main(void) {
   if (ret != ESP_OK) {
     printf("esp_sleep_enable_gpio_wakeup failed (error code: %s)\n",
         esp_err_to_name(ret));
-  }
-
-  if (!driver.SetSleep(
-          lilygo_device_driver::TDisplayP4Driver::SleepLevel::kPowerOff,
-          true)) {
-    printf("SetSleep failed\n");
   }
 
   printf("Entering light sleep\n");
