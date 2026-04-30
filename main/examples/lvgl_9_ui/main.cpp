@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-04-14 09:57:40
+ * @LastEditTime: 2026-04-30 11:29:33
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -49,7 +49,14 @@
 #include "kode_bq25896.h"
 #endif
 
-#define SD_FILE_PATH_MUSIC "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Nocturne, Op.9 No.2 in E-flat major-Aya Higuchi (piano).mp3"
+#define SD_FILE_PATH_MUSIC_MP3 "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Nocturne, Op.9 No.2 in E-flat major-Aya Higuchi (piano).mp3"
+#define SD_FILE_PATH_MUSIC_WAV "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Nocturne, Op.9 No.2 in E-flat major-Aya Higuchi (piano).wav"
+
+#if SCREEN_ROTATION_DIRECTION == 0
+#define SD_FILE_PATH_MUSIC SD_FILE_PATH_MUSIC_MP3
+#else
+#define SD_FILE_PATH_MUSIC SD_FILE_PATH_MUSIC_WAV
+#endif
 
 #define LVGL_TICK_PERIOD_MS 1
 
@@ -227,6 +234,18 @@ struct Real_Time
     uint8_t second = -1; // 秒
 
     std::string time_zone = ""; // 时区
+};
+
+struct Wav_Info
+{
+    uint16_t audio_format = 0;
+    uint16_t channels = 0;
+    uint32_t sample_rate = 0;
+    uint32_t byte_rate = 0;
+    uint16_t block_align = 0;
+    uint16_t bits_per_sample = 0;
+    uint32_t data_offset = 0;
+    uint32_t data_size = 0;
 };
 
 Ethernet_Info Eth_Info;
@@ -729,6 +748,230 @@ float get_mp3_duration_from_vbr_header(FILE *f, size_t mp3_offset)
     }
 
     return -1.0f; // 没找到 VBR header
+}
+
+bool parse_wav_header(FILE *f, Wav_Info &info)
+{
+    auto read_le16 = [](const uint8_t *p) -> uint16_t
+    {
+        return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+    };
+    auto read_le32 = [](const uint8_t *p) -> uint32_t
+    {
+        return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+    };
+
+    uint8_t header[12] = {};
+    if (fread(header, 1, sizeof(header), f) != sizeof(header))
+    {
+        return false;
+    }
+
+    if (memcmp(header, "RIFF", 4) != 0 || memcmp(header + 8, "WAVE", 4) != 0)
+    {
+        return false;
+    }
+
+    bool fmt_found = false;
+    bool data_found = false;
+    while (fmt_found == false || data_found == false)
+    {
+        uint8_t chunk_header[8] = {};
+        if (fread(chunk_header, 1, sizeof(chunk_header), f) != sizeof(chunk_header))
+        {
+            return false;
+        }
+
+        uint32_t chunk_size = read_le32(chunk_header + 4);
+        long chunk_data_pos = ftell(f);
+        if (chunk_data_pos < 0)
+        {
+            return false;
+        }
+
+        if (memcmp(chunk_header, "fmt ", 4) == 0)
+        {
+            uint8_t fmt[16] = {};
+            if (chunk_size < sizeof(fmt) || fread(fmt, 1, sizeof(fmt), f) != sizeof(fmt))
+            {
+                return false;
+            }
+
+            info.audio_format = read_le16(fmt + 0);
+            info.channels = read_le16(fmt + 2);
+            info.sample_rate = read_le32(fmt + 4);
+            info.byte_rate = read_le32(fmt + 8);
+            info.block_align = read_le16(fmt + 12);
+            info.bits_per_sample = read_le16(fmt + 14);
+            fmt_found = true;
+        }
+        else if (memcmp(chunk_header, "data", 4) == 0)
+        {
+            info.data_offset = (uint32_t)chunk_data_pos;
+            info.data_size = chunk_size;
+            data_found = true;
+        }
+
+        uint32_t skip_size = chunk_size + (chunk_size & 1);
+        if (fseek(f, chunk_data_pos + skip_size, SEEK_SET) != 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Play_Wav_File(const char *file_path)
+{
+    FILE *wav_file = fopen(file_path, "rb");
+    if (wav_file == NULL)
+    {
+        printf("failed to open wav file: %s\n", file_path);
+        return false;
+    }
+
+    Wav_Info wav = {};
+    if (parse_wav_header(wav_file, wav) == false)
+    {
+        printf("wav header parse fail\n");
+        fclose(wav_file);
+        return false;
+    }
+
+    printf("wav info format:%u sample_rate:%lu bits:%u channels:%u byte_rate:%lu data_size:%lu\n",
+           wav.audio_format,
+           (unsigned long)wav.sample_rate,
+           wav.bits_per_sample,
+           wav.channels,
+           (unsigned long)wav.byte_rate,
+           (unsigned long)wav.data_size);
+
+    if (wav.audio_format != 1 || wav.bits_per_sample != 16 || wav.channels != AUDIO_NUM_CHANNEL || wav.sample_rate == 0 || wav.byte_rate == 0 || wav.block_align == 0)
+    {
+        printf("unsupported wav format, need PCM 16-bit stereo\n");
+        fclose(wav_file);
+        return false;
+    }
+
+    if (wav.sample_rate != AUDIO_SAMPLE_RATE)
+    {
+        Es8311->set_clock_reconfig(AUDIO_MCLK_MULTIPLE, wav.sample_rate);
+    }
+
+    float duration = (float)wav.data_size / (float)wav.byte_rate;
+    _lock_acquire(&lvgl_api_lock);
+    System_Ui->set_win_music_current_total_time(0, duration);
+    _lock_release(&lvgl_api_lock);
+
+    if (fseek(wav_file, wav.data_offset, SEEK_SET) != 0)
+    {
+        printf("wav seek data fail\n");
+        fclose(wav_file);
+        return false;
+    }
+
+    const size_t wav_buf_size = 8 * 1024;
+    uint8_t *wav_buf = (uint8_t *)heap_caps_malloc(wav_buf_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
+    if (wav_buf == NULL)
+    {
+        printf("wav_buf alloc fail\n");
+        fclose(wav_file);
+        return false;
+    }
+
+    Music_Play_End_Flag = false;
+    uint32_t cycle_time = 0;
+    uint32_t data_remaining = wav.data_size;
+    uint64_t total_pcm_bytes_sent = 0;
+
+    while (data_remaining > 0)
+    {
+        if (Music_Play_End_Flag)
+        {
+            break;
+        }
+
+        if (Es8311_Speaker_Mode == Es8311_Mode::TEST)
+        {
+            Es8311->write_data(c2_b16_s44100, sizeof(c2_b16_s44100));
+            Es8311_Speaker_Mode = Es8311_Mode::PLAY_MUSIC;
+        }
+
+        if (Set_Music_Current_Time_S_Flag == true)
+        {
+            double safe_progress = Set_Music_Current_Time_S / duration;
+            if (safe_progress < 0.0)
+                safe_progress = 0.0;
+            if (safe_progress > 0.99)
+                safe_progress = 0.99;
+
+            uint32_t seek_bytes = (uint32_t)(safe_progress * wav.data_size);
+            seek_bytes -= seek_bytes % wav.block_align;
+            if (fseek(wav_file, wav.data_offset + seek_bytes, SEEK_SET) == 0)
+            {
+                data_remaining = wav.data_size - seek_bytes;
+                total_pcm_bytes_sent = seek_bytes;
+            }
+            Set_Music_Current_Time_S_Flag = false;
+        }
+
+        if (System_Ui->_registry.win.music.play_flag == true)
+        {
+            size_t read_size = data_remaining > wav_buf_size ? wav_buf_size : data_remaining;
+            read_size -= read_size % wav.block_align;
+            if (read_size == 0)
+            {
+                break;
+            }
+
+            size_t actual_read = fread(wav_buf, 1, read_size, wav_file);
+            if (actual_read == 0)
+            {
+                break;
+            }
+
+            Es8311->write_data(wav_buf, actual_read);
+            data_remaining -= actual_read;
+            total_pcm_bytes_sent += actual_read;
+
+            if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::MUSIC && esp_log_timestamp() > cycle_time)
+            {
+                double current_time = static_cast<double>(total_pcm_bytes_sent) / wav.byte_rate;
+                _lock_acquire(&lvgl_api_lock);
+                System_Ui->set_win_music_current_total_time(current_time, duration);
+                _lock_release(&lvgl_api_lock);
+
+                printf("Playing WAV: %.2f / %.2f s\n", current_time, duration);
+                cycle_time = esp_log_timestamp() + 1000;
+            }
+        }
+        else
+        {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+    }
+
+    heap_caps_free(wav_buf);
+    fclose(wav_file);
+
+    if (wav.sample_rate != AUDIO_SAMPLE_RATE)
+    {
+        Es8311->set_clock_reconfig(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE);
+    }
+
+    System_Ui->_registry.win.music.play_flag = false;
+
+    if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::MUSIC)
+    {
+        _lock_acquire(&lvgl_api_lock);
+        System_Ui->set_win_music_play_imagebutton_status(System_Ui->_registry.win.music.play_flag);
+        System_Ui->set_win_music_current_total_time(0, duration);
+        _lock_release(&lvgl_api_lock);
+    }
+
+    printf("wav play finish\n");
+    return true;
 }
 
 bool Play_Mp3_File(const char *file_path)
@@ -1259,7 +1502,11 @@ void device_speaker_task(void *arg)
         case Es8311_Mode::PLAY_MUSIC:
             // 播放音乐
 
+#if SCREEN_ROTATION_DIRECTION == 0
             Play_Mp3_File(SD_FILE_PATH_MUSIC);
+#else
+            Play_Wav_File(SD_FILE_PATH_MUSIC);
+#endif
             break;
 
         default:
