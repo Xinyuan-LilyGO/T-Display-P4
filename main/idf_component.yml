@@ -55,10 +55,21 @@ dependencies:
       - if: "$CONFIG{EXAMPLE_BUILD_LVGL_9_UI} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SLEEP} == True"
 
+  espressif/iot_usbh_ecm:
+    version: "^0.2.1"
+    matches:
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
+
+  espressif/iot_eth:
+    version: "^1.0.0"
+    matches:
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
+
   espressif/iperf-cmd:
     version: "^0.1.1"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
+      - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True && $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
 
   espressif/esp_audio_codec:
     version: "^2.4.1"
