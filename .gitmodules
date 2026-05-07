@@ -13,9 +13,6 @@
 [submodule "libraries/arduino_cpp_bus_driver"]
 	path = libraries/arduino_cpp_bus_driver
 	url = https://github.com/Llgok/arduino_cpp_bus_driver.git
-[submodule "libraries/ICM20948_WE"]
-	path = libraries/ICM20948_WE
-	url = https://github.com/Llgok/ICM20948_WE.git
 [submodule "libraries/kode_bq25896"]
 	path = libraries/kode_bq25896
 	url = https://github.com/Llgok/kode_bq25896.git
