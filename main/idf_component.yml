@@ -11,8 +11,8 @@ dependencies:
   kode_bq25896:
     override_path: "../libraries/kode_bq25896"
 
-  ICM20948_WE:
-    override_path: "../libraries/ICM20948_WE"
+  icm20948_we:
+    override_path: "../libraries/icm20948_we"
 
   lilygo_device_driver:
     override_path: "../libraries/lilygo_device_driver"
