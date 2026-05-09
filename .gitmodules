@@ -1,8 +1,8 @@
 [submodule "libraries/cpp_bus_driver"]
 	path = libraries/cpp_bus_driver
 	url = https://github.com/Llgok/cpp_bus_driver.git
-[submodule "main/apps/esp-at"]
-	path = main/apps/esp-at
+[submodule "apps/esp-at"]
+	path = apps/esp-at
 	url = https://github.com/espressif/esp-at.git
 [submodule "libraries/ST25R3916"]
 	path = libraries/ST25R3916
