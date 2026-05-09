@@ -25,3 +25,6 @@
 [submodule "libraries/icm20948_we"]
 	path = libraries/icm20948_we
 	url = https://github.com/Llgok/icm20948_we.git
+[submodule "apps/EspIdf-LilygoBox"]
+	path = apps/EspIdf-LilygoBox
+	url = git@github.com:Xinyuan-LilyGO/EspIdf-LilygoBox.git
