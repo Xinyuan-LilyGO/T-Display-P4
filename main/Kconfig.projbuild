@@ -85,7 +85,7 @@ menu "Example Configuration"
 
     choice
         prompt "Select the example to build"
-        default EXAMPLE_BUILD_LVGL_9_UI
+        default EXAMPLE_BUILD_SCREEN_LVGL
             config EXAMPLE_BUILD_AW86224
                 bool "aw86224"
                 depends on BOARD_TYPE_T_DISPLAY_P4
@@ -125,9 +125,6 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_L76K
                 bool "l76k"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_LVGL_9_UI
-                bool "lvgl_9_ui"
-                depends on BOARD_TYPE_T_DISPLAY_P4 || BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_PCF8563
                 bool "pcf8563"
                 depends on BOARD_TYPE_T_DISPLAY_P4
