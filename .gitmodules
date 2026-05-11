@@ -27,4 +27,4 @@
 	url = https://github.com/Llgok/icm20948_we.git
 [submodule "apps/EspIdf-LilygoBox"]
 	path = apps/EspIdf-LilygoBox
-	url = git@github.com:Xinyuan-LilyGO/EspIdf-LilygoBox.git
+	url = https://github.com/Xinyuan-LilyGO/EspIdf-LilygoBox.git
