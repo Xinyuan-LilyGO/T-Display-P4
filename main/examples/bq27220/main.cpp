@@ -2,7 +2,7 @@
  * @Description: bq27220
  * @Author: LILYGO_L
  * @Date: 2025-01-04 15:06:05
- * @LastEditTime: 2026-05-12 17:45:18
+ * @LastEditTime: 2026-05-13 00:12:00
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -39,10 +39,6 @@ extern "C" void app_main(void) {
   driver.Init();
 
   auto& bq27220 = driver.chip().bq27220;
-  if (bq27220 == nullptr) {
-    printf("BQ27220 handle is null\n");
-    return;
-  }
 
   cpp_bus_driver::Bq27220::CedvProfile battery_profile;
   battery_profile.design_capacity = kBatteryCapacityMah;
@@ -52,8 +48,6 @@ extern "C" void app_main(void) {
 
   bool config_ok =
       bq27220->ApplyBatteryProfileIfNeeded(battery_profile, gauging_config);
-  config_ok &= bq27220->SetTemperatureMode(
-      cpp_bus_driver::Bq27220::TemperatureMode::kExternalNtc);
   printf("BQ27220 example config: %s, capacity: %u mAh\n",
       config_ok ? "ok" : "failed", kBatteryCapacityMah);
 
