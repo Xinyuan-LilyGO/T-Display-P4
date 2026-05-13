@@ -68,10 +68,19 @@ extern "C" void app_main(void) {
     if (operation_status_ok) {
       printf("Security mode: %s\n",
           SecurityModeToString(operation_status.security));
-      printf("Config update: %d\n", operation_status.flag.config_update);
-      printf("Init complete: %d\n", operation_status.flag.init_comp);
-      printf("EDV2 reached: %d\n", operation_status.flag.edv2);
-      printf("Smoothing active: %d\n", operation_status.flag.smth);
+      printf("Calibration mode: %d\n",
+          operation_status.flag.calibration_mode);
+      printf("Config update: %d\n",
+          operation_status.flag.config_update_mode);
+      printf("Init complete: %d\n",
+          operation_status.flag.initialization_complete);
+      printf("EDV2 reached: %d\n", operation_status.flag.edv2_reached);
+      printf("Valid discharge qualified: %d\n",
+          operation_status.flag.valid_discharge_qualified);
+      printf("Smoothing active: %d\n",
+          operation_status.flag.smoothing_active);
+      printf("Battery trip point interrupt: %d\n",
+          operation_status.flag.battery_trip_point_interrupt);
     }
 
     PrintSeparator();
@@ -116,18 +125,29 @@ extern "C" void app_main(void) {
 
     if (battery_status_ok) {
       PrintSeparator();
-      printf("Battery status raw: 0x%04X\n", battery_status.value);
-      printf("Discharging: %d\n", battery_status.flag.dsg);
-      printf("Battery present: %d\n", battery_status.flag.battpres);
-      printf("Full charged: %d\n", battery_status.flag.fc);
-      printf("Full discharged: %d\n", battery_status.flag.fd);
-      printf("Charge inhibit: %d\n", battery_status.flag.chginh);
-      printf("Charge overtemperature: %d\n", battery_status.flag.otc);
-      printf("Discharge overtemperature: %d\n", battery_status.flag.otd);
-      printf("Sleep: %d\n", battery_status.flag.sleep);
-      printf("Terminate charge alarm: %d\n", battery_status.flag.tca);
-      printf("Terminate discharge alarm: %d\n", battery_status.flag.tda);
-      printf("System down: %d\n", battery_status.flag.sysdwn);
+      printf("Discharging: %d\n", battery_status.flag.discharging);
+      printf("Battery present: %d\n", battery_status.flag.battery_present);
+      printf("Authentication good: %d\n",
+          battery_status.flag.authentication_good);
+      printf("Open circuit voltage good: %d\n",
+          battery_status.flag.open_circuit_voltage_good);
+      printf("Open circuit voltage failed: %d\n",
+          battery_status.flag.open_circuit_voltage_failed);
+      printf("Open circuit voltage complete: %d\n",
+          battery_status.flag.open_circuit_voltage_complete);
+      printf("Full charged: %d\n", battery_status.flag.full_charged);
+      printf("Full discharged: %d\n", battery_status.flag.full_discharged);
+      printf("Charge inhibit: %d\n", battery_status.flag.charge_inhibit);
+      printf("Charge overtemperature: %d\n",
+          battery_status.flag.over_temperature_charge);
+      printf("Discharge overtemperature: %d\n",
+          battery_status.flag.over_temperature_discharge);
+      printf("Sleep: %d\n", battery_status.flag.sleep_mode);
+      printf("Terminate charge alarm: %d\n",
+          battery_status.flag.terminate_charge_alarm);
+      printf("Terminate discharge alarm: %d\n",
+          battery_status.flag.terminate_discharge_alarm);
+      printf("System down: %d\n", battery_status.flag.system_down);
     }
 
     PrintSeparator();
