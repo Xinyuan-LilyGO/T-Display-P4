@@ -10,6 +10,19 @@
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
+  using Sx126x = cpp_bus_driver::Sx126x;
+  constexpr uint16_t kRxDoneIrqMask =
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kRxDone) |
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTimeout) |
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kCrcError);
+  constexpr uint16_t kRxIrqMask =
+      kRxDoneIrqMask |
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kPreambleDetected) |
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kSyncWordValid);
+  constexpr uint16_t kTxIrqMask =
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTxDone) |
+      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTimeout);
+
   uint8_t receive_package[255] = {0};
   const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
   size_t cycle_time = 0;
@@ -25,12 +38,15 @@ extern "C" void app_main(void) {
       cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   sx1262->ConfigGfskParams(
-      850.0, 200.0, cpp_bus_driver::Sx126x::GfskBw::kBw467000Hz, 140, 22);
+      850.0, 200.0, Sx126x::GfskBw::kBw467000Hz, 140, 22, 10.0,
+      nullptr, 0, Sx126x::PulseShape::kGaussianBt1,
+      Sx126x::GfskCrcType::kCrc2ByteInv, 0x1D0F, 0x1021);
   sx1262->ClearBuffer();
 
-  sx1262->StartGfskTransmit(cpp_bus_driver::Sx126x::ChipMode::kRx);
-  sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
-  sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
+  sx1262->StartGfsk(cpp_bus_driver::Sx126x::ChipMode::kRx);
+  sx1262->SetIrqGpioMode(
+      kRxDoneIrqMask, 0, 0, kRxIrqMask);
+  sx1262->ClearIrqFlag(kRxIrqMask);
 
   printf("Sx1262 start gfsk transmit\n");
 
@@ -80,21 +96,27 @@ extern "C" void app_main(void) {
     }
 
     if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
-      sx1262->StartGfskTransmit(cpp_bus_driver::Sx126x::ChipMode::kTx, 0,
-          cpp_bus_driver::Sx126x::FallbackMode::kFs);
-      sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
-      sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kTxDone);
+      sx1262->SetRxTxFallbackMode(cpp_bus_driver::Sx126x::FallbackMode::kFs);
+      sx1262->SetIrqGpioMode(
+          kTxIrqMask, 0, 0, kTxIrqMask);
+      sx1262->ClearIrqFlag(kTxIrqMask);
 
       printf("Sx1262 send start\n");
       uint16_t timeout_count = 0;
       if (sx1262->SendData(send_package, sizeof(send_package))) {
         while (1) {
           if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
-            cpp_bus_driver::Sx126x::IrqStatus irq_status;
-            if (!sx1262->ParseIrqStatus(sx1262->GetIrqFlag(), irq_status)) {
-              printf("ParseIrqStatus failed\n");
-            } else if (irq_status.all_flag.tx_done) {
+            Sx126x::SendStatus send_status;
+            if (!sx1262->GetSendStatus(send_status)) {
+              printf("Get send status failed\n");
+              break;
+            } else if (send_status.timeout) {
+              printf("Sx1262 send irq timeout\n");
+              sx1262->ClearIrqFlag(send_status.irq_flags);
+              break;
+            } else if (send_status.done) {
               printf("Sx1262 send success\n");
+              sx1262->ClearIrqFlag(send_status.irq_flags);
               break;
             }
           }
@@ -102,6 +124,7 @@ extern "C" void app_main(void) {
           timeout_count++;
           if (timeout_count > 500) {
             printf("Sx1262 send timeout\n");
+            sx1262->ClearIrqFlag(kTxIrqMask);
             break;
           }
           vTaskDelay(pdMS_TO_TICKS(10));
@@ -110,64 +133,31 @@ extern "C" void app_main(void) {
         printf("Sx1262 send failed\n");
       }
 
-      sx1262->StartGfskTransmit(cpp_bus_driver::Sx126x::ChipMode::kRx);
-      sx1262->SetIrqGpioMode(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
-      sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
+      sx1262->StartGfsk(cpp_bus_driver::Sx126x::ChipMode::kRx);
+      sx1262->SetIrqGpioMode(
+          kRxDoneIrqMask, 0, 0, kRxIrqMask);
+      sx1262->ClearIrqFlag(kRxIrqMask);
     }
 
     if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
-      cpp_bus_driver::Sx126x::IrqStatus irq_status;
-      if (!sx1262->ParseIrqStatus(sx1262->GetIrqFlag(), irq_status)) {
-        printf("ParseIrqStatus failed\n");
+      Sx126x::ReceiveStatus receive_status;
+      std::memset(receive_package, 0, sizeof(receive_package));
+      uint8_t length_buffer =
+          sx1262->ReceiveData(receive_package, 0, &receive_status);
+      if (length_buffer == 0) {
+        printf("Sx1262 receive failed\n");
       } else {
-        if (irq_status.all_flag.tx_rx_timeout) {
-          printf("Receive timeout\n");
-          sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kTimeout);
-        } else if (irq_status.all_flag.crc_error) {
-          printf("Receive crc error\n");
-          sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kCrcError);
-        } else {
-          cpp_bus_driver::Sx126x::GfskPacketStatus gfsk_packet_status;
-          uint32_t packet_buffer = sx1262->GetGfskPacketStatus();
-          if (!sx1262->ParseGfskPacketStatus(
-                  packet_buffer, gfsk_packet_status)) {
-            printf("ParseGfskPacketStatus failed\n");
-          } else {
-            if (gfsk_packet_status.abort_error_flag) {
-              printf("Receive abort_error_flag error\n");
-            } else if (gfsk_packet_status.length_error_flag) {
-              printf("Receive length_error_flag error\n");
-            } else if (gfsk_packet_status.crc_error_flag) {
-              printf("Receive crc_error_flag error\n");
-            } else if (gfsk_packet_status.address_error_flag) {
-              printf("Receive address_error_flag error\n");
-            } else if (gfsk_packet_status.sync_word_flag) {
-              printf("Receive sync_word_flag error\n");
-            } else if (gfsk_packet_status.preamble_error_flag) {
-              printf("Receive preamble_error_flag error\n");
-            } else {
-              std::memset(receive_package, 0, sizeof(receive_package));
-              uint8_t length_buffer = sx1262->ReceiveData(receive_package);
-              if (length_buffer == 0) {
-                printf("Sx1262 receive failed\n");
-              } else {
-                cpp_bus_driver::Sx126x::PacketMetrics packet_metrics;
-                sx1262->ParseGfskPacketMetrics(packet_buffer, packet_metrics);
+        cpp_bus_driver::Sx126x::PacketMetrics packet_metrics;
+        sx1262->ParseGfskPacketMetrics(
+            receive_status.gfsk_packet_status_raw, packet_metrics);
 
-                printf("Sx1262 receive rssi_average: %.01f rssi_sync: %.01f\n",
-                    packet_metrics.gfsk.rssi_average,
-                    packet_metrics.gfsk.rssi_sync);
+        printf("Sx1262 receive rssi_average: %.01f rssi_sync: %.01f\n",
+            packet_metrics.gfsk.rssi_average, packet_metrics.gfsk.rssi_sync);
 
-                for (uint8_t i = 0; i < length_buffer; i++) {
-                  printf("Get sx1262 data[%d]: %d\n", i, receive_package[i]);
-                }
-              }
-            }
-          }
+        for (uint8_t i = 0; i < length_buffer; i++) {
+          printf("Get sx1262 data[%d]: %d\n", i, receive_package[i]);
         }
       }
-
-      sx1262->ClearIrqFlag(cpp_bus_driver::Sx126x::IrqMaskFlag::kRxDone);
     }
 
     vTaskDelay(pdMS_TO_TICKS(10));
