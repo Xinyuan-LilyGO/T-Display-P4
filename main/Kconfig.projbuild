@@ -218,6 +218,9 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_BQ25896
                 bool "bq25896"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+            config EXAMPLE_BUILD_RADIOLIB_LR2021_SEND_RECEIVE
+                bool "radiolib_lr2021_send_receive"
+                depends on BOARD_TYPE_T_DISPLAY_P4
     endchoice
 
     # config ESP_HOSTED_SDIO_GPIO_RESET_SLAVE

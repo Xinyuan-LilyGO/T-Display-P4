@@ -16,9 +16,6 @@
 [submodule "components/ICM20948_WE"]
 	path = components/ICM20948_WE
 	url = https://github.com/Llgok/ICM20948_WE.git
-[submodule "components/RadioLib"]
-	path = components/RadioLib
-	url = https://github.com/jgromes/RadioLib.git
 [submodule "components/kode_bq25896"]
 	path = components/kode_bq25896
 	url = https://github.com/Llgok/kode_bq25896.git

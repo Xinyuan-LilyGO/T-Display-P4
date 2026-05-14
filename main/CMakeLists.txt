@@ -61,6 +61,8 @@ elseif(CONFIG_EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW)
     set(project_path "keyboard_examples/screen_tca8418_lvgl_touch_draw/")
 elseif(CONFIG_EXAMPLE_BUILD_BQ25896)
     set(project_path "keyboard_examples/bq25896/")
+elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_LR2021_SEND_RECEIVE)
+    set(project_path "examples/radiolib_lr2021_send_receive/")
 endif()
         
 idf_component_register(SRC_DIRS ${project_path} 
