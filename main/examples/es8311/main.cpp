@@ -2,10 +2,10 @@
  * @Description: es8311
  * @Author: LILYGO_L
  * @Date: 2024-12-23 15:18:58
- * @LastEditTime: 2026-04-30 10:29:42
+ * @LastEditTime: 2026-05-13 18:08:41
  * @License: GPL 3.0
  */
-#include "New Notification 010_c2_b16_s44100.h"
+#include "new_notification_010_c2_b16_s44100.h"
 #include "lilygo_device_driver_library.h"
 
 extern "C" void app_main(void) {
