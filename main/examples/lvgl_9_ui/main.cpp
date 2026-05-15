@@ -27,10 +27,10 @@
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
 #include "t_display_p4_keyboard_config.h"
 #include "st25r3916_driver.h"
-#include "RadioLib.h"
-#include "radiolib_bridge_driver.h"
 #include "kode_bq25896.h"
 #endif
+#include "RadioLib.h"
+#include "radiolib_bridge_driver.h"
 #include "lvgl_ui.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #include "esp_vfs_fat.h"
@@ -50,6 +50,34 @@
 #include "driver/ppa.h"
 #include "esp_private/esp_cache_private.h"
 #include <fstream>
+
+#ifndef LR2021_CS
+#define LR2021_CS 24
+#endif
+
+#ifndef LR2021_BUSY
+#define LR2021_BUSY 6
+#endif
+
+#ifndef LR2021_SCLK
+#define LR2021_SCLK 2
+#endif
+
+#ifndef LR2021_MOSI
+#define LR2021_MOSI 3
+#endif
+
+#ifndef LR2021_MISO
+#define LR2021_MISO 4
+#endif
+
+#ifndef XL9535_LR2021_RST
+#define XL9535_LR2021_RST Cpp_Bus_Driver::Xl95x5::Pin::IO16
+#endif
+
+#ifndef XL9535_LR2021_DIO1
+#define XL9535_LR2021_DIO1 Cpp_Bus_Driver::Xl95x5::Pin::IO17
+#endif
 
 #define SD_FILE_PATH_MUSIC "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Erik Satie-Gymnopedie 1-Chase Coleman (piano).wav"
 
@@ -161,7 +189,7 @@ struct System_Status
     struct
     {
         bool init_flag = false;
-    } sx1262;
+    } lr2021;
 
     struct
     {
@@ -298,6 +326,27 @@ int32_t video_cam_fd0;
 bool Rf_Send_Flag = false;
 uint8_t Rf_Send_Package[255] = {0};
 
+static constexpr uint32_t kGpioLow = 0;
+static constexpr uint32_t kGpioHigh = 1;
+
+static const uint32_t lr2021_rfswitch_dio_pins[] = {
+    RADIOLIB_NC,
+    RADIOLIB_LR2021_DIO6,
+    RADIOLIB_LR2021_DIO7,
+    RADIOLIB_NC,
+    RADIOLIB_NC,
+};
+
+static const Module::RfSwitchMode_t lr2021_rfswitch_table[] = {
+      // mode               DIO5   DIO6  DIO7
+    {LR2021::MODE_STBY, {kGpioLow, kGpioLow, kGpioLow}},
+    {LR2021::MODE_RX, {kGpioLow, kGpioLow, kGpioLow}},
+    {LR2021::MODE_TX, {kGpioLow, kGpioLow, kGpioLow}},
+    {LR2021::MODE_RX_HF, {kGpioLow, kGpioHigh, kGpioLow}},
+    {LR2021::MODE_TX_HF, {kGpioLow, kGpioLow, kGpioHigh}},
+    END_OF_MODE_TABLE,
+};
+
 bool Device_Rf_Task_Stop_Flag = false;
 
 QueueHandle_t app_queue;
@@ -327,7 +376,7 @@ auto ESP32C6_AT_SDIO_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Sdio>(ESP32
                                                                            Cpp_Bus_Driver::Hardware_Sdio::Sdio_Port::SLOT_1);
 
 // SPI
-auto SX1262_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI2_HOST, 0);
+auto LR2021_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(LR2021_MOSI, LR2021_SCLK, LR2021_MISO, SPI2_HOST, 0);
 
 // IIC 1
 auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_IIC_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
@@ -353,8 +402,23 @@ auto ESP32C6_AT = std::make_unique<Cpp_Bus_Driver::Esp_At>(ESP32C6_AT_SDIO_Bus,
                                                            });
 
 // SPI
-auto SX1262 = std::make_unique<Cpp_Bus_Driver::Sx126x>(SX1262_SPI_Bus, Cpp_Bus_Driver::Sx126x::Chip_Type::SX1262, SX1262_BUSY,
-                                                       SX1262_CS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+static RadioLibHal *Lr2021_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(LR2021_SPI_Bus, 10000000, LR2021_CS);
+static LR2021 Lr2021 = new Module(Lr2021_Radiolib_Hal,
+                                  static_cast<uint32_t>(RADIOLIB_NC),
+                                  static_cast<uint32_t>(RADIOLIB_NC),
+                                  static_cast<uint32_t>(RADIOLIB_NC),
+                                  LR2021_BUSY);
+
+static void lr2021_reset(void)
+{
+    XL9535->pin_mode(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(10));
+}
 
 #if defined SCREEN_ROTATION_DIRECTION_0
 auto System_Ui = std::make_unique<Lvgl_Ui::System>(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -529,7 +593,7 @@ uint8_t rx_buf[CONFIG_TINYUSB_CDC_RX_BUFSIZE + 1];
 //     {
 //         printf("device sleep start\n");
 
-//         SX1262->set_sleep();
+//         Lr2021.set_sleep();
 
 //         XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
 
@@ -1666,63 +1730,15 @@ void device_rf_task(void *arg)
 {
     printf("device_rf_task start\n");
 
-    size_t cycle_time = 0;
     size_t auto_send_cycle_time = 0;
 
     while (1)
     {
         switch (System_Ui->_rf_chip_type)
         {
-        case Lvgl_Ui::System::Rf_Chip_Type::SX1262:
+        case Lvgl_Ui::System::Rf_Chip_Type::LR2021:
         {
-            // if (esp_log_timestamp() > cycle_time)
-            // {
-            //     printf("sx1262 ID: %#X\n", SX1262->get_device_id());
-
-            //     printf("sx1262 get current limit: %d\n", SX1262->get_current_limit());
-
-            //     switch (SX1262->get_packet_type())
-            //     {
-            //     case Cpp_Bus_Driver::Sx126x::Packet_Type::GFSK:
-            //         printf("sx1262 packet type: GFSK\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Packet_Type::LORA:
-            //         printf("sx1262 packet type: LORA\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Packet_Type::LR_FHSS:
-            //         printf("sx1262 packet type: LR_FHSS\n");
-            //         break;
-
-            //     default:
-            //         break;
-            //     }
-
-            //     switch (SX1262->parse_chip_mode_status(SX1262->get_status()))
-            //     {
-            //     case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::STBY_RC:
-            //         printf("sx1262 chip mode status: STBY_RC\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::STBY_XOSC:
-            //         printf("sx1262 chip mode status: STBY_XOSC\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::FS:
-            //         printf("sx1262 chip mode status: FS\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::RX:
-            //         printf("sx1262 chip mode status: RX\n");
-            //         break;
-            //     case Cpp_Bus_Driver::Sx126x::Chip_Mode_Status::TX:
-            //         printf("sx1262 chip mode status: TX\n");
-            //         break;
-
-            //     default:
-            //         break;
-            //     }
-
-            //     cycle_time = esp_log_timestamp() + 1000;
-            // }
-
-            if (System_Ui->_device_sx1262.auto_send.flag == true)
+            if (System_Ui->_device_lr2021.auto_send.flag == true)
             {
                 if (Rf_Send_Flag == false)
                 {
@@ -1731,17 +1747,17 @@ void device_rf_task(void *arg)
                         memset(Rf_Send_Package, '\0', sizeof(Rf_Send_Package));
 
                         // 检查长度是否越界
-                        if (System_Ui->_device_sx1262.auto_send.text.size() <= 255)
+                        if (System_Ui->_device_lr2021.auto_send.text.size() <= 255)
                         {
-                            memcpy(Rf_Send_Package, System_Ui->_device_sx1262.auto_send.text.data(), System_Ui->_device_sx1262.auto_send.text.size());
+                            memcpy(Rf_Send_Package, System_Ui->_device_lr2021.auto_send.text.data(), System_Ui->_device_lr2021.auto_send.text.size());
                         }
                         else
                         {
                             // 处理错误：数据过长
-                            memcpy(Rf_Send_Package, System_Ui->_device_sx1262.auto_send.text.data(), 254);
+                            memcpy(Rf_Send_Package, System_Ui->_device_lr2021.auto_send.text.data(), 254);
                             Rf_Send_Package[254] = '\0';
 
-                            printf("sx1262 send out of bounds(data > Rf_Send_Package)\n");
+                            printf("lr2021 send out of bounds(data > Rf_Send_Package)\n");
                         }
 
                         char buffer_time[15];
@@ -1751,7 +1767,7 @@ void device_rf_task(void *arg)
                             {
                                 .direction = Lvgl_Ui::System::Chat_Message_Direction::SEND,
                                 .time = buffer_time,
-                                .data = System_Ui->_device_sx1262.auto_send.text,
+                                .data = System_Ui->_device_lr2021.auto_send.text,
                             };
                         System_Ui->_registry.win.rf.chat_message_data.push_back(wlcm);
 
@@ -1765,151 +1781,117 @@ void device_rf_task(void *arg)
 
                         Rf_Send_Flag = true;
 
-                        auto_send_cycle_time = esp_log_timestamp() + System_Ui->_device_sx1262.auto_send.interval;
+                        auto_send_cycle_time = esp_log_timestamp() + System_Ui->_device_lr2021.auto_send.interval;
                     }
                 }
             }
 
             if (Rf_Send_Flag == true)
             {
-                // 设置发送模式，发送完成后进入快速切换模式（FS模式）
-                SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::TX, 0, Cpp_Bus_Driver::Sx126x::Fallback_Mode::FS);
-                SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
-                SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TX_DONE);
-
-                printf("sx1262 send start\n");
-                printf("sx1262 send data size: %d\n", strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
+                printf("lr2021 send start\n");
+                printf("lr2021 send data size: %d\n", strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
                 uint16_t timeout_count = 0;
-                if (SX1262->send_data(Rf_Send_Package, strlen(reinterpret_cast<const char *>(Rf_Send_Package))) == true)
+                int16_t assert = Lr2021.startTransmit(Rf_Send_Package, strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
+                if (assert != RADIOLIB_ERR_NONE)
                 {
-                    while (1) // 等待发送完成
+                    printf("lr2021 startTransmit fail (error code: %d)\n", assert);
+                }
+                else
+                {
+                    while (1)
                     {
-                        if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 发送完成中断
+                        if (XL9535->pin_read(XL9535_LR2021_DIO1) == 1)
                         {
-                            // 检查中断
-                            Cpp_Bus_Driver::Sx126x::Irq_Status is;
-                            if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
+                            assert = Lr2021.finishTransmit();
+                            if (assert == RADIOLIB_ERR_NONE)
                             {
-                                printf("parse_Iqr_status fail\n");
+                                printf("lr2021 send success\n");
                             }
                             else
                             {
-                                if (is.all_flag.tx_done == true) // 发送完成
-                                {
-                                    printf("sx1262 send success\n");
-                                    break;
-                                }
+                                printf("lr2021 finishTransmit fail (error code: %d)\n", assert);
                             }
+                            break;
                         }
 
                         timeout_count++;
-                        if (timeout_count > 1000) // 超时
+                        if (timeout_count > 1000)
                         {
-                            printf("sx1262 send timeout\n");
+                            printf("lr2021 send timeout\n");
+                            Lr2021.finishTransmit();
                             break;
                         }
                         vTaskDelay(pdMS_TO_TICKS(10));
                     }
                 }
-                else
+
+                assert = Lr2021.startReceive();
+                if (assert != RADIOLIB_ERR_NONE)
                 {
-                    printf("sx1262 send fail\n");
+                    printf("lr2021 startReceive fail (error code: %d)\n", assert);
                 }
-
-                // vTaskDelay(pdMS_TO_TICKS(1000));
-
-                // 还原接收模式
-                SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
-                SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
-                SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
 
                 Rf_Send_Flag = false;
             }
 
-            if (XL9535->pin_read(XL9535_SX1262_DIO1) == 1) // 接收完成中断
+            if (XL9535->pin_read(XL9535_LR2021_DIO1) == 1)
             {
-                // 检查中断
-                Cpp_Bus_Driver::Sx126x::Irq_Status is;
-                if (SX1262->parse_irq_status(SX1262->get_irq_flag(), is) == false)
+                uint8_t receive_package[255] = {0};
+                size_t length_buffer = Lr2021.getPacketLength();
+                if (length_buffer > sizeof(receive_package))
                 {
-                    printf("parse_irq_status fail\n");
+                    length_buffer = sizeof(receive_package);
+                }
+
+                int16_t assert = Lr2021.readData(receive_package, length_buffer);
+                if (assert != RADIOLIB_ERR_NONE)
+                {
+                    printf("lr2021 receive fail (error assert: %d)\n", assert);
                 }
                 else
                 {
-                    if (is.all_flag.tx_rx_timeout == true)
+                    float buffer_rssi = Lr2021.getRSSI();
+                    float buffer_snr = Lr2021.getSNR();
+                    printf("lr2021 receive rssi: %.01f snr: %.01f\n", buffer_rssi, buffer_snr);
+
+                    for (size_t i = 0; i < length_buffer; i++)
                     {
-                        printf("receive timeout\n");
-                        SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::TIMEOUT);
+                        printf("get lr2021 data[%d]: %d\n", static_cast<int>(i), receive_package[i]);
                     }
-                    else if (is.all_flag.crc_error == true)
-                    {
-                        printf("receive crc error\n");
-                        SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::CRC_ERROR);
-                    }
-                    else if (is.lora_reg_flag.header_error == true)
-                    {
-                        printf("receive header error\n");
-                        SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::HEADER_ERROR);
-                    }
-                    else
-                    {
-                        uint8_t receive_package[255] = {0};
-                        uint8_t length_buffer = SX1262->receive_data(receive_package);
-                        if (length_buffer == 0)
+
+                    char buffer_time[15];
+                    snprintf(buffer_time, sizeof(buffer_time), "%02d:%02d:%02d", System_Ui->_time.hour, System_Ui->_time.minute, System_Ui->_time.second);
+
+                    std::vector<uint8_t> buffer_vector(receive_package, receive_package + length_buffer);
+                    buffer_vector.erase(std::remove(buffer_vector.begin(), buffer_vector.end(), 0), buffer_vector.end());
+                    std::string message_str(buffer_vector.begin(), buffer_vector.end());
+                    message_str += '\0';
+
+                    char buffer_data_info[30];
+                    snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[%.01f] snr[%.01f]", buffer_rssi, buffer_snr);
+
+                    Lvgl_Ui::System::Win_Rf_Chat_Message wlcm =
                         {
-                            printf("sx1262 receive fail (error assert: %d)\n", SX1262->_assert);
-                        }
-                        else
-                        {
-                            Cpp_Bus_Driver::Sx126x::Packet_Metrics pm;
-                            if (SX1262->get_lora_packet_metrics(pm) == true)
-                            {
-                                printf("sx1262 receive rssi_average: %.01f rssi_instantaneous: %.01f snr: %.01f\n", pm.lora.rssi_average, pm.lora.rssi_instantaneous, pm.lora.snr);
-                            }
+                            .direction = Lvgl_Ui::System::Chat_Message_Direction::RECEIVE,
+                            .time = buffer_time,
+                            .data = message_str,
+                            .data_info = buffer_data_info,
+                        };
+                    System_Ui->_registry.win.rf.chat_message_data.push_back(wlcm);
 
-                            for (uint8_t i = 0; i < length_buffer; i++)
-                            {
-                                printf("get sx1262 data[%d]: %d\n", i, receive_package[i]);
-                            }
-
-                            char buffer_time[15];
-                            snprintf(buffer_time, sizeof(buffer_time), "%02d:%02d:%02d", System_Ui->_time.hour, System_Ui->_time.minute, System_Ui->_time.second);
-
-                            // 创建一个 vector 来存储数据，因为 std::remove 需要可修改的序列
-                            std::vector<uint8_t> buffer_vector(receive_package, receive_package + length_buffer);
-
-                            // 使用 std::remove 将 \0 字符移除
-                            buffer_vector.erase(std::remove(buffer_vector.begin(), buffer_vector.end(), 0), buffer_vector.end());
-
-                            // 使用 string 的构造函数从 vector 创建 string
-                            std::string message_str(buffer_vector.begin(), buffer_vector.end());
-
-                            message_str += '\0';
-
-                            char buffer_data_info[30];
-                            snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[%.01f] snr[%.01f]", pm.lora.rssi_instantaneous, pm.lora.snr);
-
-                            Lvgl_Ui::System::Win_Rf_Chat_Message wlcm =
-                                {
-                                    .direction = Lvgl_Ui::System::Chat_Message_Direction::RECEIVE,
-                                    .time = buffer_time,
-                                    .data = message_str,
-                                    .data_info = buffer_data_info,
-                                };
-                            System_Ui->_registry.win.rf.chat_message_data.push_back(wlcm);
-
-                            if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::RF)
-                            {
-                                // 更新聊天容器
-                                _lock_acquire(&lvgl_api_lock);
-                                System_Ui->win_rf_chat_message_data_update(System_Ui->_registry.win.rf.chat_message_data);
-                                _lock_release(&lvgl_api_lock);
-                            }
-                        }
+                    if (System_Ui->_current_win == Lvgl_Ui::System::Current_Win::RF)
+                    {
+                        _lock_acquire(&lvgl_api_lock);
+                        System_Ui->win_rf_chat_message_data_update(System_Ui->_registry.win.rf.chat_message_data);
+                        _lock_release(&lvgl_api_lock);
                     }
                 }
 
-                SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
+                assert = Lr2021.startReceive();
+                if (assert != RADIOLIB_ERR_NONE)
+                {
+                    printf("lr2021 startReceive fail (error code: %d)\n", assert);
+                }
             }
         }
         break;
@@ -3033,30 +3015,56 @@ void System_Ui_Callback_Init(void)
         }
     };
 
-    System_Ui->_win_rf_config_sx1262_params_callback = [](Lvgl_Ui::System::Device_Sx1262 device_sx1262) -> bool
+    System_Ui->_win_rf_config_lr2021_params_callback = [](Lvgl_Ui::System::Device_Lr2021 device_lr2021) -> bool
     {
-        if (device_sx1262.params.rf_switch == 0)
+        const int8_t min_power = (device_lr2021.params.freq > 1500.0) ? -19 : -9;
+        const int8_t max_power = (device_lr2021.params.freq >= 1000.0) ? 8 : 22;
+        int8_t output_power = device_lr2021.params.power;
+        if (output_power < min_power)
         {
-            XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+            output_power = min_power;
         }
-        else
+        else if (output_power > max_power)
         {
-            XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+            output_power = max_power;
         }
 
-        if (SX1262->config_lora_params(device_sx1262.params.freq, device_sx1262.params.bandwidth, device_sx1262.params.current_limit,
-                                       device_sx1262.params.power, device_sx1262.params.sf, device_sx1262.params.cr, device_sx1262.params.crc_type,
-                                       device_sx1262.params.preamble_length, device_sx1262.params.sync_word) == false)
+        printf("LR2021 config freq: %.1f MHz, output power: %d dBm\n",
+               device_lr2021.params.freq, output_power);
+
+        lr2021_reset();
+
+        int16_t assert = Lr2021.begin(device_lr2021.params.freq,
+                                      device_lr2021.params.bandwidth,
+                                      device_lr2021.params.sf,
+                                      device_lr2021.params.cr,
+                                      device_lr2021.params.sync_word,
+                                      output_power,
+                                      device_lr2021.params.preamble_length,
+                                      3.3);
+        if (assert != RADIOLIB_ERR_NONE)
         {
-            printf("config_lora_params fail\n");
+            printf("LR2021 begin fail (error code: %d)\n", assert);
             return false;
         }
-        SX1262->clear_buffer();
-        SX1262->start_lora_transmit(Cpp_Bus_Driver::Sx126x::Chip_Mode::RX);
-        SX1262->set_irq_pin_mode(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
-        SX1262->clear_irq_flag(Cpp_Bus_Driver::Sx126x::Irq_Mask_Flag::RX_DONE);
 
-        printf("config_lora_params finish start sx1262 transmit\n");
+        Lr2021.setRfSwitchTable(lr2021_rfswitch_dio_pins, lr2021_rfswitch_table);
+
+        assert = Lr2021.setCRC(device_lr2021.params.crc_type ? 2 : 0);
+        if (assert != RADIOLIB_ERR_NONE)
+        {
+            printf("LR2021 setCRC fail (error code: %d)\n", assert);
+            return false;
+        }
+
+        assert = Lr2021.startReceive();
+        if (assert != RADIOLIB_ERR_NONE)
+        {
+            printf("LR2021 startReceive fail (error code: %d)\n", assert);
+            return false;
+        }
+
+        printf("LR2021 config finish, start receive\n");
         return true;
     };
 
@@ -4664,12 +4672,12 @@ void System_Startup_Message_Init(void)
         }
     }
 
-    if (Sys_Status.sx1262.init_flag == false)
+    if (Sys_Status.lr2021.init_flag == false)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
 
         _lock_acquire(&lvgl_api_lock);
-        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "sx1262 init fail");
+        System_Ui->create_system_message_box(lv_screen_active(), "device massage", "lr2021 init fail");
         _lock_release(&lvgl_api_lock);
 
         while (System_Ui->_registry.system_message_box.occupancy_flag == true)
@@ -5145,34 +5153,31 @@ extern "C" void app_main(void)
     Set_Lvgl_Startup_Progress_Bar(90);
     _lock_release(&lvgl_api_lock);
 
-    XL9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    XL9535->pin_mode(XL9535_LR2021_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
     // LORA复位
-    XL9535->pin_mode(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    XL9535->pin_mode(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
     vTaskDelay(pdMS_TO_TICKS(10));
-    XL9535->pin_write(XL9535_SX1262_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    XL9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    XL9535->pin_mode(XL9535_SX1262_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
+    XL9535->pin_mode(XL9535_LR2021_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
-    SX1262_SPI_Bus->_bus_init_flag = true;
+    LR2021_SPI_Bus->_bus_init_flag = true;
 #endif
-    if (SX1262->begin(10000000) == false)
+    Lr2021.irqDioNum = 11;
+    if (System_Ui->set_config_rf_params(System_Ui->_device_lr2021) == false)
     {
-        printf("sx1262 begin fail\n");
-        Sys_Status.sx1262.init_flag = false;
+        printf("lr2021 init fail\n");
+        Sys_Status.lr2021.init_flag = false;
     }
     else
     {
-        printf("sx1262 begin success\n");
-        Sys_Status.sx1262.init_flag = true;
+        printf("lr2021 init success\n");
+        Sys_Status.lr2021.init_flag = true;
     }
-
-    System_Ui->set_config_rf_params(System_Ui->_device_sx1262);
 
     _lock_acquire(&lvgl_api_lock);
     Set_Lvgl_Startup_Progress_Bar(100);

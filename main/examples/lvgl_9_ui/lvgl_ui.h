@@ -109,7 +109,7 @@ namespace Lvgl_Ui
 
         enum class Rf_Chip_Type
         {
-            SX1262 = 0,
+            LR2021 = 0,
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             CC1101,
             NRF24L01,
@@ -326,7 +326,6 @@ namespace Lvgl_Ui
                                 struct
                                 {
                                     lv_obj_t *freq;
-                                    lv_obj_t *current_limit;
                                     lv_obj_t *power;
                                     lv_obj_t *preamble_length;
                                     lv_obj_t *sync_word;
@@ -334,13 +333,12 @@ namespace Lvgl_Ui
 
                                 struct
                                 {
-                                    lv_obj_t *rf_switch;
                                     lv_obj_t *bandwidth;
                                     lv_obj_t *spreading_factor;
                                     lv_obj_t *coding_rate;
                                     lv_obj_t *crc_type;
                                 } dropdown;
-                            } sx1262;
+                            } lr2021;
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
                             struct
                             {
@@ -464,7 +462,7 @@ namespace Lvgl_Ui
             std::string time_zone = "null"; // 时区
         };
 
-        struct Device_Sx1262
+        struct Device_Lr2021
         {
             struct
             {
@@ -475,16 +473,14 @@ namespace Lvgl_Ui
 
             struct
             {
-                bool rf_switch = 0; // 射频开关
-                double freq = 868.0;
-                Sx126x::Lora_Bw bandwidth = Sx126x::Lora_Bw::BW_125000HZ;
-                float current_limit = 140.0;
-                int8_t power = 22;
-                Sx126x::Sf sf = Sx126x::Sf::SF9;
-                Sx126x::Cr cr = Sx126x::Cr::CR_4_7;
-                Sx126x::Lora_Crc_Type crc_type = Sx126x::Lora_Crc_Type::ON;
+                double freq = 2450.0;
+                float bandwidth = 125.0;
+                int8_t power = 8;
+                uint8_t sf = 12;
+                uint8_t cr = 7;
+                bool crc_type = true;
                 uint16_t preamble_length = 8;
-                uint16_t sync_word = 0x1424;
+                uint8_t sync_word = 0x12;
             } params;
         };
 
@@ -499,7 +495,7 @@ namespace Lvgl_Ui
 
         Time _time;
 
-        Device_Sx1262 _device_sx1262;
+        Device_Lr2021 _device_lr2021;
 
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
         // cc1101带宽
@@ -570,7 +566,7 @@ namespace Lvgl_Ui
 
         Current_Win _current_win = Current_Win::UNKNOWN;
 
-        Rf_Chip_Type _rf_chip_type = Rf_Chip_Type::SX1262;
+        Rf_Chip_Type _rf_chip_type = Rf_Chip_Type::LR2021;
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
         Hi8561_Touch::Touch_Point _touch_point;
@@ -602,7 +598,7 @@ namespace Lvgl_Ui
 
         void (*_win_camera_status_callback)(bool status) = nullptr;
 
-        bool (*_win_rf_config_sx1262_params_callback)(Device_Sx1262 device_sx1262) = nullptr;
+        bool (*_win_rf_config_lr2021_params_callback)(Device_Lr2021 device_lr2021) = nullptr;
 
         void (*_win_rf_send_data_callback)(std::string data) = nullptr;
 
@@ -692,9 +688,9 @@ namespace Lvgl_Ui
         void init_win_rf_setings(void);
         void init_win_rf_setings_keyboard_position_event_cb(lv_obj_t *parent);
         void init_win_rf_setings_rf_chip_type_message_box(void);
-        void init_win_rf_setings_config_sx1262_params_message_box(void);
+        void init_win_rf_setings_config_lr2021_params_message_box(void);
         void init_win_rf_setings_auto_send_message_box(void);
-        bool set_config_rf_params(Device_Sx1262 device_sx1262);
+        bool set_config_rf_params(Device_Lr2021 device_lr2021);
         void set_rf_send_data_callback(std::string data);
         void set_rf_status_callback(bool status);
 
