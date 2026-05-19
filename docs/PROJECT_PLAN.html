@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshCore Multi-Tool Firmware - Project Plan</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+            --border: #30363d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent-blue); }
+        h2 { font-size: 1.8rem; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); color: var(--accent-green); }
+        h3 { font-size: 1.3rem; margin: 1.5rem 0 0.75rem; color: var(--accent-purple); }
+        h4 { font-size: 1.1rem; margin: 1rem 0 0.5rem; color: var(--accent-orange); }
+        p { margin-bottom: 1rem; color: var(--text-secondary); }
+        a { color: var(--accent-blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+    <header>
+        <h1>MeshCore Multi-Tool Firmware</h1>
+        <p class="subtitle"><strong>Project:</strong> LilyGo T-Display-P4 Unified Firmware</p>
+        <div class="meta-grid">
+            <span><strong>Version:</strong> 0.1.0 (Planning)</span>
+            <span><strong>Date:</strong> May 19, 2026</span>
+            <span><strong>License:</strong> GPL 3.0</span>
+        </div>
+    </header>
+
+
+    <nav>
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#hardware">Hardware Platform</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#modules">Module Breakdown</a></li>
+            <li><a href="#phases">Implementation Phases</a></li>
+            <li><a href="#technical">Technical Considerations</a></li>
+            <li><a href="#dependencies">Dependencies</a></li>
+        </ul>
+    </nav>
+
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>A unified, multi-function firmware for the LilyGo T-Display-P4 that combines off-grid mesh communication (MeshCore protocol), security analysis tools, environmental monitoring, camera surveillance, media playback, smart home control, gaming, and RF spectrum analysis into a single modular application.</p>
+        <p>The firmware uses an <strong>app launcher shell</strong> architecture where the MeshCore mesh protocol runs as an always-on background service, and individual tool modules are launched on-demand from a touchscreen UI.</p>
+    </section>
+
+    <section id="hardware">
+        <h2>Hardware Platform</h2>
+        <h3>Core Specifications</h3>
+        <table>
+            <thead><tr><th>Component</th><th>Details</th></tr></thead>
+            <tbody>
+                <tr><td>MCU</td><td>ESP32-P4 (high-performance dual-core, 16MB flash, hex-mode PSRAM @ 200MHz)</td></tr>
+                <tr><td>Auxiliary MCU</td><td>ESP32-C6-MINI-1U (WiFi 6 / BLE 5.0 via SDIO, 4MB flash)</td></tr>
+                <tr><td>Display Option 1</td><td>HI8561 - 4.05" TFT, 540x1168px, MIPI DSI, 326 PPI, 10-point touch</td></tr>
+                <tr><td>Display Option 2</td><td>RM69A10 - 4.1" AMOLED, 568x1232px, MIPI DSI, 10-point touch</td></tr>
+                <tr><td>Camera</td><td>OV2710 / SC2336 / OV5645 (MIPI CSI, up to 1920x1080)</td></tr>
+                <tr><td>Flash</td><td>16MB</td></tr>
+                <tr><td>PSRAM</td><td>Hex-mode @ 200MHz</td></tr>
+            </tbody>
+        </table>
+
+
+        <h3>Onboard Peripherals</h3>
+        <table>
+            <thead><tr><th>Category</th><th>Hardware</th><th>Interface</th></tr></thead>
+            <tbody>
+                <tr><td>LoRa Radio</td><td>SX1262 + SKY13453 RF switch</td><td>SPI</td></tr>
+                <tr><td>GPS</td><td>L76K</td><td>UART</td></tr>
+                <tr><td>Ethernet</td><td>IP101GRI</td><td>RMII</td></tr>
+                <tr><td>Audio DAC</td><td>ES8311</td><td>I2S</td></tr>
+                <tr><td>Amplifier</td><td>NS4150B</td><td>-</td></tr>
+                <tr><td>Microphone</td><td>Electret condenser</td><td>I2S</td></tr>
+                <tr><td>IMU</td><td>ICM20948 (9-axis)</td><td>I2C</td></tr>
+                <tr><td>Haptics</td><td>AW86224 vibration motor</td><td>I2C</td></tr>
+                <tr><td>RTC</td><td>PCF8563</td><td>I2C</td></tr>
+                <tr><td>Battery Gauge</td><td>BQ27220</td><td>I2C</td></tr>
+                <tr><td>Charger</td><td>LGS4056H</td><td>-</td></tr>
+                <tr><td>I/O Expander</td><td>XL9535</td><td>I2C</td></tr>
+                <tr><td>Power Mgmt</td><td>SGM38121 LDO</td><td>I2C</td></tr>
+                <tr><td>Storage</td><td>SD card</td><td>SDMMC</td></tr>
+                <tr><td>USB</td><td>TinyUSB CDC</td><td>USB</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Keyboard Expansion Board (Optional)</h3>
+        <table>
+            <thead><tr><th>Component</th><th>Details</th><th>Interface</th></tr></thead>
+            <tbody>
+                <tr><td>Keyboard</td><td>TCA8418 matrix (10x7 QWERTY)</td><td>I2C</td></tr>
+                <tr><td>Sub-GHz Radio</td><td>CC1101 (300-928MHz)</td><td>SPI</td></tr>
+                <tr><td>2.4GHz Radio</td><td>NRF24L01</td><td>SPI</td></tr>
+                <tr><td>NFC</td><td>ST25R3916</td><td>SPI</td></tr>
+                <tr><td>Charger</td><td>BQ25896</td><td>I2C</td></tr>
+                <tr><td>I/O Expander</td><td>XL9555</td><td>I2C</td></tr>
+                <tr><td>Backlight</td><td>SY7200A</td><td>PWM</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+
+    <section id="architecture">
+        <h2>Architecture</h2>
+        <h3>System Architecture Diagram</h3>
+        <pre><code>+-------------------------------------------------------------+
+|                      LVGL 9 UI Shell                         |
+|  +----------+ +----------+ +----------+ +--------+          |
+|  | MeshCore | | Security | |  Weather | | Camera |          |
+|  |   Comms  | |  Tools   | |  Station | |  Surv. |          |
+|  +----------+ +----------+ +----------+ +--------+          |
+|  +----------+ +----------+ +----------+ +--------+          |
+|  |  Music   | |  Smart   | |   Games  | | Radio  |          |
+|  |  Player  | |  Home    | |  Console | |Scanner |          |
+|  +----------+ +----------+ +----------+ +--------+          |
++-------------------------------------------------------------+
+|                    Core Services Layer                        |
+|  +---------+ +--------+ +------+ +------+ +-----+ +------+  |
+|  |MeshCore | | Radio  | | GPS  | |Audio | | Net | |Battery|  |
+|  |Protocol | |Manager | | Svc  | | Svc  | | Svc | | Svc  |  |
+|  +---------+ +--------+ +------+ +------+ +-----+ +------+  |
++-------------------------------------------------------------+
+|              Hardware Abstraction (cpp_bus_driver)            |
+|  SX1262 | CC1101 | NRF24 | NFC | WiFi | Camera | IMU       |
+|  GPS | Audio | Display | Touch | Battery | RTC | SD         |
++-------------------------------------------------------------+
+|                    ESP-IDF v5.4.x / FreeRTOS                 |
++-------------------------------------------------------------+</code></pre>
+
+        <h3>Design Principles</h3>
+        <ol>
+            <li><strong>Modular App System</strong> - Each feature is an independent module with its own UI window</li>
+            <li><strong>Background Services</strong> - MeshCore, GPS, and battery monitoring run continuously as FreeRTOS tasks</li>
+            <li><strong>Radio Resource Manager</strong> - Arbitrates access to shared radio hardware</li>
+            <li><strong>Event-Driven</strong> - Inter-module communication via FreeRTOS event groups and queues</li>
+            <li><strong>Memory-Aware</strong> - Apps that use heavy resources release memory on exit</li>
+            <li><strong>Power-Conscious</strong> - Deep sleep integration, radio duty cycling, display dimming</li>
+        </ol>
+
+        <h3>App Lifecycle</h3>
+        <pre><code>App States: UNLOADED -> LOADING -> ACTIVE -> SUSPENDED -> UNLOADED
+                                      |
+                                      v
+                               BACKGROUND (for MeshCore)</code></pre>
+    </section>
+
+
+    <section id="modules">
+        <h2>Module Breakdown</h2>
+
+        <div class="module-card">
+            <h3>1. MeshCore Communications</h3>
+            <div class="badge critical">Critical - Phase 1</div>
+            <p><strong>Repository:</strong> <a href="https://github.com/meshcore-dev/MeshCore">github.com/meshcore-dev/MeshCore</a></p>
+            <p>Integration of the MeshCore mesh networking protocol for off-grid, encrypted, multi-hop LoRa communication. This is the backbone service that runs continuously and provides communication infrastructure for all other modules.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>Mesh Networking:</strong> Self-organizing multi-hop routing via SX1262 LoRa</li>
+                <li><strong>Device Roles:</strong> Selectable via UI - Client (Companion), Repeater, or Room Server</li>
+                <li><strong>Encryption:</strong> End-to-end encrypted messaging (public key based)</li>
+                <li><strong>Contact Management:</strong> Add/remove contacts, vanity key generation</li>
+                <li><strong>Message Types:</strong> Direct messages, room/group messages, broadcast</li>
+                <li><strong>Background Service:</strong> Always-on mesh participation</li>
+                <li><strong>GPS Integration:</strong> Share location with mesh contacts</li>
+                <li><strong>Alert Forwarding:</strong> Other modules can send alerts via mesh</li>
+            </ul>
+            <h4>Technical Integration</h4>
+            <ul>
+                <li>MeshCore uses RadioLib for radio abstraction - already a component in this project</li>
+                <li>SX1262 is the primary radio for MeshCore</li>
+                <li>BLE companion mode via ESP32-C6 for mobile app connectivity</li>
+                <li>Message store on SD card for Room Server mode</li>
+            </ul>
+        </div>
+
+        <div class="module-card">
+            <h3>2. Security/Pen-test Tools</h3>
+            <div class="badge high">High - Phase 3</div>
+            <p>Multi-radio security analysis toolkit for educational RF security research and network analysis.</p>
+            <h4>WiFi (via ESP32-C6)</h4>
+            <ul>
+                <li>Network scanner (SSID, BSSID, channel, signal strength, encryption)</li>
+                <li>Deauthentication packet detector</li>
+                <li>Beacon frame analysis</li>
+                <li>Connected client enumeration</li>
+                <li>Channel utilization graph</li>
+            </ul>
+            <h4>Sub-GHz (CC1101 - Keyboard expansion)</h4>
+            <ul>
+                <li>Frequency scanner (300-928MHz range)</li>
+                <li>Signal recording and analysis</li>
+                <li>Protocol identification</li>
+                <li>Waterfall display</li>
+            </ul>
+            <h4>2.4GHz (NRF24L01 - Keyboard expansion)</h4>
+            <ul>
+                <li>BLE advertisement scanner</li>
+                <li>Device discovery and fingerprinting</li>
+                <li>Channel hopping analysis</li>
+            </ul>
+            <h4>NFC (ST25R3916 - Keyboard expansion)</h4>
+            <ul>
+                <li>Tag type identification</li>
+                <li>UID reading and display</li>
+                <li>NDEF record parsing</li>
+                <li>Memory dump viewer</li>
+            </ul>
+        </div>
+
+
+        <div class="module-card">
+            <h3>3. Weather Station / Environmental Monitor</h3>
+            <div class="badge medium">Medium - Phase 4</div>
+            <p>Environmental monitoring with local display and remote reporting via MeshCore mesh network.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>Local Sensors:</strong> IMU-derived barometric estimation, GPS altitude</li>
+                <li><strong>External Sensors:</strong> I2C/UART sensors via expansion headers (BME280, SHT31, etc.)</li>
+                <li><strong>LoRa Reporting:</strong> Periodic environmental data broadcast over MeshCore</li>
+                <li><strong>Remote Nodes:</strong> Receive and display data from other mesh sensor nodes</li>
+                <li><strong>Data Logging:</strong> Store readings to SD card with timestamps</li>
+                <li><strong>Trend Analysis:</strong> Historical graphs with configurable time windows</li>
+                <li><strong>Alerts:</strong> Configurable thresholds trigger MeshCore alerts</li>
+            </ul>
+        </div>
+
+        <div class="module-card">
+            <h3>4. Camera / Surveillance</h3>
+            <div class="badge high">High - Phase 2</div>
+            <p>Camera-based surveillance system with motion detection and LoRa-based alerting via MeshCore.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>Live Preview:</strong> Real-time camera feed on display (up to 1080p downscaled)</li>
+                <li><strong>Motion Detection:</strong> Frame differencing with configurable sensitivity</li>
+                <li><strong>Photo Capture:</strong> Save images to SD card with timestamp naming</li>
+                <li><strong>Time-lapse Mode:</strong> Configurable interval capture</li>
+                <li><strong>LoRa Alerts:</strong> Send MeshCore message when motion detected</li>
+                <li><strong>Alert Zones:</strong> Define regions of interest for motion detection</li>
+                <li><strong>Gallery:</strong> Browse captured images on-screen</li>
+            </ul>
+            <h4>Technical Notes</h4>
+            <ul>
+                <li>Uses esp_video component with ISP pipeline</li>
+                <li>PPA (Pixel Processing Accelerator) for efficient frame rotation/scaling</li>
+                <li>Frame buffer in PSRAM for motion comparison</li>
+                <li>Motion detection runs on separate FreeRTOS task</li>
+            </ul>
+        </div>
+
+        <div class="module-card">
+            <h3>5. Music / Media Player</h3>
+            <div class="badge high">High - Phase 2</div>
+            <p>Enhanced media player with audio visualizations, playlist management, and Bluetooth streaming.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>Playback:</strong> WAV/PCM files from SD card</li>
+                <li><strong>BLE Audio:</strong> Via ESP32-C6 as Bluetooth audio source</li>
+                <li><strong>Visualizations:</strong> Real-time FFT spectrum analyzer, waveform, VU meters</li>
+                <li><strong>Playlists:</strong> Create, edit, shuffle, repeat</li>
+                <li><strong>EQ Settings:</strong> Software-based equalizer presets</li>
+                <li><strong>Haptic Feedback:</strong> Vibration on UI interactions</li>
+                <li><strong>Background Playback:</strong> Continue playing while in other apps</li>
+            </ul>
+        </div>
+
+
+        <div class="module-card">
+            <h3>6. Smart Home Controller</h3>
+            <div class="badge medium">Medium - Phase 4</div>
+            <p>Touchscreen dashboard for controlling smart home devices via multiple protocols.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>WiFi/MQTT:</strong> Connect to Home Assistant, Node-RED, or custom brokers</li>
+                <li><strong>HTTP REST:</strong> Control devices via REST APIs</li>
+                <li><strong>LoRa/MeshCore:</strong> Control off-grid IoT nodes via mesh</li>
+                <li><strong>NFC Automation:</strong> Tap NFC tags to trigger actions/scenes</li>
+                <li><strong>Dashboard:</strong> Room-based tile layout with real-time status</li>
+                <li><strong>Scenes:</strong> One-tap multi-device configurations</li>
+                <li><strong>Automation:</strong> Simple if/then rules engine</li>
+            </ul>
+        </div>
+
+        <div class="module-card">
+            <h3>7. Portable Game Console</h3>
+            <div class="badge medium">Medium - Phase 5</div>
+            <p>LVGL-based gaming platform leveraging the high-res display, touch, IMU, and optional keyboard.</p>
+            <h4>Features</h4>
+            <ul>
+                <li><strong>Game Engine:</strong> Simple 2D engine built on LVGL canvas</li>
+                <li><strong>Input:</strong> Touch, IMU tilt, keyboard (expansion)</li>
+                <li><strong>Built-in Games:</strong> Snake, Tetris, 2048, Pong, Flappy Bird, simple RPG</li>
+                <li><strong>Sound Effects:</strong> Via ES8311 speaker</li>
+                <li><strong>Haptic Feedback:</strong> Vibration on collisions/events</li>
+                <li><strong>High Scores:</strong> Persistent storage on SD card</li>
+                <li><strong>Multiplayer:</strong> LoRa peer-to-peer via MeshCore (turn-based)</li>
+            </ul>
+        </div>
+
+        <div class="module-card">
+            <h3>8. Digital Radio Scanner</h3>
+            <div class="badge high">High - Phase 3</div>
+            <p>Multi-band RF spectrum analysis tool utilizing all available radio hardware.</p>
+            <h4>SX1262 (LoRa Band)</h4>
+            <ul>
+                <li>LoRa signal scanner (868/915MHz ISM band)</li>
+                <li>RSSI sweep across frequency range</li>
+                <li>Packet detection and protocol identification</li>
+                <li>Signal strength over time (waterfall)</li>
+            </ul>
+            <h4>CC1101 (Sub-GHz - Keyboard expansion)</h4>
+            <ul>
+                <li>Wideband frequency sweep (300-928MHz)</li>
+                <li>Signal strength per channel</li>
+                <li>Signal capture and replay (educational)</li>
+                <li>Bookmark interesting frequencies</li>
+            </ul>
+            <h4>NRF24L01 (2.4GHz - Keyboard expansion)</h4>
+            <ul>
+                <li>All 125 channel scan (2.400-2.525GHz)</li>
+                <li>WiFi/BLE/Zigbee interference visualization</li>
+                <li>Channel occupancy percentage</li>
+            </ul>
+        </div>
+    </section>
+
+
+    <section id="phases">
+        <h2>Implementation Phases</h2>
+
+        <div class="phase-card">
+            <h3>Phase 1: Core Shell + MeshCore (Weeks 1-4)</h3>
+            <table>
+                <thead><tr><th>Task</th><th>Description</th><th>Priority</th></tr></thead>
+                <tbody>
+                    <tr><td>App Shell</td><td>LVGL app launcher with navigation, status bar, app lifecycle</td><td><span class="badge critical">Critical</span></td></tr>
+                    <tr><td>MeshCore Port</td><td>Integrate MeshCore library with RadioLib/SX1262</td><td><span class="badge critical">Critical</span></td></tr>
+                    <tr><td>Background Services</td><td>FreeRTOS tasks for MeshCore, battery, RTC</td><td><span class="badge critical">Critical</span></td></tr>
+                    <tr><td>Chat UI</td><td>Basic messaging interface</td><td><span class="badge critical">Critical</span></td></tr>
+                    <tr><td>Radio Manager</td><td>SX1262 sharing between MeshCore and other apps</td><td><span class="badge critical">Critical</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="phase-card">
+            <h3>Phase 2: Camera + Music (Weeks 5-8)</h3>
+            <table>
+                <thead><tr><th>Task</th><th>Description</th><th>Priority</th></tr></thead>
+                <tbody>
+                    <tr><td>Camera Surveillance</td><td>Motion detection, capture, LoRa alerts</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>Music Player</td><td>Enhanced playback, visualizations, playlists</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>BLE Audio</td><td>ESP32-C6 Bluetooth audio streaming</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>Background Audio</td><td>Play music while in other apps</td><td><span class="badge high">High</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="phase-card">
+            <h3>Phase 3: Radio Scanner + Security (Weeks 9-12)</h3>
+            <table>
+                <thead><tr><th>Task</th><th>Description</th><th>Priority</th></tr></thead>
+                <tbody>
+                    <tr><td>Radio Scanner</td><td>Multi-band spectrum display</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>WiFi Scanner</td><td>Network analysis via ESP32-C6</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>NFC Tools</td><td>Tag reading/writing interface</td><td><span class="badge high">High</span></td></tr>
+                    <tr><td>Sub-GHz Analysis</td><td>CC1101 frequency scanning</td><td><span class="badge high">High</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="phase-card">
+            <h3>Phase 4: Weather + Smart Home (Weeks 13-16)</h3>
+            <table>
+                <thead><tr><th>Task</th><th>Description</th><th>Priority</th></tr></thead>
+                <tbody>
+                    <tr><td>Weather Station</td><td>Sensor dashboard, data logging, mesh reporting</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Smart Home</td><td>MQTT integration, device dashboard</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Automation</td><td>Rules engine, NFC triggers</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Remote Sensors</td><td>Receive data from mesh sensor nodes</td><td><span class="badge medium">Medium</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="phase-card">
+            <h3>Phase 5: Games + Polish (Weeks 17-20)</h3>
+            <table>
+                <thead><tr><th>Task</th><th>Description</th><th>Priority</th></tr></thead>
+                <tbody>
+                    <tr><td>Game Engine</td><td>2D game framework on LVGL canvas</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Built-in Games</td><td>4-6 classic games</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Multiplayer</td><td>LoRa peer-to-peer turn-based gaming</td><td><span class="badge medium">Medium</span></td></tr>
+                    <tr><td>Polish</td><td>UI refinement, performance optimization</td><td><span class="badge medium">Medium</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section id="technical">
+        <h2>Technical Considerations</h2>
+
+        <h3>Memory Management</h3>
+        <ul>
+            <li><strong>App Partition:</strong> 15MB factory app space</li>
+            <li><strong>PSRAM:</strong> Used for frame buffers, audio buffers, large data structures</li>
+            <li><strong>Heap Strategy:</strong> Apps allocate on entry, free on exit; heavy apps cannot coexist</li>
+            <li><strong>L2 Cache:</strong> 256KB configured for optimal DMA/display performance</li>
+        </ul>
+
+        <h3>Radio Resource Sharing</h3>
+        <pre><code>Radio Priority System:
+1. MeshCore (always-on, uses SX1262 time slots)
+2. Active app radio requests (scanner, security tools)
+3. Background reporting (weather, smart home)
+
+Resolution: Time-division multiplexing with MeshCore getting
+priority slots. Other apps request radio access via RadioManager
+service which queues and schedules transmissions.</code></pre>
+
+        <h3>Power Management</h3>
+        <table>
+            <thead><tr><th>Mode</th><th>Description</th><th>Current Draw</th></tr></thead>
+            <tbody>
+                <tr><td>Active</td><td>Full speed, all peripherals enabled</td><td>~500mA</td></tr>
+                <tr><td>Idle</td><td>Screen dimmed, radio duty-cycled</td><td>~100mA</td></tr>
+                <tr><td>Sleep</td><td>Deep sleep with RTC wakeup</td><td>~1.2mA</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Display Performance</h3>
+        <ul>
+            <li><strong>MIPI DSI:</strong> 2 lanes @ 1000 Mbps</li>
+            <li><strong>DPI Clock:</strong> 60MHz</li>
+            <li><strong>Refresh:</strong> 30ms LVGL refresh period</li>
+            <li><strong>Color:</strong> RGB565 (16-bit) for performance, RGB888 optional</li>
+            <li><strong>Rotation:</strong> PPA hardware accelerator</li>
+            <li><strong>DMA2D:</strong> Hardware-accelerated buffer copies</li>
+        </ul>
+    </section>
+
+    <section id="dependencies">
+        <h2>Dependencies</h2>
+
+        <h3>Core Framework</h3>
+        <table>
+            <thead><tr><th>Library</th><th>Version</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td>ESP-IDF</td><td>v5.4.x</td><td>Build framework & OS</td></tr>
+                <tr><td>LVGL</td><td>v9.3.0</td><td>UI framework</td></tr>
+                <tr><td>FreeRTOS</td><td>(in ESP-IDF)</td><td>Real-time task scheduling</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Libraries</h3>
+        <table>
+            <thead><tr><th>Library</th><th>Purpose</th><th>Source</th></tr></thead>
+            <tbody>
+                <tr><td>MeshCore</td><td>Mesh networking protocol</td><td><a href="https://github.com/meshcore-dev/MeshCore">GitHub</a></td></tr>
+                <tr><td>RadioLib</td><td>Multi-radio abstraction</td><td><a href="https://github.com/jgromes/RadioLib">GitHub</a></td></tr>
+                <tr><td>cpp_bus_driver</td><td>Hardware abstraction</td><td><a href="https://github.com/Llgok/cpp_bus_driver">GitHub</a></td></tr>
+                <tr><td>esp_video</td><td>Camera ISP pipeline</td><td>ESP Component Registry</td></tr>
+                <tr><td>esp-sr</td><td>Speech recognition</td><td>ESP Component Registry</td></tr>
+                <tr><td>esp_hosted</td><td>WiFi via ESP32-C6</td><td>ESP Component Registry</td></tr>
+                <tr><td>esp_tinyusb</td><td>USB CDC serial</td><td>ESP Component Registry</td></tr>
+                <tr><td>ICM20948_WE</td><td>IMU driver</td><td><a href="https://github.com/Llgok/ICM20948_WE">GitHub</a></td></tr>
+                <tr><td>ST25R3916 / NFC-RFAL</td><td>NFC stack</td><td>GitHub (stm32duino)</td></tr>
+                <tr><td>kode_bq25896</td><td>Battery charger</td><td><a href="https://github.com/Llgok/kode_bq25896">GitHub</a></td></tr>
+            </tbody>
+        </table>
+    </section>
+
+
+    <section id="build">
+        <h2>Build System</h2>
+        <h3>Proposed Project Structure</h3>
+        <pre><code>T-Display-P4/
++-- CMakeLists.txt
++-- sdkconfig.defaults
++-- partitions.csv
++-- main/
+|   +-- CMakeLists.txt
+|   +-- Kconfig.projbuild
+|   +-- app_shell/              # App launcher & lifecycle
+|   +-- services/               # Background services
+|   |   +-- meshcore_service.cpp
+|   |   +-- radio_manager.cpp
+|   |   +-- gps_service.cpp
+|   |   +-- battery_service.cpp
+|   |   +-- audio_service.cpp
+|   |   +-- network_service.cpp
+|   +-- apps/                   # Application modules
+|   |   +-- meshcore_chat/
+|   |   +-- security_tools/
+|   |   +-- weather_station/
+|   |   +-- camera_surveillance/
+|   |   +-- music_player/
+|   |   +-- smart_home/
+|   |   +-- game_console/
+|   |   +-- radio_scanner/
+|   +-- ui/                     # Shared UI components
++-- components/
+|   +-- meshcore/               # MeshCore protocol library
+|   +-- cpp_bus_driver/         # Hardware abstraction
+|   +-- RadioLib/               # Multi-radio library
+|   +-- private_library/        # Board-specific drivers
+|   +-- esp_video/              # Camera pipeline
+|   +-- ST25R3916/ + NFC-RFAL/
+|   +-- ICM20948_WE/
+|   +-- kode_bq25896/
++-- docs/
+    +-- PROJECT_PLAN.md
+    +-- PROJECT_PLAN.html</code></pre>
+
+        <h3>Build Commands</h3>
+        <pre><code># Configure target
+idf.py set-target esp32p4
+
+# Open menuconfig for module selection
+idf.py menuconfig
+
+# Build
+idf.py build
+
+# Flash
+idf.py -p /dev/ttyUSB0 flash monitor</code></pre>
+    </section>
+
+    <footer>
+        <hr>
+        <p><strong>License:</strong> GPL 3.0 | <strong>Repository:</strong> <a href="https://github.com/hasmeni/T-Display-P4">hasmeni/T-Display-P4</a></p>
+        <p><em>Document generated: May 19, 2026</em></p>
+    </footer>
+
+    <style>
+        /* Additional styles */
+        header { margin-bottom: 2rem; }
+        .subtitle { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .meta-grid { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.5rem; color: var(--text-secondary); }
+        nav { background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid var(--border); }
+        nav ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; }
+        nav li { padding: 0.25rem 0; }
+        section { margin-bottom: 3rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; }
+        th { background: var(--bg-tertiary); padding: 0.75rem 1rem; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+        tr:last-child td { border-bottom: none; }
+        pre { background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; border: 1px solid var(--border); }
+        code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; font-size: 0.9rem; }
+        ul, ol { margin: 0.75rem 0 1rem 1.5rem; color: var(--text-secondary); }
+        li { margin-bottom: 0.4rem; }
+        .module-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .phase-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin: 0.5rem 0; }
+        .badge.critical { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .badge.high { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); border: 1px solid var(--accent-orange); }
+        .badge.medium { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        footer { margin-top: 3rem; padding-top: 1rem; color: var(--text-secondary); }
+        footer hr { border: none; border-top: 1px solid var(--border); margin-bottom: 1rem; }
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            .meta-grid { flex-direction: column; gap: 0.5rem; }
+            nav ul { grid-template-columns: 1fr; }
+        }
+    </style>
+</body>
+</html>
