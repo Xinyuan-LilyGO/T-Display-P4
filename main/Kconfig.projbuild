@@ -94,6 +94,8 @@ menu "Example Configuration"
                 bool "iperf_ethernet"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET
                 bool "usb_iperf_ethernet"
+            config EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC
+                bool "usb_iperf_ethernet_host_msc"
             config EXAMPLE_BUILD_USB_UVC_SCREEN
                 bool "usb_uvc_screen"
             config EXAMPLE_BUILD_ES8311_SD_MP3

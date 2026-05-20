@@ -6,7 +6,6 @@
  * @License: GPL 3.0
  */
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "esp_check.h"
@@ -32,8 +31,6 @@ static constexpr uint8_t RTL8152B_FALLBACK_MAC[6] = {
     0x02, 0x00, 0x00, 0x12, 0x15, 0x2B};
 
 static EventGroupHandle_t s_event_group = nullptr;
-static iot_eth_driver_t* s_ecm_driver = nullptr;
-static esp_netif_t* s_ecm_netif = nullptr;
 
 static bool usb_host_enum_filter_cb(
     const usb_device_desc_t* dev_desc, uint8_t* bConfigurationValue) {
@@ -54,8 +51,11 @@ static bool usb_host_enum_filter_cb(
 static void usb_lib_task(void* arg) {
   const usb_host_config_t host_config = {
       .skip_phy_setup = false,
+      .root_port_unpowered = false,
       .intr_flags = ESP_INTR_FLAG_LEVEL1,
       .enum_filter_cb = usb_host_enum_filter_cb,
+      .fifo_settings_custom = {},
+      .peripheral_map = 0,
   };
   ESP_ERROR_CHECK(usb_host_install(&host_config));
   xTaskNotifyGive(static_cast<TaskHandle_t>(arg));
@@ -148,30 +148,24 @@ static void start_iperf_console(void) {
 }
 
 static esp_err_t install_rtl8152b_ecm(void) {
-  auto* dev_match_id = static_cast<usb_device_match_id_t*>(
-      calloc(2, sizeof(usb_device_match_id_t)));
-  if (dev_match_id == nullptr) {
-    return ESP_ERR_NO_MEM;
-  }
-
+  static usb_device_match_id_t dev_match_id[2] = {};
   dev_match_id[0].match_flags = USB_DEVICE_ID_MATCH_VID_PID;
   dev_match_id[0].idVendor = RTL8152B_VID;
   dev_match_id[0].idProduct = RTL8152B_PID;
-  memset(&dev_match_id[1], 0, sizeof(usb_device_match_id_t));
 
   iot_usbh_ecm_config_t ecm_cfg = {
       .match_id_list = dev_match_id,
   };
 
-  esp_err_t ret = iot_eth_new_usb_ecm(&ecm_cfg, &s_ecm_driver);
+  iot_eth_driver_t* ecm_driver = nullptr;
+  esp_err_t ret = iot_eth_new_usb_ecm(&ecm_cfg, &ecm_driver);
   if (ret != ESP_OK) {
-    free(dev_match_id);
     return ret;
   }
 
   iot_eth_handle_t eth_handle = nullptr;
   iot_eth_config_t eth_cfg = {
-      .driver = s_ecm_driver,
+      .driver = ecm_driver,
       .stack_input = nullptr,
   };
   ESP_RETURN_ON_ERROR(
@@ -188,21 +182,21 @@ static esp_err_t install_rtl8152b_ecm(void) {
       .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH,
   };
 
-  s_ecm_netif = esp_netif_new(&netif_cfg);
+  esp_netif_t* ecm_netif = esp_netif_new(&netif_cfg);
   ESP_RETURN_ON_FALSE(
-      s_ecm_netif != nullptr, ESP_FAIL, TAG, "create USB ECM netif failed");
-  esp_netif_set_default_netif(s_ecm_netif);
+      ecm_netif != nullptr, ESP_FAIL, TAG, "create USB ECM netif failed");
+  esp_netif_set_default_netif(ecm_netif);
 
   iot_eth_netif_glue_handle_t glue = iot_eth_new_netif_glue(eth_handle);
   ESP_RETURN_ON_FALSE(
       glue != nullptr, ESP_FAIL, TAG, "create iot_eth netif glue failed");
 
   ESP_RETURN_ON_ERROR(
-      esp_netif_attach(s_ecm_netif, glue), TAG, "attach netif failed");
+      esp_netif_attach(ecm_netif, glue), TAG, "attach netif failed");
 
   uint8_t fallback_mac[6] = {};
   memcpy(fallback_mac, RTL8152B_FALLBACK_MAC, sizeof(fallback_mac));
-  ESP_RETURN_ON_ERROR(esp_netif_set_mac(s_ecm_netif, fallback_mac), TAG,
+  ESP_RETURN_ON_ERROR(esp_netif_set_mac(ecm_netif, fallback_mac), TAG,
       "set fallback MAC failed");
   ESP_LOGI(TAG, "Use fallback MAC: %02X:%02X:%02X:%02X:%02X:%02X",
       fallback_mac[0], fallback_mac[1], fallback_mac[2], fallback_mac[3],
