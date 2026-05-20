@@ -92,38 +92,15 @@ menu "Example Configuration"
                 bool "bq25896"
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
+            config EXAMPLE_BUILD_ES8311_SD_MP3
+                bool "es8311_sd_mp3"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET
                 bool "usb_iperf_ethernet"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC
                 bool "usb_iperf_ethernet_host_msc"
-            config EXAMPLE_BUILD_USB_UVC_SCREEN
-                bool "usb_uvc_screen"
-            config EXAMPLE_BUILD_ES8311_SD_MP3
-                bool "es8311_sd_mp3"
+            config EXAMPLE_BUILD_USB_HOST_MSC
+                bool "usb_host_msc"
+
     endchoice
-
-    config USB_UVC_SCREEN_LVGL_DRAW_LINES
-        int "usb_uvc_screen LVGL draw buffer lines"
-        depends on EXAMPLE_BUILD_USB_UVC_SCREEN
-        range 16 240
-        default 80
-        help
-            Number of lines in the LVGL partial draw buffer.
-
-    config USB_UVC_SCREEN_JPEG_BUFFER_KB
-        int "usb_uvc_screen JPEG frame buffer size (KB)"
-        depends on EXAMPLE_BUILD_USB_UVC_SCREEN
-        range 128 2048
-        default 512
-        help
-            Maximum encoded MJPEG frame size used by the USB UVC display panel.
-
-    config USB_UVC_SCREEN_JPEG_QUALITY
-        int "usb_uvc_screen JPEG quality"
-        depends on EXAMPLE_BUILD_USB_UVC_SCREEN
-        range 1 100
-        default 80
-        help
-            JPEG quality for the USB UVC stream.
 
 endmenu

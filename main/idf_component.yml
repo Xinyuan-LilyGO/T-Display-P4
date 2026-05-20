@@ -82,6 +82,7 @@ dependencies:
     version: "^1.2.0"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_HOST_MSC} == True"
 
   espressif/esp_audio_codec:
     version: "^2.4.1"
