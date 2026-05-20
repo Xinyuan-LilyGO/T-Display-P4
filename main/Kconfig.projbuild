@@ -176,8 +176,8 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_IPERF_ETHERNET_USB
-                bool "iperf_ethernet_usb"
+            config EXAMPLE_BUILD_USB_IPERF_ETHERNET
+                bool "usb_iperf_ethernet"
                 depends on BOARD_TYPE_T_DISPLAY_P4 && BOARD_VERSION_T_DISPLAY_P4_V2_0
             config EXAMPLE_BUILD_ES8311_SD_MP3
                 bool "es8311_sd_mp3"

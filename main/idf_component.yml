@@ -73,13 +73,13 @@ dependencies:
     version: "^0.2.1"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True &&
-          $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
+          $CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
 
   espressif/iot_eth:
     version: "^1.0.0"
     matches:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True &&
-          $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
+          $CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
 
   espressif/iperf-cmd:
     version: "^0.1.1"
@@ -87,7 +87,7 @@ dependencies:
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True &&
           $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
       - if: "$CONFIG{BOARD_TYPE_T_DISPLAY_P4} == True &&
-          $CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET_USB} == True"
+          $CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
 
   espressif/esp_audio_codec:
     version: "^2.4.1"
