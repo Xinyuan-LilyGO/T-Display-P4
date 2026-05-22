@@ -2,12 +2,18 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-02-25 11:34:56
+ * @LastEditTime: 2026-05-22 13:54:41
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
 
 ## **[English](./README.md) | 中文**
+
+> [!IMPORTANT]
+> 当前 `main` 分支已经不是最新开发分支，内容可能已经陈旧。
+> 最新开发进度请以 `debug2` 分支为准。
+> 针对 `main` 的复杂修改，将会在 `debug2` 最新分支处理完成后再进行处理。
+> 待最新分支整理完成后，我们会将更新后的代码推送回 `main`。
 
 ## 版本迭代:
 | Version                               | Update date                       |Update description|

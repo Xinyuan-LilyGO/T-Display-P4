@@ -2,12 +2,18 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-02-25 11:35:15
+ * @LastEditTime: 2026-05-22 13:54:59
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
 
 ## **English | [中文](./README_CN.md)**
+
+> [!IMPORTANT]
+> The `main` branch is currently outdated and does not represent the latest development state of this project.
+> Active development has moved to the `debug2` branch while we prepare major updates.
+> Complex changes targeting `main` will be handled after the latest updates in the `debug2` branch are completed.
+> Once the latest branch is ready, we will push the updated code back to `main`.
 
 ## VersionIteration:
 | Version                               | Update date                       |Update description|
