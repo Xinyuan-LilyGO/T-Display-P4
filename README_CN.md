@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-02-25 11:34:56
+ * @LastEditTime: 2026-05-22 14:18:13
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -14,6 +14,9 @@
 > 最新开发进度请以 `debug2` 分支为准。
 > 针对 `main` 的复杂修改，将会在 `debug2` 最新分支处理完成后再进行处理。
 > 待最新分支整理完成后，我们会将更新后的代码推送回 `main`。
+>
+> T-Display-P4 v2.0 硬件版本目前处于评估预览阶段。
+> 更多说明请查看：[T-Display-P4 v2.0 Hardware Revision - Evaluation Preview](https://github.com/Xinyuan-LilyGO/T-Display-P4/issues/20)
 
 ## 版本迭代:
 | Version                               | Update date                       |Update description|

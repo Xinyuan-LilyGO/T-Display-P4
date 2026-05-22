@@ -14,6 +14,9 @@
 > Active development has moved to the `debug2` branch while we prepare major updates.
 > Complex changes targeting `main` will be handled after the latest updates in the `debug2` branch are completed.
 > Once the latest branch is ready, we will push the updated code back to `main`.
+>
+> T-Display-P4 v2.0 hardware revision is currently under evaluation preview.
+> For more details, please see: [T-Display-P4 v2.0 Hardware Revision - Evaluation Preview](https://github.com/Xinyuan-LilyGO/T-Display-P4/issues/20)
 
 ## VersionIteration:
 | Version                               | Update date                       |Update description|
