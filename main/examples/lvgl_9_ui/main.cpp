@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-04-30 11:29:33
+ * @LastEditTime: 2026-06-01 17:13:43
  * @License: GPL 3.0
  */
 #include "cpp_bus_driver_library.h"
@@ -305,6 +305,7 @@ int64_t start_time;
 
 bool Rf_Send_Flag = false;
 uint8_t Rf_Send_Package[255] = {0};
+size_t Rf_Send_Package_Length = 0;
 
 bool Device_Rf_Task_Stop_Flag = false;
 
@@ -417,7 +418,35 @@ enum class Cc1101_Rf_Switch
 
 volatile bool Tca8418_Interrupt_Flag = false;
 volatile bool Cc1101_Interrupt_Flag = false;
+volatile bool Cc1101_Transmitted_Flag = false;
 volatile bool Nrf24l01_Interrupt_Flag = false;
+int16_t Cc1101_Transmission_State = RADIOLIB_ERR_NONE;
+bool Cc1101_Transmit_In_Progress = false;
+uint32_t Cc1101_Transmit_Start_Time = 0;
+constexpr size_t CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH = RADIOLIB_CC1101_FIFO_SIZE - 1;
+
+static void IRAM_ATTR Cc1101_Set_Packet_Received_Flag(void)
+{
+    Cc1101_Interrupt_Flag = true;
+}
+
+static void IRAM_ATTR Cc1101_Set_Packet_Sent_Flag(void)
+{
+    Cc1101_Transmitted_Flag = true;
+}
+
+static Cc1101_Rf_Switch Cc1101_Rf_Switch_From_Frequency(double freq)
+{
+    if (freq < 387.0)
+    {
+        return Cc1101_Rf_Switch::RF_SWITCH_315MHZ;
+    }
+    if (freq <= 464.0)
+    {
+        return Cc1101_Rf_Switch::RF_SWITCH_434MHZ;
+    }
+    return Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ;
+}
 
 bool Device_Nfc_Task_Stop_Flag = false;
 
@@ -441,7 +470,8 @@ auto Tca8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(Tca8418_Iic_Bus, TCA841
 
 // SPI
 CC1101 Cc1101 = new Module(Cc1101_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                           static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
+                           static_cast<uint32_t>(T_MIXRF_CC1101_INT),
+                           static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
 nRF24 Nrf24l01 = new Module(Nrf24l01_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
                             static_cast<uint32_t>(T_MIXRF_NRF24L01_INT), static_cast<uint32_t>(T_MIXRF_NRF24L01_CE), static_cast<uint32_t>(RADIOLIB_NC));
 
@@ -2269,7 +2299,6 @@ void device_rf_task(void *arg)
                     if (esp_log_timestamp() > auto_send_cycle_time)
                     {
                         memset(Rf_Send_Package, '\0', sizeof(Rf_Send_Package));
-
                         // 检查长度是否越界
                         if (System_Ui->_device_sx1262.auto_send.text.size() <= 255)
                         {
@@ -2463,17 +2492,23 @@ void device_rf_task(void *arg)
                     if (esp_log_timestamp() > auto_send_cycle_time)
                     {
                         memset(Rf_Send_Package, '\0', sizeof(Rf_Send_Package));
+                        Rf_Send_Package_Length = System_Ui->_device_cc1101.auto_send.text.size();
+                        if (Rf_Send_Package_Length > CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH)
+                        {
+                            Rf_Send_Package_Length = CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH;
+                            printf("cc1101 send out of bounds(data > Rf_Send_Package)\n");
+                        }
 
                         // 检查长度是否越界
-                        if (System_Ui->_device_cc1101.auto_send.text.size() <= 255)
+                        if (System_Ui->_device_cc1101.auto_send.text.size() <= CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH)
                         {
-                            memcpy(Rf_Send_Package, System_Ui->_device_cc1101.auto_send.text.data(), System_Ui->_device_cc1101.auto_send.text.size());
+                            memcpy(Rf_Send_Package, System_Ui->_device_cc1101.auto_send.text.data(), Rf_Send_Package_Length);
                         }
                         else
                         {
                             // 处理错误：数据过长
-                            memcpy(Rf_Send_Package, System_Ui->_device_cc1101.auto_send.text.data(), 254);
-                            Rf_Send_Package[254] = '\0';
+                            memcpy(Rf_Send_Package, System_Ui->_device_cc1101.auto_send.text.data(), Rf_Send_Package_Length);
+                            Rf_Send_Package[Rf_Send_Package_Length] = '\0';
 
                             printf("cc1101 send out of bounds(data > Rf_Send_Package)\n");
                         }
@@ -2504,31 +2539,95 @@ void device_rf_task(void *arg)
                 }
             }
 
-            if (Rf_Send_Flag == true)
+            if (Rf_Send_Flag == true && Cc1101_Transmit_In_Progress == false)
             {
                 printf("cc1101 send start\n");
-                printf("cc1101 send data size: %d\n", strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
-                int16_t assert = Cc1101.transmit(Rf_Send_Package, strlen(reinterpret_cast<const char *>(Rf_Send_Package)));
+                printf("cc1101 send data size: %u\n", static_cast<unsigned int>(Rf_Send_Package_Length));
+                int16_t assert = RADIOLIB_ERR_NONE;
+                if (Rf_Send_Package_Length > 0)
+                {
+                    Cc1101_Interrupt_Flag = false;
+                    Cc1101_Transmitted_Flag = false;
+                    Cc1101_Transmission_State = Cc1101.startTransmit(Rf_Send_Package, Rf_Send_Package_Length);
+                    Cc1101_Transmit_In_Progress = Cc1101_Transmission_State == RADIOLIB_ERR_NONE;
+                    Cc1101_Transmit_Start_Time = esp_log_timestamp();
+                    assert = Cc1101_Transmission_State;
+                }
                 if (assert != RADIOLIB_ERR_NONE)
                 {
-                    printf("cc1101 transmit fail (error code: %d)\n", assert);
+                    printf("cc1101 startTransmit fail (error code: %d)\n", assert);
+                    Cc1101_Interrupt_Flag = false;
+                    assert = Cc1101.startReceive();
+                    if (assert != RADIOLIB_ERR_NONE)
+                    {
+                        printf("cc1101 startReceive fail (error code: %d)\n", assert);
+                    }
                 }
 
+                Rf_Send_Flag = false;
+            }
+
+            if (Cc1101_Transmitted_Flag == true)
+            {
+                Cc1101_Transmitted_Flag = false;
+
+                if (Cc1101_Transmit_In_Progress == true)
+                {
+                    if (Cc1101_Transmission_State == RADIOLIB_ERR_NONE)
+                    {
+                        printf("cc1101 transmission finished\n");
+                    }
+                    else
+                    {
+                        printf("cc1101 transmission state fail (error code: %d)\n", Cc1101_Transmission_State);
+                    }
+
+                    int16_t assert = Cc1101.finishTransmit();
+                    if (assert != RADIOLIB_ERR_NONE)
+                    {
+                        printf("cc1101 finishTransmit fail (error code: %d)\n", assert);
+                    }
+
+                    Cc1101_Transmit_In_Progress = false;
+                    Cc1101_Transmitted_Flag = false;
+                    Cc1101_Interrupt_Flag = false;
+                    assert = Cc1101.startReceive();
+                    if (assert != RADIOLIB_ERR_NONE)
+                    {
+                        printf("cc1101 startReceive fail (error code: %d)\n", assert);
+                    }
+                }
+            }
+
+            if (Cc1101_Transmit_In_Progress == true && (esp_log_timestamp() - Cc1101_Transmit_Start_Time) > 3000)
+            {
+                printf("cc1101 transmit interrupt timeout\n");
+                Cc1101_Transmit_In_Progress = false;
+                Cc1101_Transmitted_Flag = false;
+
+                int16_t assert = Cc1101.finishTransmit();
+                if (assert != RADIOLIB_ERR_NONE)
+                {
+                    printf("cc1101 finishTransmit fail (error code: %d)\n", assert);
+                }
+
+                Cc1101_Interrupt_Flag = false;
                 assert = Cc1101.startReceive();
                 if (assert != RADIOLIB_ERR_NONE)
                 {
                     printf("cc1101 startReceive fail (error code: %d)\n", assert);
                 }
-
-                Cc1101_Interrupt_Flag = false;
-
-                Rf_Send_Flag = false;
             }
 
             if (Cc1101_Interrupt_Flag == true) // 接收完成中断
             {
                 uint8_t receive_package[255] = {0};
-                uint8_t length_buffer = Cc1101.getPacketLength();
+                size_t length_buffer = Cc1101.getPacketLength();
+                if (length_buffer > sizeof(receive_package))
+                {
+                    printf("cc1101 receive length out of bounds: %u\n", static_cast<unsigned int>(length_buffer));
+                    length_buffer = sizeof(receive_package);
+                }
                 int16_t assert = Cc1101.readData(receive_package, length_buffer);
                 if (assert != RADIOLIB_ERR_NONE)
                 {
@@ -2540,9 +2639,9 @@ void device_rf_task(void *arg)
                     uint8_t buffer_lqi = Cc1101.getLQI();
                     printf("cc1101 receive rssi: %.01f lqi: %d\n", buffer_rssi, buffer_lqi);
 
-                    for (uint8_t i = 0; i < length_buffer; i++)
+                    for (size_t i = 0; i < length_buffer; i++)
                     {
-                        printf("get cc1101 data[%d]: %d\n", i, receive_package[i]);
+                        printf("get cc1101 data[%u]: %d\n", static_cast<unsigned int>(i), receive_package[i]);
                     }
 
                     char buffer_time[15];
@@ -3290,17 +3389,29 @@ void System_Ui_Callback_Init(void)
     System_Ui->_win_rf_send_data_callback = [](std::string data)
     {
         memset(Rf_Send_Package, '\0', sizeof(Rf_Send_Package));
+        size_t max_send_length = sizeof(Rf_Send_Package) - 1;
+#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+        if (System_Ui->_rf_chip_type == Lvgl_Ui::System::Rf_Chip_Type::CC1101)
+        {
+            max_send_length = CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH;
+        }
+#endif
+        Rf_Send_Package_Length = data.size();
+        if (Rf_Send_Package_Length > max_send_length)
+        {
+            Rf_Send_Package_Length = max_send_length;
+        }
 
         // 检查长度是否越界
-        if (data.size() <= 255)
+        if (data.size() <= max_send_length)
         {
-            memcpy(Rf_Send_Package, data.data(), data.size());
+            memcpy(Rf_Send_Package, data.data(), Rf_Send_Package_Length);
         }
         else
         {
             // 处理错误：数据过长
-            memcpy(Rf_Send_Package, data.data(), 254);
-            Rf_Send_Package[254] = '\0';
+            memcpy(Rf_Send_Package, data.data(), Rf_Send_Package_Length);
+            Rf_Send_Package[Rf_Send_Package_Length] = '\0';
 
             printf("lora send out of bounds(data > Rf_Send_Package)\n");
         }
@@ -3386,7 +3497,13 @@ void System_Ui_Callback_Init(void)
 
     System_Ui->_win_rf_config_cc1101_params_callback = [](Lvgl_Ui::System::Device_Cc1101 device_cc1101) -> bool
     {
-        Cc1101_Rf_Switch_Control(static_cast<Cc1101_Rf_Switch>(device_cc1101.params.rf_switch));
+        Cc1101_Rf_Switch active_rf_switch = Cc1101_Rf_Switch_From_Frequency(device_cc1101.params.freq);
+        if (active_rf_switch != static_cast<Cc1101_Rf_Switch>(device_cc1101.params.rf_switch))
+        {
+            printf("cc1101 rf switch auto select: %d -> %d for %.3f MHz\n",
+                   device_cc1101.params.rf_switch, static_cast<int>(active_rf_switch), device_cc1101.params.freq);
+        }
+        Cc1101_Rf_Switch_Control(active_rf_switch);
 
         float buffer_bandwidth = 0;
 
@@ -3452,22 +3569,43 @@ void System_Ui_Callback_Init(void)
             return false;
         }
 
-        assert = Cc1101.setSyncWord(device_cc1101.params.sync_word >> 8, device_cc1101.params.sync_word);
+        assert = Cc1101.setOOK(device_cc1101.params.modulation == Lvgl_Ui::System::Cc1101_Modulation::OOK);
+        if (assert != RADIOLIB_ERR_NONE)
+        {
+            printf("cc1101 setOOK fail (error code: %d)\n", assert);
+            return false;
+        }
+
+        assert = Cc1101.setSyncWord(static_cast<uint8_t>(device_cc1101.params.sync_word >> 8),
+                                    static_cast<uint8_t>(device_cc1101.params.sync_word));
         if (assert != RADIOLIB_ERR_NONE)
         {
             printf("cc1101 setSyncWord fail (error code: %d)\n", assert);
             return false;
         }
 
+        printf("cc1101 params freq: %.3f MHz, modulation: %s, br: %.3f kbps, dev: %.3f kHz, bw: %.1f kHz, pwr: %d dBm, preamble: %u, sync: 0x%04X\n",
+               device_cc1101.params.freq,
+               device_cc1101.params.modulation == Lvgl_Ui::System::Cc1101_Modulation::OOK ? "OOK" : "2-FSK",
+               device_cc1101.params.bit_rate, device_cc1101.params.freq_deviation_khz,
+               buffer_bandwidth, device_cc1101.params.power, static_cast<unsigned int>(device_cc1101.params.preamble_length),
+               static_cast<unsigned int>(device_cc1101.params.sync_word));
+
+        Cc1101.clearPacketReceivedAction();
+        Cc1101.clearPacketSentAction();
+        Cc1101.setPacketReceivedAction(Cc1101_Set_Packet_Received_Flag);
+        Cc1101.setPacketSentAction(Cc1101_Set_Packet_Sent_Flag);
+
+        Cc1101_Interrupt_Flag = false;
+        Cc1101_Transmitted_Flag = false;
+        Cc1101_Transmit_In_Progress = false;
         assert = Cc1101.startReceive();
         if (assert != RADIOLIB_ERR_NONE)
         {
             printf("cc1101 startReceive fail (error code: %d)\n", assert);
         }
 
-        Cc1101_Interrupt_Flag = false;
-
-        printf("config_cc1101_params finish start cc1101 transmit\n");
+        printf("config_cc1101_params finish start cc1101 receive\n");
         return true;
     };
 
@@ -4975,18 +5113,23 @@ extern "C" void app_main(void)
 
     Esp32p4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    Esp32p4->create_gpio_interrupt(T_MIXRF_CC1101_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
-                                   [](void *arg) -> IRAM_ATTR void
-                                   {
-                                       Cc1101_Interrupt_Flag = true;
-                                   });
-
     Cc1101_SPI_Bus->_bus_init_flag = true;
-    int16_t assert_2 = Cc1101.begin();
+    Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ);
+    int16_t assert_2 = Cc1101.begin(868.0, 1.2, 5.2, 58.0, 10, 16);
     if (assert_2 == RADIOLIB_ERR_NONE)
     {
+        assert_2 = Cc1101.setOOK(true);
+    }
+    if (assert_2 == RADIOLIB_ERR_NONE)
+    {
+        assert_2 = Cc1101.setSyncWord(0x12, 0xAD);
+    }
+    if (assert_2 == RADIOLIB_ERR_NONE)
+    {
+        Cc1101.setPacketReceivedAction(Cc1101_Set_Packet_Received_Flag);
+        Cc1101.setPacketSentAction(Cc1101_Set_Packet_Sent_Flag);
         Sys_Status.cc1101.init_flag = true;
-        printf("cc1101 init success\n");
+        printf("cc1101 init success default 868 params\n");
     }
     else
     {

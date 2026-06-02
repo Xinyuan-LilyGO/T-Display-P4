@@ -60,6 +60,20 @@ const uint8_t Send_Package[] =
         'a', 'b', 'c', 'd', 'e', 'f', 'g'};
 
 volatile bool Interrupt_Flag = false;
+volatile bool Transmitted_Flag = false;
+int16_t Transmission_State = RADIOLIB_ERR_NONE;
+bool Transmit_In_Progress = false;
+uint32_t Transmit_Start_Time = 0;
+
+void IRAM_ATTR Set_Received_Flag(void)
+{
+    Interrupt_Flag = true;
+}
+
+void IRAM_ATTR Set_Transmitted_Flag(void)
+{
+    Transmitted_Flag = true;
+}
 
 auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
 
@@ -76,7 +90,7 @@ auto Xl9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9555_Iic_Bus, XL9555_II
 
 RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Cc1101_Spi_Bus, 10000000, T_MIXRF_CC1101_CS);
 CC1101 Cc1101 = new Module(Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                           static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
+                           static_cast<uint32_t>(T_MIXRF_CC1101_INT), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
 
 auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
@@ -148,18 +162,14 @@ extern "C" void app_main(void)
 
     Esp32p4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    Esp32p4->create_gpio_interrupt(T_MIXRF_CC1101_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
-                                   [](void *arg) -> IRAM_ATTR void
-                                   {
-                                       Interrupt_Flag = true;
-                                   });
+    Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch::RF_SWITCH_434MHZ);
 
-    Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ);
-
-    int16_t status = Cc1101.begin(868.0);
-    // int16_t status = Cc1101.beginFSK4(868.0);
+    int16_t status = Cc1101.begin(434.0);
+    // int16_t status = Cc1101.beginFSK4(434.0);
     if (status == RADIOLIB_ERR_NONE)
     {
+        Cc1101.setPacketReceivedAction(Set_Received_Flag);
+        Cc1101.setPacketSentAction(Set_Transmitted_Flag);
         printf("cc1101 init success\n");
     }
     else
@@ -167,7 +177,7 @@ extern "C" void app_main(void)
         printf("cc1101 init fail (error code: %d)\n", status);
     }
 
-    status = Cc1101.setSyncWord(0xAA, 0xBB);
+    status = Cc1101.setSyncWord(0x12, 0xAD);
     if (status != RADIOLIB_ERR_NONE)
     {
         printf("setSyncWord fail (error code: %d)\n", status);
@@ -176,38 +186,95 @@ extern "C" void app_main(void)
     Cc1101.startReceive();
 
     Interrupt_Flag = false;
+    Transmitted_Flag = false;
+    Transmit_In_Progress = false;
 
     while (1)
     {
-        if (Esp32p4->pin_read(ESP32P4_BOOT) == 0)
+        if (Esp32p4->pin_read(ESP32P4_BOOT) == 0 && Transmit_In_Progress == false)
         {
             vTaskDelay(pdMS_TO_TICKS(300));
 
             printf("T_MIXRF_CC1101 send package\n");
 
-            status = Cc1101.transmit(Send_Package, 10);
+            Interrupt_Flag = false;
+            Transmitted_Flag = false;
+            Transmission_State = Cc1101.startTransmit(Send_Package, 10);
+            Transmit_In_Progress = Transmission_State == RADIOLIB_ERR_NONE;
+            Transmit_Start_Time = esp_log_timestamp();
+            status = Transmission_State;
             if (status != RADIOLIB_ERR_NONE)
             {
-                printf("transmit fail (error code: %d)\n", status);
+                printf("startTransmit fail (error code: %d)\n", status);
+                status = Cc1101.startReceive();
+                if (status != RADIOLIB_ERR_NONE)
+                {
+                    printf("startReceive fail (error code: %d)\n", status);
+                }
+            }
+        }
+
+        if (Transmitted_Flag == true)
+        {
+            Transmitted_Flag = false;
+
+            if (Transmission_State == RADIOLIB_ERR_NONE)
+            {
+                printf("transmission finished\n");
+            }
+            else
+            {
+                printf("transmission state fail (error code: %d)\n", Transmission_State);
             }
 
+            status = Cc1101.finishTransmit();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("finishTransmit fail (error code: %d)\n", status);
+            }
+
+            Transmit_In_Progress = false;
+            Interrupt_Flag = false;
             status = Cc1101.startReceive();
             if (status != RADIOLIB_ERR_NONE)
             {
                 printf("startReceive fail (error code: %d)\n", status);
             }
+        }
+
+        if (Transmit_In_Progress == true && (esp_log_timestamp() - Transmit_Start_Time) > 3000)
+        {
+            printf("transmit interrupt timeout\n");
+            Transmit_In_Progress = false;
+            Transmitted_Flag = false;
+
+            status = Cc1101.finishTransmit();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("finishTransmit fail (error code: %d)\n", status);
+            }
 
             Interrupt_Flag = false;
+            status = Cc1101.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
+            }
         }
 
         if (Interrupt_Flag == true) // 接收完成中断
         {
             uint8_t receive_package[255] = {0};
-            if (Cc1101.readData(receive_package, 9) == RADIOLIB_ERR_NONE)
+            size_t length_buffer = Cc1101.getPacketLength();
+            if (length_buffer > sizeof(receive_package))
             {
-                for (uint8_t i = 0; i < 9; i++)
+                length_buffer = sizeof(receive_package);
+            }
+            if (Cc1101.readData(receive_package, length_buffer) == RADIOLIB_ERR_NONE)
+            {
+                for (size_t i = 0; i < length_buffer; i++)
                 {
-                    printf("get T_MIXRF_CC1101 data[%d]: %d\n", i, receive_package[i]);
+                    printf("get T_MIXRF_CC1101 data[%u]: %d\n", static_cast<unsigned int>(i), receive_package[i]);
                 }
             }
 

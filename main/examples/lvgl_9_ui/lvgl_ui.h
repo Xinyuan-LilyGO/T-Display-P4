@@ -361,6 +361,7 @@ namespace Lvgl_Ui
                                 struct
                                 {
                                     lv_obj_t *rf_switch;
+                                    lv_obj_t *modulation;
                                     lv_obj_t *bandwidth;
                                 } dropdown;
                             } cc1101;
@@ -527,6 +528,12 @@ namespace Lvgl_Ui
             BW_812KHZ,
         };
 
+        enum class Cc1101_Modulation
+        {
+            FSK_2,
+            OOK,
+        };
+
         struct Device_Cc1101
         {
             struct
@@ -538,14 +545,15 @@ namespace Lvgl_Ui
 
             struct
             {
-                uint8_t rf_switch = 0; // 射频开关
-                double freq = 315.0;
+                uint8_t rf_switch = 2; // RF switch
+                double freq = 868.0;
+                Cc1101_Modulation modulation = Cc1101_Modulation::OOK;
                 Cc1101_Bw bandwidth = Cc1101_Bw::BW_58KHZ;
-                float bit_rate = 4.8;
-                float freq_deviation_khz = 5.0;
+                float bit_rate = 1.2;
+                float freq_deviation_khz = 5.2;
                 int8_t power = 10;
                 uint16_t preamble_length = 16;
-                uint16_t sync_word = 0xAABB;
+                uint16_t sync_word = 0x12AD;
             } params;
         };
 
