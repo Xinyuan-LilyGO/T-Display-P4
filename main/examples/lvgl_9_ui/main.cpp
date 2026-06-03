@@ -424,6 +424,7 @@ int16_t Cc1101_Transmission_State = RADIOLIB_ERR_NONE;
 bool Cc1101_Transmit_In_Progress = false;
 uint32_t Cc1101_Transmit_Start_Time = 0;
 constexpr size_t CC1101_INTERRUPT_MAX_PAYLOAD_LENGTH = RADIOLIB_CC1101_FIFO_SIZE - 1;
+constexpr int32_t CC1101_SPI_FREQ_HZ = 2000000;
 
 static void IRAM_ATTR Cc1101_Set_Packet_Received_Flag(void)
 {
@@ -461,12 +462,49 @@ auto Tca8418_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Software_Iic>(TCA8418_SD
 // SPI
 auto Cc1101_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_CC1101_MOSI, T_MIXRF_CC1101_SCLK, T_MIXRF_CC1101_MISO, SPI2_HOST, 0);
 auto Nrf24l01_SPI_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_NRF24L01_MOSI, T_MIXRF_NRF24L01_SCLK, T_MIXRF_NRF24L01_MISO, SPI2_HOST, 0);
-RadioLibHal *Cc1101_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Cc1101_SPI_Bus, 10000000, T_MIXRF_CC1101_CS);
+RadioLibHal *Cc1101_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Cc1101_SPI_Bus, CC1101_SPI_FREQ_HZ, T_MIXRF_CC1101_CS);
 RadioLibHal *Nrf24l01_Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Nrf24l01_SPI_Bus, 10000000, T_MIXRF_NRF24L01_CS);
 
 //  Software IIC
 auto Xl9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9555_Iic_Bus, XL9555_IIC_ADDRESS);
 auto Tca8418 = std::make_unique<Cpp_Bus_Driver::Tca8418>(Tca8418_Iic_Bus, TCA8418_IIC_ADDRESS);
+
+static void T_Mixrf_Spi_Deselect_All(void)
+{
+    Esp32p4->pin_write(T_MIXRF_NRF24L01_CS, true);
+    Esp32p4->pin_write(T_MIXRF_ST25R3916_CS, true);
+    Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+}
+
+static void T_Mixrf_Spi_Init_Cs_Idle(void)
+{
+    Esp32p4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_write(T_MIXRF_CC1101_CS, true);
+    Esp32p4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_write(T_MIXRF_NRF24L01_CS, true);
+    Esp32p4->pin_mode(T_MIXRF_ST25R3916_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_write(T_MIXRF_ST25R3916_CS, true);
+    Xl9555->pin_mode(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+}
+
+static void Cc1101_Print_Tx_Data(const uint8_t *data, size_t length)
+{
+    printf("cc1101 send data ascii: ");
+    for (size_t i = 0; i < length; ++i)
+    {
+        uint8_t ch = data[i];
+        printf("%c", (ch >= 0x20 && ch <= 0x7E) ? static_cast<char>(ch) : '.');
+    }
+    printf("\n");
+
+    printf("cc1101 send data hex:");
+    for (size_t i = 0; i < length; ++i)
+    {
+        printf(" %02X", data[i]);
+    }
+    printf("\n");
+}
 
 // SPI
 CC1101 Cc1101 = new Module(Cc1101_Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
@@ -2546,6 +2584,8 @@ void device_rf_task(void *arg)
                 int16_t assert = RADIOLIB_ERR_NONE;
                 if (Rf_Send_Package_Length > 0)
                 {
+                    Cc1101_Print_Tx_Data(Rf_Send_Package, Rf_Send_Package_Length);
+                    T_Mixrf_Spi_Deselect_All();
                     Cc1101_Interrupt_Flag = false;
                     Cc1101_Transmitted_Flag = false;
                     Cc1101_Transmission_State = Cc1101.startTransmit(Rf_Send_Package, Rf_Send_Package_Length);
@@ -3171,6 +3211,8 @@ void Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch rf_switch)
 bool Set_T_Mixrf_Lr1121_Sleep()
 {
     Xl9555->pin_mode(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_T_MIXRF_LR1121_CS, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     // Xl9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     // vTaskDelay(pdMS_TO_TICKS(10));
     Xl9555->pin_write(XL9555_T_MIXRF_LR1121_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
@@ -3504,6 +3546,7 @@ void System_Ui_Callback_Init(void)
                    device_cc1101.params.rf_switch, static_cast<int>(active_rf_switch), device_cc1101.params.freq);
         }
         Cc1101_Rf_Switch_Control(active_rf_switch);
+        T_Mixrf_Spi_Deselect_All();
 
         float buffer_bandwidth = 0;
 
@@ -5094,6 +5137,7 @@ extern "C" void app_main(void)
 
     Xl9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    T_Mixrf_Spi_Init_Cs_Idle();
 
     if (St25r3916_Init() == false)
     {
@@ -5107,6 +5151,7 @@ extern "C" void app_main(void)
     }
 
     Set_T_Mixrf_Lr1121_Sleep();
+    T_Mixrf_Spi_Deselect_All();
 
     Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
     Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
