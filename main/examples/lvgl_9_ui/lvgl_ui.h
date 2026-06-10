@@ -333,6 +333,7 @@ namespace Lvgl_Ui
 
                                 struct
                                 {
+                                    lv_obj_t *rf_switch;
                                     lv_obj_t *bandwidth;
                                     lv_obj_t *spreading_factor;
                                     lv_obj_t *coding_rate;
@@ -473,6 +474,7 @@ namespace Lvgl_Ui
 
             struct
             {
+                uint8_t rf_switch = 0; // 射频开关
                 double freq = 2450.0;
                 float bandwidth = 125.0;
                 int8_t power = 8;

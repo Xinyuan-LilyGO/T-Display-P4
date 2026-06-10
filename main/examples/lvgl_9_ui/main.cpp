@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-03-20 16:12:19
+ * @LastEditTime: 2026-06-10 15:38:10
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -40,6 +40,7 @@
 #include "esp_eth.h"
 #include "esp_event.h"
 #include "ethernet_init.h"
+#include "esp_video_init.h"
 #if CONFIG_ENABLE_USB_DISPLAY == true
 #include "esp_lcd_usb_display.h"
 #else
@@ -82,6 +83,10 @@
 #define SD_FILE_PATH_MUSIC "/sdcard/t_display_p4_lvgl_9_ui_resource/music/Erik Satie-Gymnopedie 1-Chase Coleman (piano).wav"
 
 #define LVGL_TICK_PERIOD_MS 1
+
+#ifndef CAMERA_BUFFER_COUNT
+#define CAMERA_BUFFER_COUNT CONFIG_EXAMPLE_CAM_BUF_COUNT
+#endif
 
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 44100
@@ -2993,10 +2998,17 @@ void System_Ui_Callback_Init(void)
 #endif
             if (status == true)
             {
-                esp_err_t assert = app_video_stream_task_restart(video_cam_fd0);
+                esp_err_t assert = app_video_set_bufs(video_cam_fd0, CAMERA_BUFFER_COUNT, NULL);
                 if (assert != ESP_OK)
                 {
-                    printf("app_video_stream_task_restart fail (error code: %#X)\n", assert);
+                    printf("app_video_set_bufs fail (error code: %#X)\n", assert);
+                    return;
+                }
+
+                assert = app_video_stream_task_start(video_cam_fd0, 0);
+                if (assert != ESP_OK)
+                {
+                    printf("app_video_stream_task_start fail (error code: %#X)\n", assert);
                 }
                 else
                 {
@@ -3017,6 +3029,18 @@ void System_Ui_Callback_Init(void)
 
     System_Ui->_win_rf_config_lr2021_params_callback = [](Lvgl_Ui::System::Device_Lr2021 device_lr2021) -> bool
     {
+        // RF switch control (same as sx1262 style)
+        if (device_lr2021.params.rf_switch == 0)
+        {
+            printf("LR2021 rf switch: RF1\n");
+            XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        }
+        else
+        {
+            printf("LR2021 rf switch: RF2\n");
+            XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        }
+
         const int8_t min_power = (device_lr2021.params.freq > 1500.0) ? -19 : -9;
         const int8_t max_power = (device_lr2021.params.freq >= 1000.0) ? 8 : 22;
         int8_t output_power = device_lr2021.params.power;
@@ -4065,7 +4089,7 @@ void hardware_usb_cdc_task(void *arg)
 #endif
 
 void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, uint32_t camera_buf_hes, uint32_t camera_buf_ves,
-                                  size_t camera_buf_len, void *user_data)
+                                  size_t camera_buf_len)
 {
     fps_count++;
     if (fps_count == 50)
@@ -4087,7 +4111,7 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
     uint32_t output_img_height = input_img_height;
 
     size_t output_buffer_size = output_img_width * output_img_height * (SCREEN_BITS_PER_PIXEL / 8);
-    uint8_t *output_buffer = (uint8_t *)heap_caps_malloc(output_buffer_size, MALLOC_CAP_DMA | MALLOC_CAP_SPIRAM);
+    uint8_t *output_buffer = (uint8_t *)heap_caps_aligned_calloc(data_cache_line_size, 1, output_buffer_size, MALLOC_CAP_SPIRAM);
     if (output_buffer == NULL)
     {
         printf("heap_caps_malloc fail\n");
@@ -4190,14 +4214,6 @@ void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
 
 bool App_Video_Init(void)
 {
-    esp_lcd_panel_handle_t mipi_dpi_panel = NULL;
-
-    if (Camera_Init(&mipi_dpi_panel) == false)
-    {
-        printf("Camera_Init fail\n");
-        return false;
-    }
-
     ppa_client_config_t ppa_srm_config =
         {
             .oper_type = PPA_OPERATION_SRM,
@@ -4215,23 +4231,40 @@ bool App_Video_Init(void)
         return false;
     }
 
-    assert = app_video_main(SGM38121_IIC_Bus->get_bus_handle());
+    esp_video_init_csi_config_t csi_config =
+        {
+            .sccb_config = {
+                .init_sccb = false,
+                .i2c_handle = SGM38121_IIC_Bus->get_bus_handle(),
+                .freq = static_cast<uint32_t>(100000),
+            },
+            .reset_pin = GPIO_NUM_NC,
+            .pwdn_pin = GPIO_NUM_NC,
+            .dont_init_ldo = true,
+        };
+
+    esp_video_init_config_t cam_config =
+        {
+            .csi = &csi_config,
+        };
+
+    assert = esp_video_init(&cam_config);
     if (assert != ESP_OK)
     {
-        printf("video_init fail (error code: %#X)\n", assert);
+        printf("esp_video_init fail (error code: %#X)\n", assert);
         return false;
     }
 
 #if (defined CONFIG_CAMERA_TYPE_SC2336) || (defined CONFIG_CAMERA_TYPE_OV2710)
 #if defined CONFIG_SCREEN_PIXEL_FORMAT_RGB565
-    video_cam_fd0 = app_video_open(EXAMPLE_CAM_DEV_PATH, video_fmt_t::APP_VIDEO_FMT_RGB565);
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB565);
     if (video_cam_fd0 < 0)
     {
         printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
         return false;
     }
 #elif defined CONFIG_SCREEN_PIXEL_FORMAT_RGB888
-    video_cam_fd0 = app_video_open(EXAMPLE_CAM_DEV_PATH, video_fmt_t::APP_VIDEO_FMT_RGB888);
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB888);
     if (video_cam_fd0 < 0)
     {
         printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
@@ -4241,7 +4274,7 @@ bool App_Video_Init(void)
 #error "unknown macro definition, please select the correct macro definition."
 #endif
 #elif defined CONFIG_CAMERA_TYPE_OV5645
-    video_cam_fd0 = app_video_open(EXAMPLE_CAM_DEV_PATH, video_fmt_t::APP_VIDEO_FMT_RGB565);
+    video_cam_fd0 = app_video_open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, video_fmt_t::APP_VIDEO_FMT_RGB565);
     if (video_cam_fd0 < 0)
     {
         printf("video cam open fail (video_cam_fd0: %ld)\n", video_cam_fd0);
@@ -4250,17 +4283,6 @@ bool App_Video_Init(void)
 #else
 #error "unknown macro definition, please select the correct macro definition."
 #endif
-
-#if CONFIG_EXAMPLE_CAM_BUF_COUNT == 2
-    assert = esp_lcd_dpi_panel_get_frame_buffer(mipi_dpi_panel, 2, &lcd_buffer[0], &lcd_buffer[1]);
-#else
-    assert = esp_lcd_dpi_panel_get_frame_buffer(mipi_dpi_panel, 3, &lcd_buffer[0], &lcd_buffer[1], &lcd_buffer[2]);
-#endif
-    if (assert != ESP_OK)
-    {
-        printf("esp_lcd_dpi_panel_get_frame_buffer fail (error code: %#X)\n", assert);
-        return false;
-    }
 
     // #if CONFIG_EXAMPLE_USE_MEMORY_MAPPING
     //     ESP_LOGI(TAG, "Using map buffer");
@@ -4293,7 +4315,7 @@ bool App_Video_Init(void)
     //     }
     // #endif
 
-    assert = app_video_set_bufs(video_cam_fd0, CONFIG_EXAMPLE_CAM_BUF_COUNT, (const void **)lcd_buffer);
+    assert = app_video_set_bufs(video_cam_fd0, CAMERA_BUFFER_COUNT, NULL);
     if (assert != ESP_OK)
     {
         printf("app_video_set_bufs fail (error code: %#X)\n", assert);
@@ -4307,18 +4329,6 @@ bool App_Video_Init(void)
         printf("app_video_register_frame_operation_cb fail (error code: %#X)\n", assert);
         return false;
     }
-
-    assert = app_video_stream_task_start(video_cam_fd0, 0, NULL);
-    if (assert != ESP_OK)
-    {
-        printf("app_video_stream_task_start fail (error code: %#X)\n", assert);
-        return false;
-    }
-
-    app_video_stream_task_stop(video_cam_fd0);
-
-    // // Get the initial time for frame rate statistics
-    // start_time = esp_timer_get_time();
 
     return true;
 }
@@ -4785,7 +4795,7 @@ extern "C" void app_main(void)
 
     // bsp_init_refresh_monitor_io();
 
-    Init_Ldo_Channel_Power(3, 1830);
+    Init_Ldo_Channel_Power(3, 2500);
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -4812,15 +4822,29 @@ extern "C" void app_main(void)
 #endif
 
 #if CONFIG_ENABLE_USB_DISPLAY == true
-    Usb_Screen_Init(&Screen_Mipi_Dpi_Panel);
+    bool screen_init_ok = Usb_Screen_Init(&Screen_Mipi_Dpi_Panel);
 #else
-    Screen_Init(&Screen_Mipi_Dpi_Panel);
+    bool screen_init_ok = Screen_Init(&Screen_Mipi_Dpi_Panel);
 #endif
-
-    esp_err_t assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
-    if (assert != ESP_OK)
+    if (screen_init_ok == false)
     {
-        printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
+        printf("Screen_Init fail\n");
+    }
+
+    esp_err_t assert = ESP_FAIL;
+    if (Screen_Mipi_Dpi_Panel != NULL)
+    {
+        assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
+        if (assert != ESP_OK)
+        {
+            printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
+            screen_init_ok = false;
+        }
+    }
+    else
+    {
+        printf("esp_lcd_panel_init skip: Screen_Mipi_Dpi_Panel is NULL\n");
+        screen_init_ok = false;
     }
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
@@ -4865,9 +4889,16 @@ extern "C" void app_main(void)
     //     printf("Sdspi_Init fail\n");
     // }
 
-    Lvgl_Init();
-    Lvgl_Startup();
-    xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
+    if (screen_init_ok == true)
+    {
+        Lvgl_Init();
+        Lvgl_Startup();
+        xTaskCreate(lvgl_ui_task, "lvgl_ui_task", 100 * 1024, NULL, 1, NULL);
+    }
+    else
+    {
+        printf("LVGL init skip: screen init failed\n");
+    }
 
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     if (XL9555->begin() == false)
@@ -5152,6 +5183,10 @@ extern "C" void app_main(void)
     _lock_acquire(&lvgl_api_lock);
     Set_Lvgl_Startup_Progress_Bar(90);
     _lock_release(&lvgl_api_lock);
+
+    // SKY13453 射频开关控制引脚（与 sx1262 共用）
+    XL9535->pin_mode(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     XL9535->pin_mode(XL9535_LR2021_DIO1, Cpp_Bus_Driver::Xl95x5::Mode::INPUT);
     // LORA复位
