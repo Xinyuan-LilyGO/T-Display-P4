@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-05-15 09:29:27
+ * @LastEditTime: 2026-06-11 18:16:27
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -127,7 +127,7 @@ namespace Lvgl_Ui
 #error "unknown macro definition, please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202605150910"},
+            {"firmware build date:\n     ", "202606111816"},
     };
 
     void System::begin()
@@ -3585,11 +3585,21 @@ namespace Lvgl_Ui
                                 {  
                                     int buffer = std::stoi(power_text);
 
-                                    const int8_t min_power = (ds.params.freq > 1500.0) ? -19 : -9;
-                                    const int8_t max_power = (ds.params.freq >= 1000.0) ? 8 : 22;
+                                    const bool switch_to_high_freq = (self->_device_lr2021.params.freq < 1000.0) && (ds.params.freq >= 1000.0);
+                                    const bool switch_to_low_freq = (self->_device_lr2021.params.freq >= 1000.0) && (ds.params.freq < 1000.0);
+                                    const int8_t min_power = (ds.params.freq >= 1000.0) ? -19 : -9;
+                                    const int8_t max_power = (ds.params.freq >= 1000.0) ? 12 : 22;
                                     if(buffer <= min_power)
                                     {
                                         ds.params.power = min_power;
+                                    }
+                                    else if (switch_to_high_freq && (buffer == self->_device_lr2021.params.power) && (buffer > 8))
+                                    {
+                                        ds.params.power = 8;
+                                    }
+                                    else if (switch_to_low_freq && (buffer == self->_device_lr2021.params.power))
+                                    {
+                                        ds.params.power = 22;
                                     }
                                     else if(buffer <= max_power)
                                     {

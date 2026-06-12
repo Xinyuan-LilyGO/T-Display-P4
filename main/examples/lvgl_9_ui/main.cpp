@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-06-10 15:38:10
+ * @LastEditTime: 2026-06-12 09:08:41
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -333,6 +333,7 @@ uint8_t Rf_Send_Package[255] = {0};
 
 static constexpr uint32_t kGpioLow = 0;
 static constexpr uint32_t kGpioHigh = 1;
+static constexpr float kLr2021InvalidRssiThresholdDbm = -200.0f;
 
 static const uint32_t lr2021_rfswitch_dio_pins[] = {
     RADIOLIB_NC,
@@ -1857,7 +1858,16 @@ void device_rf_task(void *arg)
                 {
                     float buffer_rssi = Lr2021.getRSSI();
                     float buffer_snr = Lr2021.getSNR();
-                    printf("lr2021 receive rssi: %.01f snr: %.01f\n", buffer_rssi, buffer_snr);
+                    bool lr2021_rssi_invalid = buffer_rssi < kLr2021InvalidRssiThresholdDbm;
+                    if (lr2021_rssi_invalid)
+                    {
+                        // printf("lr2021 receive rssi[Invalid(%.01f)] snr: %.01f\n", buffer_rssi, buffer_snr);
+                        printf("lr2021 receive rssi[0.0(invalid)] snr: %.01f\n", buffer_snr);
+                    }
+                    else
+                    {
+                        printf("lr2021 receive rssi: %.01f snr: %.01f\n", buffer_rssi, buffer_snr);
+                    }
 
                     for (size_t i = 0; i < length_buffer; i++)
                     {
@@ -1873,7 +1883,15 @@ void device_rf_task(void *arg)
                     message_str += '\0';
 
                     char buffer_data_info[30];
-                    snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[%.01f] snr[%.01f]", buffer_rssi, buffer_snr);
+                    if (lr2021_rssi_invalid)
+                    {
+                        // snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[Invalid(%.01f)] snr[%.01f]", buffer_rssi, buffer_snr);
+                        snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[0.0(invalid)] snr[%.01f]", buffer_snr);
+                    }
+                    else
+                    {
+                        snprintf(buffer_data_info, sizeof(buffer_data_info), "rssi[%.01f] snr[%.01f]", buffer_rssi, buffer_snr);
+                    }
 
                     Lvgl_Ui::System::Win_Rf_Chat_Message wlcm =
                         {
@@ -1892,11 +1910,8 @@ void device_rf_task(void *arg)
                     }
                 }
 
-                assert = Lr2021.startReceive();
-                if (assert != RADIOLIB_ERR_NONE)
-                {
-                    printf("lr2021 startReceive fail (error code: %d)\n", assert);
-                }
+                // 连续接收模式下，readData() 后 LR2021 会继续保持接收。
+                // 这里再次调用 startReceive() 可能会让芯片拒绝 SetRx 命令。
             }
         }
         break;
@@ -3041,8 +3056,8 @@ void System_Ui_Callback_Init(void)
             XL9535->pin_write(XL9535_SKY13453_VCTL, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         }
 
-        const int8_t min_power = (device_lr2021.params.freq > 1500.0) ? -19 : -9;
-        const int8_t max_power = (device_lr2021.params.freq >= 1000.0) ? 8 : 22;
+        const int8_t min_power = (device_lr2021.params.freq >= 1000.0) ? -19 : -9;
+        const int8_t max_power = (device_lr2021.params.freq >= 1000.0) ? 12 : 22;
         int8_t output_power = device_lr2021.params.power;
         if (output_power < min_power)
         {

@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
@@ -46,15 +47,18 @@
 
 static uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 static uint8_t receive_package[255] = {0};
-static constexpr float lr2021_freq_mhz = 2450.0f;
+static constexpr float lr2021_freq_mhz = 915.0f;
 // 工作在 2.4 G ，建议配置输出功率参数“ #define c_HF_power  8 或 9 ”，
 // 此时，在模块内部，LR2021 RFO_HF 输出功率为 0 dBm ，ANT 脚功率为 + 20 dBm 。
 // 如果配置输出功率参数 > 9 ，ANT 脚功率为 + 20 dBm ，但总电流会增加。
 // 禁止配置输出功率参数 > 12，此时，在模块内部，LR2021 RFO_HF 输出功率极可能 > +5 dBm ，
 // 可能会损坏 PCBA 内部 FEM 芯片
-static constexpr int8_t lr2021_output_power_dbm = (lr2021_freq_mhz >= 1000.0f) ? 8 : 22;
+static constexpr bool kDirectRfCableTest = false;
+static constexpr int8_t lr2021_output_power_dbm = kDirectRfCableTest ? ((lr2021_freq_mhz >= 1000.0f) ? -19 : -9) : ((lr2021_freq_mhz >= 1000.0f) ? 8 : 22);
 static constexpr uint32_t kGpioLow = 0;
 static constexpr uint32_t kGpioHigh = 1;
+static constexpr float kInvalidRssiThresholdDbm = -200.0f;
+static constexpr float kOverloadSnrThresholdDb = 10.0f;
 
 static auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
 static auto SPI_Bus_2 = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(LR2021_MOSI, LR2021_SCLK, LR2021_MISO, SPI2_HOST, 0);
@@ -96,6 +100,67 @@ static void lr2021_reset(void)
     vTaskDelay(pdMS_TO_TICKS(10));
     XL9535->pin_write(XL9535_LR2021_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
     vTaskDelay(pdMS_TO_TICKS(10));
+}
+
+static float lr2021_read_rssi(float *packet_rssi, float *signal_rssi, float *instant_rssi, bool *rssi_overload)
+{
+    float packet = Lr2021.getRSSI();
+    float signal = 0.0f;
+    float instant = 0.0f;
+    float snr = 0.0f;
+    uint8_t packet_length = 0;
+    int16_t status = Lr2021.getLoRaPacketStatus(nullptr, nullptr, &packet_length, &snr, nullptr, &signal);
+    bool packet_invalid = packet < kInvalidRssiThresholdDbm;
+    bool signal_invalid = signal < kInvalidRssiThresholdDbm;
+    bool overload = (status == RADIOLIB_ERR_NONE) && packet_invalid && signal_invalid &&
+                    (packet_length > 0) && (snr >= kOverloadSnrThresholdDb);
+
+    if (packet_invalid)
+    {
+        instant = Lr2021.getRSSI(false, true);
+    }
+
+    if (packet_rssi != nullptr)
+    {
+        *packet_rssi = packet;
+    }
+    if (signal_rssi != nullptr)
+    {
+        *signal_rssi = (status == RADIOLIB_ERR_NONE) ? signal : 0.0f;
+    }
+    if (instant_rssi != nullptr)
+    {
+        *instant_rssi = instant;
+    }
+    if (rssi_overload != nullptr)
+    {
+        *rssi_overload = overload;
+    }
+
+    if (overload)
+    {
+        printf("LR2021 packet RSSI filtered: likely RX overload, packet: %.2f dBm, signal: %.2f dBm, instant(noise): %.2f dBm, snr: %.2f dB, packet len: %u\n",
+               packet, signal, instant, snr, static_cast<unsigned int>(packet_length));
+    }
+    else if ((status == RADIOLIB_ERR_NONE) && packet_invalid)
+    {
+        printf("LR2021 packet RSSI invalid: %.2f dBm, signal: %.2f dBm, instant(noise): %.2f dBm, snr: %.2f dB, packet len: %u\n",
+               packet, signal, instant, snr, static_cast<unsigned int>(packet_length));
+    }
+    else if (status != RADIOLIB_ERR_NONE)
+    {
+        printf("LR2021 getLoRaPacketStatus fail (error code: %d), packet rssi: %.2f dBm\n", status, packet);
+    }
+
+    if (packet >= kInvalidRssiThresholdDbm)
+    {
+        return packet;
+    }
+    if ((status == RADIOLIB_ERR_NONE) && (signal >= kInvalidRssiThresholdDbm))
+    {
+        return signal;
+    }
+    return NAN;
 }
 
 extern "C" void app_main(void)
@@ -206,7 +271,22 @@ extern "C" void app_main(void)
             status = Lr2021.readData(receive_package, length);
             if (status == RADIOLIB_ERR_NONE)
             {
-                printf("LR2021 rssi: %.2f dBm, snr: %.2f dB\n", Lr2021.getRSSI(), Lr2021.getSNR());
+                float packet_rssi = 0.0f;
+                float signal_rssi = 0.0f;
+                float instant_rssi = 0.0f;
+                bool rssi_overload = false;
+                float rssi = lr2021_read_rssi(&packet_rssi, &signal_rssi, &instant_rssi, &rssi_overload);
+                if (isnan(rssi))
+                {
+                    printf("LR2021 rssi: filtered(%s), packet: %.2f dBm, signal: %.2f dBm, instant: %.2f dBm, snr: %.2f dB\n",
+                           rssi_overload ? "overload" : "invalid",
+                           packet_rssi, signal_rssi, instant_rssi, Lr2021.getSNR());
+                }
+                else
+                {
+                    printf("LR2021 rssi: %.2f dBm, packet: %.2f dBm, signal: %.2f dBm, instant: %.2f dBm, snr: %.2f dB\n",
+                           rssi, packet_rssi, signal_rssi, instant_rssi, Lr2021.getSNR());
+                }
                 for (size_t i = 0; i < length; i++)
                 {
                     printf("get LR2021 data[%d]: %d\n", static_cast<int>(i), receive_package[i]);
@@ -218,11 +298,8 @@ extern "C" void app_main(void)
                 printf("LR2021 readData fail (error code: %d)\n", status);
             }
 
-            status = Lr2021.startReceive();
-            if (status != RADIOLIB_ERR_NONE)
-            {
-                printf("LR2021 startReceive fail (error code: %d)\n", status);
-            }
+            // 连续接收模式下，readData() 后 LR2021 会继续保持接收。
+            // 这里再次调用 startReceive() 可能会让芯片拒绝 SetRx 命令。
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
