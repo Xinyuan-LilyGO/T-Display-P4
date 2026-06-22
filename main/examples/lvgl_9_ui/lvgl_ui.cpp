@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-06-11 18:16:27
+ * @LastEditTime: 2026-06-22 11:28:46
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -127,7 +127,7 @@ namespace Lvgl_Ui
 #error "unknown macro definition, please select the correct macro definition."
 #endif
 
-            {"firmware build date:\n     ", "202606111816"},
+            {"firmware build date:\n     ", "202606221128"},
     };
 
     void System::begin()
@@ -3593,9 +3593,9 @@ namespace Lvgl_Ui
                                     {
                                         ds.params.power = min_power;
                                     }
-                                    else if (switch_to_high_freq && (buffer == self->_device_lr2021.params.power) && (buffer > 8))
+                                    else if (switch_to_high_freq && (buffer == self->_device_lr2021.params.power) && (buffer > 5))
                                     {
-                                        ds.params.power = 8;
+                                        ds.params.power = 5;
                                     }
                                     else if (switch_to_low_freq && (buffer == self->_device_lr2021.params.power))
                                     {
