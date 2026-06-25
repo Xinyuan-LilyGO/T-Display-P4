@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-05-22 13:59:07
+ * @LastEditTime: 2026-06-25 11:49:40
  * @License: GPL 3.0
 -->
 <h1 align = "center">T-Display-P4</h1>
@@ -428,8 +428,8 @@ For pin definitions, please refer to the configuration file:
 
 <br />
 
-* Q. Why is my board continuously failing to download the program?
-* A. Please hold down the "BOOT" button and try downloading the program again.
+* Q. Why does my board keep failing to burn the firmware or fail to burn the program?
+* A. Please enter download mode before burning the program. To enter download mode, hold down the boot button before powering on. Please note that for the auxiliary processor, the burning procedure requires that the board be completely powered off first, then the main processor must enter download mode, followed by the auxiliary processor entering download mode, only then can the auxiliary processor download the program.
 
 <br />
 
