@@ -87,12 +87,12 @@ Example Configuration
 
 ### 示例
 
-| 示例集合 | 链接 | 说明 |
-| --- | --- | --- |
-| 出厂示例 | [`lilygobox-espidf`](./apps/lilygobox-espidf) | T-Display-P4 出厂应用示例 |
-| 通用设备驱动示例 | [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | 在独立应用工程中集中维护的通用示例 |
-| T-Display-P4 示例 | [`main/examples`](./main/examples) | T-Display-P4 板级专用示例 |
-| T-Display-P4-Keyboard 示例 | [`main/keyboard_examples`](./main/keyboard_examples) | 键盘扩展板专用示例 |
+| 示例链接 | 说明 |
+| --- | --- |
+| [`lilygobox-espidf`](./apps/lilygobox-espidf) | T-Display-P4 出厂应用示例 |
+| [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | 在独立应用工程中集中维护的通用示例 |
+| [`main/examples`](./main/examples) | T-Display-P4 板级专用示例 |
+| [`main/keyboard_examples`](./main/keyboard_examples) | 键盘扩展板专用示例 |
 
 请通过上方入口查看最新源码和当前支持的示例。
 

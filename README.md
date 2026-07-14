@@ -87,14 +87,14 @@ Example Configuration
 
 ### Examples
 
-| Example Collection | Link | Description |
-| --- | --- | --- |
-| Factory example | [`lilygobox-espidf`](./apps/lilygobox-espidf) | Factory application example for T-Display-P4 |
-| General device-driver examples | [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | Shared examples maintained in a dedicated application project |
-| T-Display-P4 examples | [`main/examples`](./main/examples) | Examples specific to the T-Display-P4 board |
-| T-Display-P4-Keyboard examples | [`main/keyboard_examples`](./main/keyboard_examples) | Examples for the keyboard expansion board |
+| Example Link | Description |
+| --- | --- |
+| [`lilygobox-espidf`](./apps/lilygobox-espidf) | Factory application example for T-Display-P4 |
+| [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | Shared examples maintained in a dedicated application project |
+| [`main/examples`](./main/examples) | Examples specific to the T-Display-P4 board |
+| [`main/keyboard_examples`](./main/keyboard_examples) | Examples for the keyboard expansion board |
 
-Open an example collection above for the current source and supported example list.
+Open an example link above for the current source and supported example list.
 
 ### Prebuilt Firmware
 
