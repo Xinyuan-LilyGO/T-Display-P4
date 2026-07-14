@@ -15,11 +15,21 @@ extern "C" void app_main(void) {
 
   auto& sx1262 = driver.chip().sx1262;
 
-  sx1262->ConfigLoraParams(
-      868.0, cpp_bus_driver::Sx126x::LoraBw::kBw125000Hz, 140, 22);
-  sx1262->SetTxContinuousWave();
+  cpp_bus_driver::Sx126x::LoraConfig lora_config;
+  lora_config.frequency_mhz = 868.0;
+  lora_config.bandwidth = cpp_bus_driver::Sx126x::LoraBw::kBw125000Hz;
+  lora_config.current_limit = 140.0f;
+  lora_config.power = 22;
+  if (!sx1262->Configure(lora_config) || !sx1262->SetTxContinuousWave()) {
+    printf("Sx1262 continuous wave config failed\n");
+    return;
+  }
 
-  printf("Sx1262 id: %s\n", sx1262->GetDeviceId().c_str());
+  cpp_bus_driver::Sx126x::DeviceId device_id;
+  if (sx1262->GetDeviceId(device_id)) {
+    printf("Sx1262 id: %.*s\n", static_cast<int>(device_id.bytes.size()),
+        reinterpret_cast<const char*>(device_id.bytes.data()));
+  }
   printf("Sx1262 start send continuous wave\n");
 
   while (1) {

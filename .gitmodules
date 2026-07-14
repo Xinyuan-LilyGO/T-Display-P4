@@ -13,9 +13,6 @@
 [submodule "libraries/arduino_cpp_bus_driver"]
 	path = libraries/arduino_cpp_bus_driver
 	url = https://github.com/Llgok/arduino_cpp_bus_driver.git
-[submodule "libraries/kode_bq25896"]
-	path = libraries/kode_bq25896
-	url = https://github.com/Llgok/kode_bq25896.git
 [submodule "libraries/lilygo_device_driver"]
 	path = libraries/lilygo_device_driver
 	url = https://github.com/Xinyuan-LilyGO/lilygo_device_driver.git
@@ -28,3 +25,9 @@
 [submodule "apps/lilygobox-espidf"]
 	path = apps/lilygobox-espidf
 	url = https://github.com/Xinyuan-LilyGO/lilygobox-espidf.git
+[submodule "apps/lilygo_device_driver_example"]
+	path = apps/lilygo_device_driver_example
+	url = https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example.git
+[submodule "libraries/semtech_cpp_bus_driver"]
+	path = libraries/semtech_cpp_bus_driver
+	url = https://github.com/Llgok/semtech_cpp_bus_driver.git

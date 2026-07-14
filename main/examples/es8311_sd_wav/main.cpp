@@ -6,10 +6,14 @@
  * @License: GPL 3.0
  */
 #include <fstream>
+#include <string>
 
 #include "lilygo_device_driver_library.h"
 
-#define MUSIC_FILE_PATH SD_BASE_PATH "/music.wav"
+namespace board = lilygo_device_driver::t_display_p4;
+
+const std::string kMusicFilePath =
+    std::string(board::device::sd::kBasePath) + "/music.wav";
 
 // WAV 文件头结构体
 struct WavHeader {
@@ -71,9 +75,9 @@ bool PlayWavFile(const char* file_path) {
   printf("Bits per sample: %d\n", wav_header.bits_per_sample);
 
   // 检查采样率、通道数和位深度是否与 I2S 配置匹配 (如果使用 I2S)
-  if (wav_header.sample_rate != ES8311_SAMPLE_RATE ||
-      wav_header.num_channel != ES8311_CHANNEL ||
-      wav_header.bits_per_sample != ES8311_BITS_PER_SAMPLE) {
+  if (wav_header.sample_rate != board::device::es8311::kSampleRate ||
+      wav_header.num_channel != board::device::es8311::kChannel ||
+      wav_header.bits_per_sample != board::device::es8311::kBitsPerSample) {
     printf(
         "Wav file parameters do not match i2s configuration audio may not play "
         "correctly\n");
@@ -121,7 +125,7 @@ extern "C" void app_main(void) {
 
   lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
 
-  if (!PlayWavFile(MUSIC_FILE_PATH)) {
+  if (!PlayWavFile(kMusicFilePath.c_str())) {
     printf("PlayWavFile failed\n");
   } else {
     printf("PlayWavFile success\n");

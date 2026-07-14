@@ -2,10 +2,12 @@
  * @Description: pcf8563
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:45:08
- * @LastEditTime: 2026-04-25 10:03:07
+ * @LastEditTime: 2026-07-13 22:31:44
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
+
+namespace board = lilygo_device_driver::t_display_p4;
 
 extern "C" void app_main(void) {
   printf("Ciallo\n");
@@ -20,7 +22,8 @@ extern "C" void app_main(void) {
   volatile bool interrupt_flag = false;
 
   esp32p4->InitGpioInterrupt(
-      XL9535_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
+      board::gpio::xl9535::kInt,
+      cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) {
         auto* flag = static_cast<volatile bool*>(arg);
         *flag = true;
@@ -78,8 +81,8 @@ extern "C" void app_main(void) {
   xl9535->ClearIrqFlag();
 
   while (1) {
-    if (pcf8563->CheckClockIntegrityFlag())  // 检查时钟完整
-    {
+    // 检查时钟完整
+    if (pcf8563->CheckClockIntegrityFlag()) {
       if (pcf8563->GetTime(t)) {
         printf(
             "Pcf8563 year:[%d] month:[%d] day:[%d] time:[%d:%d:%d] week:[%d]\n",
@@ -93,7 +96,7 @@ extern "C" void app_main(void) {
     }
 
     if (interrupt_flag) {
-      if (xl9535->GpioRead(XL9535_RTC_INT) == 0) {
+      if (xl9535->GpioRead(board::gpio::xl9535::kRtcInt) == 0) {
         if (pcf8563->CheckTimerFlag()) {
           printf("Pcf8563 timer_flag triggered\n");
           pcf8563->ClearTimerFlag();

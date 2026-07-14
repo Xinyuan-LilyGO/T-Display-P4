@@ -7,6 +7,8 @@
  */
 #include "lilygo_device_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 const uint8_t g_send_package[] = {
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
@@ -46,7 +48,8 @@ extern "C" void app_main(void) {
   auto nrf24l01 = driver.chip().nrf24l01;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput);
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput);
 
   int16_t status = nrf24l01->begin(2400.0, 1000.0, 0);
   if (status == RADIOLIB_ERR_NONE) {
@@ -56,7 +59,8 @@ extern "C" void app_main(void) {
   }
 
   esp32p4->InitGpioInterrupt(
-      T_MIXRF_NRF24L01_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
+      board::keyboard::gpio::t_mix_rf::nrf24l01::kInt,
+      cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) -> void { g_interrupt_flag = true; });
 
   uint8_t addr[] = {0x01, 0x23, 0x45, 0x67, 0x89};
@@ -71,7 +75,7 @@ extern "C" void app_main(void) {
   }
 
   while (1) {
-    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
 
       printf("Nrf24l01 send package\n");

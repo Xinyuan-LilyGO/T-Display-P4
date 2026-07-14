@@ -7,6 +7,8 @@
  */
 #include "lilygo_device_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
@@ -20,16 +22,16 @@ extern "C" void app_main(void) {
   xl9555->ClearIrqFlag();
 
   while (1) {
-    xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kHigh);
-    xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kHigh);
-    xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kHigh);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed1, 1);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed2, 1);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed3, 1);
     printf("Xl9555 io7: %d\n",
         xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
-    xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
-    xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed1, 0);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed2, 0);
+    xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed3, 0);
     printf("Xl9555 io7: %d\n",
         xl9555->GpioRead(cpp_bus_driver::Xl95x5::Pin::kIo7));
     vTaskDelay(pdMS_TO_TICKS(1000));

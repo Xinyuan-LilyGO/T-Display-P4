@@ -10,8 +10,8 @@ dependencies:
   radiolib_cpp_bus_driver:
     override_path: "../libraries/radiolib_cpp_bus_driver"
 
-  kode_bq25896:
-    override_path: "../libraries/kode_bq25896"
+  semtech_cpp_bus_driver:
+    override_path: "../libraries/semtech_cpp_bus_driver"
 
   icm20948_we:
     override_path: "../libraries/icm20948_we"
@@ -19,8 +19,8 @@ dependencies:
   lilygo_device_driver:
     override_path: "../libraries/lilygo_device_driver"
 
-  private_library:
-    override_path: "../libraries/private_library"
+  common:
+    override_path: "../libraries/common"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
@@ -30,36 +30,15 @@ dependencies:
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_AFE} == True"
 
-  espressif/esp_hosted:
-    version: "2.11.5"
-    matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SLEEP} == True"
-
-  espressif/esp_wifi_remote:
-    version: "1.3.2"
-    matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SLEEP} == True"
-
-  esp_video_app_video:
-    override_path: "../libraries/esp_video_app_video"
-    matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_CAMERA} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SLEEP} == True"
-
   lvgl/lvgl:
-    version: "9.4.0"
+    version: "9.5.0"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   espressif/ethernet_init:
     version: "^1.3.0"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SLEEP} == True"
 
   espressif/iot_usbh_ecm:
     version: "^0.2.1"

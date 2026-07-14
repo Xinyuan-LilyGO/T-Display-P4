@@ -8,17 +8,13 @@
 #include "lilygo_device_driver_library.h"
 #include "radiolib_cpp_bus_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.CreateDrivers();
-
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-  driver.InitBq25896();
-  driver.bus().xl9535_i2c_bus->set_bus_handle(
-      driver.bus().bq25896_i2c_bus->bus_handle());
-#endif
 
   driver.InitXl9535();
   driver.InitPower();
@@ -29,19 +25,22 @@ extern "C" void app_main(void) {
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
   auto sx1262_spi_bus = std::make_shared<cpp_bus_driver::HardwareSpi>(
-      SX1262_MOSI, SX1262_SCLK, SX1262_MISO, SPI2_HOST, 0);
+      board::gpio::sx1262::kMosi, board::gpio::sx1262::kSclk,
+      board::gpio::sx1262::kMiso, SPI2_HOST, 0);
 
-  RadioLibHal* radiolib_hal =
-      new RadiolibCppBusDriverHal(sx1262_spi_bus, 10000000, SX1262_CS);
+  RadioLibHal* radiolib_hal = new RadiolibCppBusDriverHal(
+      sx1262_spi_bus, 10000000, board::gpio::sx1262::kCs);
   SX1262 sx1262 = new Module(radiolib_hal, static_cast<uint32_t>(RADIOLIB_NC),
       static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC),
-      SX1262_BUSY);
+      board::gpio::sx1262::kBusy);
 
   const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput);
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput);
 
-  esp32p4->SetGpioMode(SX1262_BUSY, cpp_bus_driver::Tool::GpioMode::kInput,
+  esp32p4->SetGpioMode(board::gpio::sx1262::kBusy,
+      cpp_bus_driver::Tool::GpioMode::kInput,
       cpp_bus_driver::Tool::GpioStatus ::kPulldown);
 
   int16_t result = sx1262.begin(
@@ -61,7 +60,7 @@ extern "C" void app_main(void) {
   sx1262.startReceive();
 
   while (1) {
-    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
 
       printf("SX1262 send package\n");
@@ -77,7 +76,8 @@ extern "C" void app_main(void) {
       }
     }
 
-    if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1)  // 接收完成中断
+    if (xl9535->GpioRead(board::gpio::xl9535::kSx1262Dio1) ==
+        1)  // 接收完成中断
     {
       uint8_t receive_package[255] = {0};
       if (sx1262.readData(receive_package, 9) == RADIOLIB_ERR_NONE) {

@@ -31,17 +31,19 @@
 #include "st25r3916_driver.h"
 #include "t_display_p4_keyboard_config.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 /* Uncomment this line if you want to use the NFC reader with I2C bus instead of SPI */
 // #define I2C_ENABLED
 
 #ifndef I2C_ENABLED
-#define ST25R3916_SPI_MOSI T_MIXRF_ST25R3916_MOSI
-#define ST25R3916_SPI_MISO T_MIXRF_ST25R3916_MISO
-#define ST25R3916_SPI_SCLK T_MIXRF_ST25R3916_SCLK
+#define ST25R3916_SPI_MOSI board::keyboard::gpio::t_mix_rf::st25r3916::kMosi
+#define ST25R3916_SPI_MISO board::keyboard::gpio::t_mix_rf::st25r3916::kMiso
+#define ST25R3916_SPI_SCLK board::keyboard::gpio::t_mix_rf::st25r3916::kSclk
 #endif
 
-#define CS_PIN T_MIXRF_ST25R3916_CS
-#define IRQ_PIN T_MIXRF_ST25R3916_INT
+#define CS_PIN board::keyboard::gpio::t_mix_rf::st25r3916::kCs
+#define IRQ_PIN board::keyboard::gpio::t_mix_rf::st25r3916::kInt
 
 #define LED_A_PIN -1
 #define LED_B_PIN -1
@@ -50,7 +52,7 @@
 #define LED_AP2P_PIN -1
 #define LED_FIELD_PIN -1
 
-#define USER_BTN ESP32P4_BOOT
+#define USER_BTN board::gpio::button::kEsp32p4Boot
 
 /* Definition of possible states the demo state machine could have */
 #define DEMO_ST_NOTINIT 0         /*!< Demo State:  Not initialized */

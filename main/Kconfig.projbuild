@@ -1,43 +1,10 @@
 menu "Example Configuration"
 
     choice
-        prompt "Select the camera type"
-        default CAMERA_TYPE_OV2710
-            config CAMERA_TYPE_SC2336
-                bool "SC2336"
-            config CAMERA_TYPE_OV2710
-                bool "OV2710"
-            config CAMERA_TYPE_OV5645
-                bool "OV5645"
-    endchoice
-
-    choice
-        prompt "Select the color format of the screen"
-        default SCREEN_PIXEL_FORMAT_RGB565
-            config SCREEN_PIXEL_FORMAT_RGB565
-                bool "RGB565"
-            config SCREEN_PIXEL_FORMAT_RGB888
-                bool "RGB888"
-    endchoice
-
-    choice
-        prompt "Select the color format of the camera"
-        default CAMERA_PIXEL_FORMAT_RGB565
-            config CAMERA_PIXEL_FORMAT_RGB565
-                bool "RGB565"
-            config CAMERA_PIXEL_FORMAT_RGB888
-                bool "RGB888"
-    endchoice
-
-    choice
         prompt "Select the example to build"
-        default EXAMPLE_BUILD_SCREEN_LVGL
-            config EXAMPLE_BUILD_AW86224
-                bool "aw86224"
+        default EXAMPLE_BUILD_BQ27220
             config EXAMPLE_BUILD_BQ27220
                 bool "bq27220"
-            config EXAMPLE_BUILD_SLEEP
-                bool "sleep"
             config EXAMPLE_BUILD_ES8311
                 bool "es8311"
             config EXAMPLE_BUILD_ES8311_SD_WAV
@@ -46,50 +13,38 @@ menu "Example Configuration"
                 bool "esp32c6_at_host_sdio_uart"
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI
                 bool "esp32c6_at_host_sdio_wifi"
-            config EXAMPLE_BUILD_SCREEN_CAMERA
-                bool "screen_camera"
-            config EXAMPLE_BUILD_SCREEN_LVGL
-                bool "screen_lvgl"
-            config EXAMPLE_BUILD_SCREEN_LVGL_TOUCH_DRAW
-                bool "screen_lvgl_touch_draw"
             config EXAMPLE_BUILD_ICM20948
                 bool "icm20948"
-            config EXAMPLE_BUILD_IIC_SCAN
-                bool "iic_scan"
             config EXAMPLE_BUILD_L76K
                 bool "l76k"
             config EXAMPLE_BUILD_PCF8563
                 bool "pcf8563"
-            config EXAMPLE_BUILD_SGM38121
-                bool "sgm38121"
             config EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE
                 bool "sx1262_gfsk_send_receive"
             config EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE
                 bool "sx1262_lora_send_receive"
             config EXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE
                 bool "sx1262_tx_continuous_wave"
-            config EXAMPLE_BUILD_XL9535
-                bool "xl9535"
             config EXAMPLE_BUILD_AFE
                 bool "afe"
             config EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE
                 bool "radiolib_sx1262_send_receive"
-            config EXAMPLE_BUILD_ESP_HOSTED_MCU_SDIO_WIFI
-                bool "esp_hosted_mcu_sdio_wifi"
+            config EXAMPLE_BUILD_SEMTECH_SX1262_LORA_SEND_RECEIVE
+                bool "semtech_sx1262_lora_send_receive"
             config EXAMPLE_BUILD_XL9555
                 bool "xl9555"
             config EXAMPLE_BUILD_TCA8418
                 bool "tca8418"
+            config EXAMPLE_BUILD_CC1101_SEND_RECEIVE
+                bool "cc1101_send_receive"
             config EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE
-                bool "radiolib_cc1101_send_receive"
+                bool "radiolib_cc1101_send_receive (legacy alias)"
             config EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE
                 bool "radiolib_nrf24l01_send_receive"
             config EXAMPLE_BUILD_ST25R3916
                 bool "st25r3916"
             config EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW
                 bool "screen_tca8418_lvgl_touch_draw"
-            config EXAMPLE_BUILD_BQ25896
-                bool "bq25896"
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
             config EXAMPLE_BUILD_ES8311_SD_MP3

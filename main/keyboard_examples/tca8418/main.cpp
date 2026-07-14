@@ -7,6 +7,10 @@
  */
 #include "lilygo_device_driver_library.h"
 
+#include <iterator>
+
+namespace board = lilygo_device_driver::t_display_p4;
+
 volatile bool g_interrupt_flag = false;
 
 extern "C" void app_main(void) {
@@ -19,11 +23,11 @@ extern "C" void app_main(void) {
   auto& tca8418 = driver.chip().tca8418;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  xl9555->GpioWrite(XL9555_LED_1, cpp_bus_driver::Xl95x5::Value::kLow);
-  xl9555->GpioWrite(XL9555_LED_2, cpp_bus_driver::Xl95x5::Value::kLow);
-  xl9555->GpioWrite(XL9555_LED_3, cpp_bus_driver::Xl95x5::Value::kLow);
+  xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed1, 0);
+  xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed2, 0);
+  xl9555->GpioWrite(board::keyboard::gpio::xl9555::kLed3, 0);
 
-  esp32p4->InitGpioInterrupt(TCA8418_INT,
+  esp32p4->InitGpioInterrupt(board::keyboard::gpio::tca8418::kInt,
       cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) -> void { g_interrupt_flag = true; });
 
@@ -54,11 +58,11 @@ extern "C" void app_main(void) {
                       i + 1, tp.info[i].num, touch_position.x, touch_position.y,
                       tp.info[i].press_flag);
 
-                  const size_t key_count =
-                      sizeof(Tca8418_Map) / sizeof(std::string);
+                  const auto& key_map = board::keyboard::device::tca8418::kMap;
+                  const size_t key_count = std::size(key_map);
                   if ((tp.info[i].num > 0) && (tp.info[i].num <= key_count)) {
                     printf("   Touch string: %s\n",
-                        Tca8418_Map[tp.info[i].num - 1].c_str());
+                        key_map[tp.info[i].num - 1].c_str());
                   }
                 }
 

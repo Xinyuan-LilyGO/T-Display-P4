@@ -1,448 +1,242 @@
-<!--
- * @Description: None
- * @Author: LILYGO_L
- * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-05-22 13:54:59
- * @License: GPL 3.0
--->
-<h1 align = "center">T-Display-P4</h1>
+<h1 align="center">T-Display-P4</h1>
 
-## **English | [中文](./README_CN.md)**
+## **English** | [Chinese](./README_CN.md)
 
-> [!IMPORTANT]
-> The `main` branch is currently outdated and does not represent the latest development state of this project.
-> Active development has moved to the `debug2` branch while we prepare major updates.
-> Complex changes targeting `main` will be handled after the latest updates in the `debug2` branch are completed.
-> Once the latest branch is ready, we will push the updated code back to `main`.
+[![License](https://img.shields.io/github/license/Xinyuan-LilyGO/T-Display-P4?style=flat-square)](./LICENSE)
+[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.4%2B-ff6f00?style=flat-square)](https://github.com/espressif/esp-idf)
+[![C++](https://img.shields.io/badge/C%2B%2B-17%2B-00599c?style=flat-square)](https://isocpp.org/)
 
-## VersionIteration:
-| Version                               | Update date                       |Update description|
-| :-------------------------------: | :-------------------------------: |:--------------: |
-| T-Display-P4_V1.0                      | 2025-06-13                    |   Original version      |
-| T-Display-P4-Keyboard_V1.0                      | 2025-09-12                    |   Original version      |
+<p align="center">
+  <img src="image/1.jpg" alt="T-Display-P4 product photo" width="720">
+</p>
 
-## PurchaseLink
+## Overview
 
-| Product                     | SOC           |  FLASH  |  PSRAM   | Link                   |
-| :------------------------: | :-----------: |:-------: | :---------: | :------------------: |
-| T-Display-P4_V1.0   | NULL |   NULL   | NULL |  [NULL]()   |
+T-Display-P4 is a high-performance development platform built around the **ESP32-P4**. It combines a high-resolution MIPI-DSI touch display with an **ESP32-C6** wireless coprocessor and integrates audio, LoRa, GPS, Ethernet, motion sensing, battery monitoring, SD card storage, and MIPI-CSI camera support.
+
+Two display assemblies are supported: a 4.05-inch 540 x 1168 TFT panel and a 4.1-inch 568 x 1232 AMOLED panel. The optional T-Display-P4-Keyboard expansion board adds a keyboard, backlight control, and T-MixRF radio/NFC interfaces.
 
 ## Directory
-- [Describe](#describe)
+
+- [Overview](#overview)
+- [Hardware Versions](#hardware-versions)
 - [Preview](#preview)
-- [Module](#module)
-- [SoftwareDeployment](#SoftwareDeployment)
-- [PinOverview](#pinoverview)
-- [RelatedTests](#RelatedTests)
+- [Supported Frameworks](#supported-frameworks)
+- [Quick Start](#quick-start)
+- [Hardware Modules](#hardware-modules)
+- [Pin Overview](#pin-overview)
+- [Project Materials](#project-materials)
 - [FAQ](#faq)
-- [Project](#project)
 
-## Describe
+## Hardware Versions
 
-The T-Display-P4 is a versatile development board based on the ESP32-P4 core. Its features include:  
-
-1. **High Processing Power**: Equipped with the high-performance ESP32-P4 core processor, it can handle more complex graphics and video tasks, delivering smoother display performance.  
-2. **Low Power Design**: Offers multiple selectable power modes to effectively reduce energy consumption and extend battery life.  
-3. **High-Resolution Display**: Supports high resolution (default with a large MIPI interface screen at 540x1168px), providing sharp and clear visuals.  
-4. **Rich Peripheral Support**: Onboard peripherals include an HD MIPI touchscreen, ESP32-C6 module, speaker, microphone, LoRa module, GPS module, Ethernet, a linear vibration motor, an independent battery gauge for monitoring battery health and percentage, and an MIPI camera. Multiple GPIOs of both the ESP32-P4 and ESP32-C6 are exposed, enhancing the device's expandability.  
+| Version | Date | Description |
+| :---: | :---: | --- |
+| T-Display-P4 V1.0 | 2025-06-13 | Initial hardware version |
+| T-Display-P4-Keyboard V1.0 | 2025-09-12 | Initial keyboard expansion board |
+| T-Display-P4 V2.0 Evaluation Preview | 2026-05-22 | Evaluation-preview hardware documentation |
 
 ## Preview
-### Beta version test images
 
-<p align="center" width="100%">
-    <img src="image/4.jpg" alt="">
+<p align="center">
+  <img src="image/2.jpg" alt="T-Display-P4 preview 1" width="24%">
+  <img src="image/3.jpg" alt="T-Display-P4 preview 2" width="24%">
+  <img src="image/4.jpg" alt="T-Display-P4 preview 3" width="24%">
+  <img src="image/5.jpg" alt="T-Display-P4 preview 4" width="24%">
 </p>
 
----
-
-<p align="center" width="100%">
-    <img src="image/5.jpg" alt="">
-</p>
-
----
-
-<p align="center" width="100%">
-    <img src="image/6.jpg" alt="">
-</p>
-
-
-### Actual Product Image
-
-## Module
-
-### T-Display-P4 Section
-### 1. Core Processor  
-
-* Chip: ESP32-P4  
-* FLASH: 16M  
-* Related Documents:  
-    >[Espressif](https://www.espressif.com/en/support/documents/technical-documents)  
-
-### 2. Auxiliary Processor
-
-* Module: ESP32-C6-MINI-1U
-* Chip: ESP32-C6-FH4
-* PSRAM: -
-* FLASH: 4M 
-* Communication Protocol: SDIO
-* Other: For more information, please visit [Espressif ESP32-C6-MINI-1U datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-c6-mini-1_mini-1u_datasheet_en.pdf)
-
-### 3. Display & Touch  
-
-> #### Model: H0405S002T002-V0  
-> * Display Size (Diagonal): 4.05 inch  
-> * LCD Type: α-Si TFT  
-> * Resolution: 540(H) × 1168(V) px  
-> * Active Area: 41.9904(H) × 91.1040(V) mm  
-> * Module Dimensions: 44(H) × 95.5(V) × 1.46(T) mm  
-> * Display Colors: 16.7M  
-> * Display Interface: MIPI  
-> * Touch Interface: IIC
-> * Display & Touch Driver IC: HI8561  
-> * Maximum touch points: 10-point touch
-> * Luminance on surface: 550 cd/m²
-> * View Direction: All
-> * Contrast ratio: 1200:1
-> * Color gamut: 70%
-> * PPI: 326
-> * Window effect: No all-black  
-> * Cover plate surface effect: No AF/AG
-> * Operating Temperature: -20～70  ºC
-> * Storage Temperature: -30～80 ºC
-> * Related Documents:  
->    >[HI8561](./information/HI8561_Preliminary%20_DS_V0.00_20230511.pdf)  
-
-> #### Model: H0410S001AMT001-V0
-> * Display Size (Diagonal): 4.1 inch  
-> * LCD Type: α-Si AMOLED
-> * Resolution: 568(H) × 1232(V) px  
-> * Active Area: 43.55(H) × 94.47(V) mm  
-> * Module Dimensions: 45.6(H) × 97.22(V) × 0.7(T) mm  
-> * Display Colors: 16.7M  
-> * Display Interface: MIPI  
-> * Touch Interface: IIC
-> * Display Driver IC: RM69A10
-> * Touch Driver IC: GT9895
-> * Maximum touch points: 10-point touch
-> * Luminance on surface: 500 cd/m²
-> * View Direction: All
-> * Contrast ratio: 20000:1
-> * Color gamut: 100%
-> * PPI: 190
-> * Window effect: No all-black  
-> * Cover plate surface effect: No AF/AG
-> * Operating Temperature: -20～70  ºC
-> * Storage Temperature: -30～80 ºC
-> * Related Documents:  
->    >[RM69A10](./information/RM69A10_DataSheet_V0.2_20230330 (Public version).pdf)  
->    >[GT9895](./information/GT9895_Datasheet_V1.1.pdf)
-
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 4. Speaker & Microphone  
-
-* DAC Chip: ES8311  
-* Amplifier Chip: NS4150B  
-* Microphone: Electret Condenser Mic  
-* Communication Protocol: IIS
-* Related Documents:  
-    >[ES8311](./information/ES8311.pdf)  
-    >[NS4150B](./information/NS4150B.pdf)
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 5. Vibration  
-
-* Driver IC: AW86224AFCR  
-* Communication Protocol: IIC
-* Related Documents:  
-    >[AW86224](./information/AW86224AFCR.pdf)  
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 6. LoRa  
-
-* Module: HPD16A  
-* Chip: SX1262, SKY13453-385LF
-* Communication Protocol: Standard SPI  
-* Other notes: Use a dedicated RF analog switch to switch the antenna
-* Related Documents:  
-    >[SX1261-2](./information/DS_SX1261-2_V2_1.pdf)  
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 7. GPS  
-
-* Module: L76K  
-* Communication Protocol: Uart
-* Related Documents:  
-    >[L76K](./information/L76KB-A58.pdf)  
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 8. RTC  
-
-* Chip: PCF8563  
-* Communication Protocol: IIC
-* Related Documents:  
-    >[PCF8563](./information/PCF8563.pdf)  
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 9. Charging IC  
-
-* Chip: LGS4056H  
-* Additional Notes: The NTC pin of the 3-wire battery is connected to the LGS4056H charging IC. Over-temperature protection during charging is automatically controlled by the chip.  
-* Related Documents:  
-    >[LGS4056H](./information/LGS4056H.pdf)  
-
-### 10. Battery Gauge  
-
-* Chip: BQ27220  
-* Communication Protocol: IIC
-* Related Documents:  
-    >[BQ27220](./information/bq27220_en.pdf)  
-* Dependent Libraries:  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-
-### 11. Camera  
-
-> #### Model: OV2710  
-> * Interface: MIPI  
-> * Related Documents:  
->    >[OV2710](./information/OV2710_CSP3_DS_2.0_KING%20HORN%20ENTERPRISES%20Ltd..pdf)  
-
-### 12. IMU
-
-* Chip: ICM20948
-* Communication Protocol: IIC
-* Related Documents:  
-    >[ICM20948](./information/ICM20948.pdf)
-* Dependent Libraries:  
-    >[arduino_cpp_bus_driver](https://github.com/Llgok/arduino_cpp_bus_driver)  
-    >[cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-    >[ICM20948_WE](https://github.com/Llgok/ICM20948_WE)
-
-### 13. IO Expansion
-
-* Chip: XL9535
-* Communication Protocol: IIC
-* Related Materials:
-    > [XL9535](./information/XL95x5.pdf)
-* Dependent Libraries:
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
-
-### T-Display-P4-Keyboard Section
-### 1. Keyboard Driver
-
-* Chip: TCA8418
-* Communication Protocol: IIC
-* Related Materials:
-    > [TCA8418](./information/tca8418.pdf)
-* Dependent Libraries:
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
-
-### 2. Keyboard Backlight Driver
-
-* Chip: SY7200A
-* Communication Protocol: PWM
-* Related Materials:
-    > [SY7200A](./information/SY7200AABC.pdf)
-
-### 3. IO Expansion
-
-* Chip: XL9555
-* Communication Protocol: IIC
-* Related Materials:
-    > [XL9555](./information/XL95x5.pdf)
-* Dependent Libraries:
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)
-
-### 4. CC1101
-
-* Module: T-MixRF
-* Chip: CC1101
-* Communication Protocol: Standard SPI
-* Other Notes: The T-MixRF module on the T-Display-P4-Keyboard board will not use the LR1121 chip
-* Related Materials:
-    > [CC1101](./information/cc1101.pdf)
-* Dependent Libraries:
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-    > [RadioLib](https://github.com/jgromes/RadioLib)
-
-### 5. NRF24L01
-
-* Module: T-MixRF
-* Chip: NRF24L01
-* Communication Protocol: Standard SPI
-* Other Notes: The T-MixRF module on the T-Display-P4-Keyboard board will not use the LR1121 chip
-* Related Materials:
-    > [NRF24L01](./information/NRF24L01P-R.pdf)
-* Dependent Libraries:
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-    > [RadioLib](https://github.com/jgromes/RadioLib)
-
-### 6. NFC
-
-* Module: T-MixRF
-* Chip: ST25R3916
-* Communication Protocol: Standard SPI
-* Other Notes: The T-MixRF module on the T-Display-P4-Keyboard board will not use the LR1121 chip
-* Related Materials:
-    > [ST25R3916](./information/st25r3916.pdf)
-* Dependent Libraries:
-    > [arduino_cpp_bus_driver](https://github.com/Llgok/arduino_cpp_bus_driver)  
-    > [cpp_bus_driver](https://github.com/Llgok/cpp_bus_driver)  
-    > [ST25R3916](https://github.com/stm32duino/ST25R3916)  
-    > [NFC-RFAL](https://github.com/stm32duino/NFC-RFAL)
-
-### 7. Charging IC
-
-* Chip: BQ25896
-* Communication Protocol: IIC
-* Related Materials:
-    > [BQ25896](./information/bq25896.pdf)
-
-## SoftwareDeployment
-
-### Examples Support
-
-#### T-Display-P4 Examples
-| example | `[vscode][esp-idf-v5.4.0]` | description | picture |
-| ------  | ------ | ------ | ------ | 
-| [afe](./main/examples/afe) |  <p align="center">![alt text][supported] | | |
-| [aw86224](./main/examples/aw86224) |  <p align="center">![alt text][supported] | | |
-| [bq27220](./main/examples/bq27220) |  <p align="center">![alt text][supported] | | |
-| [deep_sleep](./main/examples/deep_sleep) |  <p align="center">![alt text][supported] | | |
-| [es8311](./main/examples/es8311) |  <p align="center">![alt text][supported] | | |
-| [es8311_sd_wav](./main/examples/es8311_sd_wav) |  <p align="center">![alt text][supported] | | |
-| [esp_hosted_mcu_sdio_wifi](./main/examples/esp_hosted_mcu_sdio_wifi) |  <p align="center">![alt text][supported] | | |
-| [esp32c6_at_host_sdio_uart](./main/examples/esp32c6_at_host_sdio_uart) |  <p align="center">![alt text][supported] | | |
-| [esp32c6_at_host_sdio_wifi](./main/examples/esp32c6_at_host_sdio_wifi) |  <p align="center">![alt text][supported] | | |
-| [icm20948](./main/examples/icm20948) |  <p align="center">![alt text][supported] | | |
-| [iic_scan](./main/examples/iic_scan) |  <p align="center">![alt text][supported] | | |
-| [l76k](./main/examples/l76k) |  <p align="center">![alt text][supported] | | |
-| [lvgl_9_ui](./main/examples/lvgl_9_ui) |  <p align="center">![alt text][supported] |factory example | |
-| [pcf8563](./main/examples/pcf8563) |  <p align="center">![alt text][supported] | | |
-| [radiolib_sx1262_send_receive](./main/examples/radiolib_sx1262_send_receive) |  <p align="center">![alt text][supported] | | |
-| [screen_camera](./main/examples/screen_camera) |  <p align="center">![alt text][supported] | | |
-| [screen_lvgl](./main/examples/screen_lvgl) |  <p align="center">![alt text][supported] | | |
-| [screen_lvgl_touch_draw](./main/examples/screen_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
-| [sgm38121](./main/examples/sgm38121) |  <p align="center">![alt text][supported] | | |
-| [sx1262_gfsk_send_receive](./main/examples/sx1262_gfsk_send_receive) |  <p align="center">![alt text][supported] | | |
-| [sx1262_lora_send_receive](./main/examples/sx1262_lora_send_receive) |  <p align="center">![alt text][supported] | | |
-| [sx1262_tx_continuous_wave](./main/examples/sx1262_tx_continuous_wave) |  <p align="center">![alt text][supported] | | |
-| [tusb_serial_device](./main/examples/tusb_serial_device) |  <p align="center">![alt text][supported] | | |
-| [xl9535](./main/examples/Vibration_Motor) |  <p align="center">![alt text][supported] | | |
-| [xiaozhi](https://github.com/78/xiaozhi-esp32) |  <p align="center">![alt text][supported] | | |
-
-#### T-Display-P4-Keyboard Examples
-| example | `[vscode][esp-idf-v5.4.0]` | description | picture |
-| ------  | ------ | ------ | ------ | 
-| [radiolib_cc1101_send_receive](./main/keyboard_examples/radiolib_cc1101_send_receive) |  <p align="center">![alt text][supported] | | |
-| [radiolib_nrf24l01_send_receive](./main/keyboard_examples/radiolib_nrf24l01_send_receive) |  <p align="center">![alt text][supported] | | |
-| [screen_tca8418_lvgl_touch_draw](./main/keyboard_examples/screen_tca8418_lvgl_touch_draw) |  <p align="center">![alt text][supported] | | |
-| [st25r3916](./main/keyboard_examples/st25r3916) |  <p align="center">![alt text][supported] | | |
-| [tca8418](./main/keyboard_examples/tca8418) |  <p align="center">![alt text][supported] | | |
-| [xl9555](./main/keyboard_examples/xl9555) |  <p align="center">![alt text][supported] | | |
-| [bq25896](./main/keyboard_examples/bq25896) |  <p align="center">![alt text][supported] | | |
-
-[supported]: https://img.shields.io/badge/-supported-green "example"
-
-| firmware | description | picture |
-| ------  | ------  | ------ |
-| [t_display_p4_lvgl_9_ui](./firmware/[T-Display-P4][lvgl_9_ui]) | factory program |  |
-| [t_display_p4_keyboard_lvgl_9_ui](./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]) | keyboard expansion board factory program |  |
-| [esp32c6_at](./firmware/[T-Display-P4][esp32c6_at_slave]) | esp32c6-at factory program |  |
-| [esp32c6_slave_esp_hosted_mcu_network_adapter](./firmware/[T-Display-P4][esp32c6_slave_esp_hosted_mcu_network_adapter]) |  |  |
-| [t_display_p4_xiaozhi](./firmware/[T-Display-P4][xiaozhi]) |  |  |
-
-### ESP-IDF Visual Studio Code  
-1. Install [Visual Studio Code](https://code.visualstudio.com/Download) by selecting the appropriate version for your operating system.  
-
-2. Open the "Extensions" sidebar in Visual Studio Code (or use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> to open extensions), search for the "ESP-IDF" extension, and install it.  
-
-3. While the extension is installing, use the git command to clone the repository:  
-
-        git clone --recursive https://github.com/Xinyuan-LilyGO/T-Display-P4.git  
-
-    Ensure you include the `--recursive` flag during cloning. If you forget to include it, you will need to initialize the submodules later by running:  
-
-        git submodule update --init --recursive  
-
-4. Download and install [ESP-IDF v5.4.1](https://dl.espressif.cn/dl/esp-idf/?idf=4.4). Take note of the installation path. Open the previously installed "ESP-IDF" extension and select "Configure ESP-IDF Extension." Choose the "USE EXISTING SETUP" menu, then select "Search ESP-IDF in system." Correctly configure the installation path you noted earlier:  
-   - **Enter ESP-IDF directory (IDF_PATH):** `Your installation path xxx\Espressif\frameworks\esp-idf-v5.4`  
-   - **Enter ESP-IDF Tools directory (IDF_TOOLS_PATH):** `Your installation path xxx\Espressif`  
-    Click the "Install" button at the bottom right to proceed with the framework installation.  
-
-5. Click the "SDK Configuration Editor" in the ESP-IDF extension menu at the bottom of Visual Studio Code. In the search bar, look for the field "Select the example to build" and choose the project you want to compile. Then, search for "Select the camera type" and select the camera model integrated on your board. Save the settings.  
-
-6. Click "Set Espressif Device Target" in the bottom menu bar of Visual Studio Code and select **ESP32P4**. Next, click "Build Project" in the bottom menu bar and wait for the build to complete. Then, click "Select Port to Use," followed by "Flash Project" to upload the program.  
-
-<p align="center" width="100%">
-    <img src="image/1.jpg" alt="example">
-</p>
-
-### firmware download
-1. Open the project file "tools" and locate the ESP32 burning tool. Open it.
-
-2. Select the correct burning chip and burning method, then click "OK." As shown in the picture, follow steps 1->2->3->4->5 to burn the program. If the burning is not successful, press and hold the "BOOT-0" button and then download and burn again.
-
-3. Burn the file in the root directory of the project file "[firmware](./firmware/)" file,There is a description of the firmware file version inside, just choose the appropriate version to download.
-
-<p align="center" width="100%">
-    <img src="image/10.png" alt="example">
-    <img src="image/11.png" alt="example">
-</p>
-
-
-## PinOverview
-
-For pin definitions, please refer to the configuration file: 
-<br />
-
-[t_display_p4_config.h](./components/private_library/t_display_p4_config.h)  
-[t_display_p4_keyboard_config.h](./components/private_library/t_display_p4_keyboard_config.h)
-
-## RelatedTests
-
-### Power Consumption
-| firmware | program | description | picture |
-| ------  | ------  | ------ | ------ | 
-| [deep_sleep(single_board)](./firmware/sleep/[T-Display-P4][deep_sleep][single_board]_firmware_202505301450.bin) |[deep_sleep](./main/examples/deep_sleep/)| Average current consumption: 1.2mA. For more details, please refer to the [Power Consumption Test Log](./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf).| |
-
-### Camera
-| program | description | picture |
-| ------  | ------ | ------ | 
-| [uvc_sc2336](./debug/examples/uvc_sc2336/)| Original image and screenshot effect of taking a picture on the screen. | <p align="center"> <img src="image/2.jpg" alt="example" width="100%"> </p> |
-| [uvc_ov2710](./debug/examples/uvc_ov2710/)| Original image and screenshot effect of taking a picture on the screen. | <p align="center"> <img src="image/3.jpg" alt="example" width="100%"> </p> |
+## Supported Frameworks
+
+| Framework | Status | Version |
+| --- | --- | --- |
+| ESP-IDF | Recommended | `>= v5.5.4` |
+
+## Quick Start
+
+### Build With ESP-IDF
+
+Install ESP-IDF first. For environment setup, refer to the official guide:
+[ESP-IDF Get Started](https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html)
+
+Clone the repository together with its submodules:
+
+```bash
+git clone --recursive https://github.com/Xinyuan-LilyGO/T-Display-P4.git
+cd T-Display-P4
+```
+
+If the repository was cloned without `--recursive`, initialize the submodules manually:
+
+```bash
+git submodule update --init --recursive
+```
+
+Select an example in `menuconfig`, then build and flash the project:
+
+```bash
+idf.py set-target esp32p4
+idf.py menuconfig
+idf.py build
+idf.py flash monitor
+```
+
+```text
+Example Configuration
+`-- Select the example to build
+```
+
+### T-Display-P4 Examples
+
+| Example | Description |
+| --- | --- |
+| [`afe`](./main/examples/afe) | Audio front-end example |
+| [`bq27220`](./main/examples/bq27220) | Battery gauge example |
+| [`es8311`](./main/examples/es8311) | ES8311 audio codec example |
+| [`es8311_sd_mp3`](./main/examples/es8311_sd_mp3) | MP3 playback from an SD card |
+| [`es8311_sd_wav`](./main/examples/es8311_sd_wav) | WAV playback from an SD card |
+| [`esp32c6_at_host_sdio_uart`](./main/examples/esp32c6_at_host_sdio_uart) | ESP-AT UART service over the ESP32-C6 SDIO link |
+| [`esp32c6_at_host_sdio_wifi`](./main/examples/esp32c6_at_host_sdio_wifi) | ESP-AT Wi-Fi service over the ESP32-C6 SDIO link |
+| [`icm20948`](./main/examples/icm20948) | ICM20948 IMU example |
+| [`iperf_ethernet`](./main/examples/iperf_ethernet) | Onboard Ethernet throughput test |
+| [`l76k`](./main/examples/l76k) | L76K GPS example |
+| [`pcf8563`](./main/examples/pcf8563) | PCF8563 RTC and alarm example |
+| [`radiolib_sx1262_send_receive`](./main/examples/radiolib_sx1262_send_receive) | SX1262 send/receive example using RadioLib |
+| [`semtech_sx1262_lora_send_receive`](./main/examples/semtech_sx1262_lora_send_receive) | SX1262 LoRa example using the Semtech driver |
+| [`sx1262_gfsk_send_receive`](./main/examples/sx1262_gfsk_send_receive) | Native SX1262 GFSK send/receive example |
+| [`sx1262_lora_send_receive`](./main/examples/sx1262_lora_send_receive) | Native SX1262 LoRa send/receive example |
+| [`sx1262_tx_continuous_wave`](./main/examples/sx1262_tx_continuous_wave) | SX1262 continuous-wave transmit example |
+
+### T-Display-P4-Keyboard Examples
+
+| Example | Description |
+| --- | --- |
+| [`radiolib_cc1101_send_receive`](./main/keyboard_examples/radiolib_cc1101_send_receive) | CC1101 send/receive example using RadioLib |
+| [`radiolib_nrf24l01_send_receive`](./main/keyboard_examples/radiolib_nrf24l01_send_receive) | NRF24L01 send/receive example using RadioLib |
+| [`screen_tca8418_lvgl_touch_draw`](./main/keyboard_examples/screen_tca8418_lvgl_touch_draw) | LVGL touch drawing and keyboard input example |
+| [`st25r3916`](./main/keyboard_examples/st25r3916) | ST25R3916 NFC example |
+| [`tca8418`](./main/keyboard_examples/tca8418) | TCA8418 keyboard example |
+| [`xl9555`](./main/keyboard_examples/xl9555) | XL9555 IO expansion example |
+
+### Prebuilt Firmware
+
+The following firmware is prebuilt.
+
+To flash prebuilt firmware, refer to Espressif's official [ESP firmware online flashing platform guide](https://docs.espressif.com/projects/esp-techpedia/en/latest/esp-friends/get-started/try-firmware/try-firmware-platform.html).
+
+| Firmware | Flash Address | Description |
+| --- | --- | --- |
+| [`T-Display-P4 LVGL UI`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 factory UI firmware |
+| [`T-Display-P4-Keyboard LVGL UI`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | Keyboard expansion board factory UI firmware |
+| [`ESP32-C6 AT`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT coprocessor firmware |
+| [`ESP32-C6 network adapter`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO network-adapter firmware |
+| [`Edge Agent`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
+| [`Xiaozhi`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
+
+> [!IMPORTANT]
+> Select `ESP32-P4` when flashing T-Display-P4 or T-Display-P4-Keyboard firmware. Select `ESP32-C6` when flashing ESP32-C6 AT or network-adapter firmware. Firmware images are not interchangeable between the two chips.
+
+## Hardware Modules
+
+### T-Display-P4 V1.0
+
+| Function | Device | Interface |
+| --- | --- | --- |
+| Main MCU | ESP32-P4, 16 MB flash | — |
+| Wireless coprocessor | ESP32-C6-MINI-1U / ESP32-C6-FH4, 4 MB flash | SDIO |
+| TFT display and touch | H0405S002T002-V0 / HI8561, 4.05 inch, 540 x 1168 | MIPI-DSI / I2C |
+| AMOLED display and touch | H0410S001AMT001-V0 / RM69A10 / GT9895, 4.1 inch, 568 x 1232 | MIPI-DSI / I2C |
+| Audio | ES8311 / NS4150B / electret condenser microphone | I2S |
+| LoRa | SX1262 / LR2021 | SPI |
+| GPS | L76K | UART |
+| RTC | PCF8563 | I2C |
+| IMU | ICM20948 | I2C |
+| Vibration | AW86224AFCR | I2C |
+| Charging | LGS4056H with battery NTC support | — |
+| Battery gauge | BQ27220 | I2C |
+| Camera | OV2710 | MIPI-CSI |
+| SD card | SD card slot | SDMMC / SPI |
+| Ethernet | IP101GRI | RMII |
+| IO expansion | XL9535 | I2C |
+
+- Related documents:
+  - [Espressif technical documents](https://www.espressif.com/en/support/documents/technical-documents)
+  - [ESP32-C6-MINI-1/MINI-1U datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-c6-mini-1_mini-1u_datasheet_en.pdf)
+  - [HI8561](<./docs/HI8561_Preliminary _DS_V0.00_20230511.pdf>)
+  - [RM69A10](<./docs/RM69A10_DataSheet_V0.2_20230330%C2%A0(Public%C2%A0version).pdf>)
+  - [GT9895](./docs/GT9895_Datasheet_V1.1.pdf)
+  - [ES8311](./docs/ES8311.pdf)
+  - [NS4150B](./docs/NS4150B.pdf)
+  - [SX1262](./docs/DS_SX1261-2_V2_1.pdf)
+  - [LR2021](<./参考资料/semtech_cpp_bus_driver/LR2021_22_12_Datasheet_v2.1.pdf>)
+  - [L76K](./docs/L76KB-A58.pdf)
+  - [PCF8563](./docs/PCF8563.pdf)
+  - [ICM20948](./docs/ICM20948.pdf)
+  - [AW86224AFCR](./docs/AW86224AFCR.pdf)
+  - [LGS4056H](./docs/LGS4056H.pdf)
+  - [BQ27220](./docs/bq27220_en.pdf)
+  - [OV2710](<./docs/OV2710_CSP3_DS_2.0_KING HORN ENTERPRISES Ltd..pdf>)
+  - [IP101GRI](./docs/IP101GRI.pdf)
+  - [XL9535](./docs/XL95x5.pdf)
+
+### T-Display-P4-Keyboard V1.0
+
+| Function | Device | Interface |
+| --- | --- | --- |
+| Keyboard controller | TCA8418 | I2C |
+| Keyboard backlight | SY7200A | PWM |
+| IO expansion | XL9555 | I2C |
+| Sub-GHz radio | CC1101 on T-MixRF | SPI |
+| 2.4 GHz radio | NRF24L01 on T-MixRF | SPI |
+| NFC | ST25R3916 on T-MixRF | SPI |
+
+- Related documents:
+  - [TCA8418](./docs/tca8418.pdf)
+  - [SY7200A](./docs/SY7200AABC.pdf)
+  - [XL9555](./docs/XL95x5.pdf)
+  - [CC1101](./docs/cc1101.pdf)
+  - [NRF24L01](./docs/NRF24L01P-R.pdf)
+  - [ST25R3916](./docs/st25r3916.pdf)
+
+## Pin Overview
+
+Board pin definitions are provided in the device-driver configuration files:
+
+- [`t_display_p4_config.h`](./libraries/lilygo_device_driver/src/device/t_display_p4/t_display_p4_config.h)
+- [`t_display_p4_keyboard_config.h`](./libraries/lilygo_device_driver/src/device/t_display_p4/t_display_p4_keyboard_config.h)
+
+## Project Materials
+
+| Document | Description |
+| --- | --- |
+| [`T-Display-P4 V1.0 TFT`](<./project/T-Display-P4_V1.0(H0405S002T002-V0)_202601061148.pdf>) | V1.0 hardware project PDF for the 4.05-inch TFT assembly |
+| [`T-Display-P4 V1.0 AMOLED`](<./project/T-Display-P4_V1.0(H0410S001AMT001-V0)_202601061148.pdf>) | V1.0 hardware project PDF for the 4.1-inch AMOLED assembly |
+| [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 evaluation-preview hardware project PDF |
+| [`docs`](./docs) | Datasheets and peripheral documentation |
+| [`Power Consumption Test Log`](<./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf>) | T-Display-P4 V1.0 power-consumption measurements |
 
 ## FAQ
 
-* Q. After reading the above tutorials, I still don't know how to build a programming environment. What should I do?
-* A. If you still don't understand how to build an environment after reading the above tutorials, you can refer to the [LilyGo-Document](https://github.com/Xinyuan-LilyGO/LilyGo-Document) document instructions to build it.
+<details>
+<summary>Q. Why does the board continuously fail to flash?</summary>
 
-<br />
+A. Hold down the `BOOT` button while starting the download, then release it after flashing begins.
 
-* Q. Why is my board continuously failing to download the program?
-* A. Please hold down the "BOOT" button and try downloading the program again.
+</details>
 
-<br />
+<details>
+<summary>Q. Why are submodule headers or components missing?</summary>
 
-* Q. Why do I encounter configuration failures with the following errors when selecting the target compilation chip or configuring menuconfig in the ESP-IDF framework?
+A. Initialize all repository submodules:
 
-        asyncio.exceptions.LimitOverrunError: Separator is found, but chunk is longer than limit
+```bash
+git submodule update --init --recursive
+```
 
-        ValueError: Separator is found, but chunk is longer than limit
+</details>
 
-* A. This is a bug in ESP-IDF framework versions v5.4 to v5.5. Modify line 351 in the file located at `esp-idf-v5.x\tools\idf_py_actions\tools.py` as follows:
+<details>
+<summary>Q. How do I select a different example?</summary>
 
-        Original code:
-        p = await asyncio.create_subprocess_exec(*cmd, env=env_copy, limit=1024 * 256, cwd=self.cwd, stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE)
-        Modified code:
-        p = await asyncio.create_subprocess_exec(*cmd, env=env_copy, limit=1024 * 512, cwd=self.cwd, stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE)
+A. Run `idf.py menuconfig`, open `Example Configuration`, select the desired example, save, and rebuild the project.
 
-## Project
-* []()
-
+</details>

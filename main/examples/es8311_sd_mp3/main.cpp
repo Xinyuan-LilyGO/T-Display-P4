@@ -9,9 +9,13 @@
 #include "esp_audio_dec_default.h"
 #include "lilygo_device_driver_library.h"
 
-#define MP3_FILE_PATH \
-  SD_BASE_PATH "/Nocturne, Op.9 No.2 in E-flat major-AyaHiguchi (piano).mp3"
-// #define MP3_FILE_PATH SD_BASE_PATH "/music.mp3"
+#include <string>
+
+namespace board = lilygo_device_driver::t_display_p4;
+
+const std::string kMp3FilePath =
+    std::string(board::device::sd::kBasePath) +
+    "/Nocturne, Op.9 No.2 in E-flat major-AyaHiguchi (piano).mp3";
 
 uint32_t g_audio_sample_rate = 44100;
 
@@ -43,7 +47,7 @@ size_t parse_and_print_id3v2(FILE* f) {
     major_version = header[3];
     id3v2_size = synchsafe_to_uint32(header + 6);
 
-    printf("Input from '%s':\n", MP3_FILE_PATH);
+    printf("Input from '%s':\n", kMp3FilePath.c_str());
     printf("  Metadata:\n");
 
     size_t pos = 10;
@@ -105,7 +109,7 @@ size_t parse_and_print_id3v2(FILE* f) {
       pos += frame_size;
     }
   } else {
-    printf("Error metadata input from '%s':\n", MP3_FILE_PATH);
+    printf("Error metadata input from '%s':\n", kMp3FilePath.c_str());
     rewind(f);
   }
 
@@ -213,7 +217,8 @@ size_t parse_and_print_id3v2(FILE* f) {
 
       es8311->SetI2sChannelEnable(false);
 
-      if (!es8311->SetClockReconfig(ES8311_MCLK_MULTIPLE, sample_rate)) {
+      if (!es8311->SetClockReconfig(
+              board::device::es8311::kMclkMultiple, sample_rate)) {
         printf("set_clock_reconfig fail\n");
       } else {
         g_audio_sample_rate = sample_rate;
@@ -323,12 +328,13 @@ extern "C" void app_main(void) {
 
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput,
       cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   while (1) {
     // 监测按键，按下后触发 MP3 解码播放
-    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
       vTaskDelay(pdMS_TO_TICKS(300));
       printf("play_mp3 start\n");
 
@@ -340,9 +346,9 @@ extern "C" void app_main(void) {
       if (esp_audio_dec_open(&dec_cfg, &decoder) != ESP_AUDIO_ERR_OK) {
         printf("esp_audio_dec_open fail\n");
       } else {
-        FILE* f_in = fopen(MP3_FILE_PATH, "rb");
+        FILE* f_in = fopen(kMp3FilePath.c_str(), "rb");
         if (f_in == nullptr) {
-          printf("Fopen mp3 fail: %s\n", MP3_FILE_PATH);
+          printf("Fopen mp3 fail: %s\n", kMp3FilePath.c_str());
         } else {
           // Parse and print ID3v2, get offset to MP3 data
           size_t mp3_offset = parse_and_print_id3v2(f_in);
@@ -366,9 +372,9 @@ extern "C" void app_main(void) {
 
           float total_duration = -1.0f;
           uint64_t total_pcm_bytes_sent = 0;  // 累计已送出的 PCM 位元组数
-          const uint32_t bytes_per_second = g_audio_sample_rate *
-                                            ES8311_CHANNEL *
-                                            (ES8311_BITS_PER_SAMPLE / 8);
+          const uint32_t bytes_per_second =
+              g_audio_sample_rate * board::device::es8311::kChannel *
+              (board::device::es8311::kBitsPerSample / 8);
           uint32_t last_print_ms = 0;
 
           // 流式读取与解码循环

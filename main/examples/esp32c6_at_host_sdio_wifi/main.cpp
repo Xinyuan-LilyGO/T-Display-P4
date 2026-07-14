@@ -7,6 +7,8 @@
  */
 #include "lilygo_device_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 size_t g_cycle_time = 0;
 
 extern "C" void app_main(void) {
@@ -16,16 +18,19 @@ extern "C" void app_main(void) {
   driver.Init();
 
   auto esp32c6_at_sdio_bus = std::make_shared<cpp_bus_driver::HardwareSdio>(
-      ESP32C6_SDIO_CLK, ESP32C6_SDIO_CMD, ESP32C6_SDIO_D0, ESP32C6_SDIO_D1,
-      ESP32C6_SDIO_D2, ESP32C6_SDIO_D3, -1, -1, -1, -1,
+      board::gpio::esp32c6::kSdioClk, board::gpio::esp32c6::kSdioCmd,
+      board::gpio::esp32c6::kSdioD0, board::gpio::esp32c6::kSdioD1,
+      board::gpio::esp32c6::kSdioD2, board::gpio::esp32c6::kSdioD3,
+      -1, -1, -1, -1,
       cpp_bus_driver::HardwareSdio::SdioPort::kSlot1);
 
   auto esp32c6_at = std::make_unique<cpp_bus_driver::EspAt>(
       esp32c6_at_sdio_bus, [](bool value) -> void {
         // ESP32C6复位
-        driver.chip().xl9535->GpioWrite(
-            XL9535_ESP32C6_EN,
-            static_cast<cpp_bus_driver::Xl95x5::Value>(value));
+        lilygo_device_driver::TDisplayP4Driver::GetInstance()
+            .chip()
+            .xl9535->GpioWrite(board::gpio::xl9535::kEsp32c6En,
+                static_cast<uint8_t>(value));
       });
 
   esp32c6_at->Init();

@@ -8,6 +8,8 @@
 #include "new_notification_010_c2_b16_s44100.h"
 #include "lilygo_device_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
@@ -21,7 +23,8 @@ extern "C" void app_main(void) {
 
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput,
       cpp_bus_driver::Tool::GpioStatus::kPullup);
 
   size_t play_count = 1;
@@ -43,7 +46,7 @@ extern "C" void app_main(void) {
     //   es8311->WriteI2s(data.get(), data_lenght * sizeof(uint16_t));
     // }
 
-    if (esp32p4->Tool::GpioRead(ESP32P4_BOOT) == 0) {
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
       uint8_t buffer = 0;
       for (size_t i = 0; i < 256; i++) {
         driver.bus().es8311_i2c_bus->BusI2cGuide::Read(

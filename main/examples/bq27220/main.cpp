@@ -2,7 +2,7 @@
  * @Description: bq27220
  * @Author: LILYGO_L
  * @Date: 2025-01-04 15:06:05
- * @LastEditTime: 2026-05-13 00:12:00
+ * @LastEditTime: 2026-07-13 22:30:41
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"

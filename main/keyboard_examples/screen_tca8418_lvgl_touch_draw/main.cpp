@@ -9,7 +9,11 @@
 #include "lvgl.h"
 #include "lvgl_keyboard_config.h"
 
+#include <iterator>
+
 #define LVGL_TICK_PERIOD_MS 1
+
+namespace board = lilygo_device_driver::t_display_p4;
 
 std::vector<uint16_t> g_lvgl_draw_x_data;
 std::vector<uint16_t> g_lvgl_draw_y_data;
@@ -103,8 +107,8 @@ void MyKeyboardRead(lv_indev_t* indev, lv_indev_data_t* data) {
                        i + 1, tp.info[i].num, touch_position.x,
                        touch_position.y, tp.info[i].press_flag);
 
-                const size_t key_count =
-                    sizeof(Tca8418_Map) / sizeof(std::string);
+                const auto& key_map = board::keyboard::device::tca8418::kMap;
+                const size_t key_count = std::size(key_map);
                 const size_t lvgl_key_count =
                     sizeof(Tca8418_Map_Lvgl) / sizeof(uint32_t);
                 const bool key_valid = (tp.info[i].num > 0) &&
@@ -114,23 +118,24 @@ void MyKeyboardRead(lv_indev_t* indev, lv_indev_data_t* data) {
 
                 if (key_valid) {
                   printf("   Touch string: %s\n",
-                         Tca8418_Map[key_index].c_str());
+                         key_map[key_index].c_str());
                   lv_label_set_text(g_keyboard_label,
-                                    Tca8418_Map[key_index].c_str());
+                                    key_map[key_index].c_str());
                 }
 
                 if (tp.info[i].press_flag == 1) {
                   pressed_state_flag = true;
 
-                  if (key_valid && (Tca8418_Map[key_index] == "Caps")) {
+                  if (key_valid && (key_map[key_index] == "Caps")) {
                     caps_lock_flag = !caps_lock_flag;
 
-                    auto led_value = caps_lock_flag
-                                         ? cpp_bus_driver::Xl95x5::Value::kLow
-                                         : cpp_bus_driver::Xl95x5::Value::kHigh;
-                    g_xl9555->GpioWrite(XL9555_LED_1, led_value);
-                    g_xl9555->GpioWrite(XL9555_LED_2, led_value);
-                    g_xl9555->GpioWrite(XL9555_LED_3, led_value);
+                    const uint8_t led_value = caps_lock_flag ? 0 : 1;
+                    g_xl9555->GpioWrite(
+                        board::keyboard::gpio::xl9555::kLed1, led_value);
+                    g_xl9555->GpioWrite(
+                        board::keyboard::gpio::xl9555::kLed2, led_value);
+                    g_xl9555->GpioWrite(
+                        board::keyboard::gpio::xl9555::kLed3, led_value);
                   }
 
                   if (key_valid) {
@@ -429,7 +434,8 @@ extern "C" void app_main(void) {
 
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
   esp32p4->InitGpioInterrupt(
-      TCA8418_INT, cpp_bus_driver::Tool::InterruptMode::kFalling,
+      board::keyboard::gpio::tca8418::kInt,
+      cpp_bus_driver::Tool::InterruptMode::kFalling,
       [](void* arg) -> void { g_interrupt_flag = true; });
 
   driver.chip().tca8418_backlight->StartGradientTime(30, 1000);

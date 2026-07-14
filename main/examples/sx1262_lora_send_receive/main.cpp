@@ -7,25 +7,14 @@
  */
 #include "lilygo_device_driver_library.h"
 
+namespace board = lilygo_device_driver::t_display_p4;
+
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
   using Sx126x = cpp_bus_driver::Sx126x;
-  constexpr uint16_t kRxDoneIrqMask =
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kRxDone) |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTimeout) |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kCrcError) |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kHeaderError);
-  constexpr uint16_t kRxIrqMask =
-      kRxDoneIrqMask |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kPreambleDetected) |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kHeaderValid);
-  constexpr uint16_t kTxIrqMask =
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTxDone) |
-      Sx126x::IrqMask(Sx126x::IrqMaskFlag::kTimeout);
-
   uint8_t receive_package[255] = {0};
-  uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+  const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
   size_t cycle_time = 0;
 
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
@@ -35,28 +24,42 @@ extern "C" void app_main(void) {
   auto& xl9535 = driver.chip().xl9535;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-  esp32p4->SetGpioMode(ESP32P4_BOOT, cpp_bus_driver::Tool::GpioMode::kInput,
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput,
       cpp_bus_driver::Tool::GpioStatus::kPullup);
 
-  sx1262->ConfigLoraParams(
-      920.0, Sx126x::LoraBw::kBw125000Hz, 140, 22, Sx126x::Sf::kSf9,
-      Sx126x::Cr::kCr47, Sx126x::LoraCrcType::kOn);
-  sx1262->ClearBuffer();
-
-  sx1262->StartLora(cpp_bus_driver::Sx126x::ChipMode::kRx);
-  sx1262->SetIrqGpioMode(
-      kRxDoneIrqMask, 0, 0, kRxIrqMask);
-  sx1262->ClearIrqFlag(kRxIrqMask);
+  Sx126x::LoraConfig lora_config;
+  lora_config.frequency_mhz = 920.0;
+  lora_config.bandwidth = Sx126x::LoraBw::kBw125000Hz;
+  lora_config.current_limit = 140.0f;
+  lora_config.power = 22;
+  lora_config.spreading_factor = Sx126x::Sf::kSf9;
+  lora_config.coding_rate = Sx126x::Cr::kCr47;
+  lora_config.crc_type = Sx126x::LoraCrcType::kOn;
+  if (!sx1262->Configure(lora_config) || !sx1262->ClearBuffer() ||
+      !sx1262->StartReceive()) {
+    printf("Sx1262 LoRa config failed\n");
+    return;
+  }
 
   printf("Sx1262 start lora transmit\n");
 
   while (1) {
     if (esp_log_timestamp() > cycle_time) {
-      printf("Sx1262 id: %s\n", sx1262->GetDeviceId().c_str());
+      Sx126x::DeviceId device_id;
+      if (sx1262->GetDeviceId(device_id)) {
+        printf("Sx1262 id: %.*s\n", static_cast<int>(device_id.bytes.size()),
+            reinterpret_cast<const char*>(device_id.bytes.data()));
+      }
 
-      printf("Sx1262 get current limit: %d\n", sx1262->GetCurrentLimit());
+      float current_limit = 0.0f;
+      if (sx1262->GetCurrentLimit(current_limit)) {
+        printf("Sx1262 get current limit: %.01f mA\n", current_limit);
+      }
 
-      switch (sx1262->GetPacketType()) {
+      Sx126x::PacketType packet_type = Sx126x::PacketType::kFalse;
+      sx1262->GetPacketType(packet_type);
+      switch (packet_type) {
         case cpp_bus_driver::Sx126x::PacketType::kGfsk:
           printf("Sx1262 packet type: GFSK\n");
           break;
@@ -71,7 +74,9 @@ extern "C" void app_main(void) {
           break;
       }
 
-      switch (sx1262->ParseChipModeStatus(sx1262->GetStatus())) {
+      uint8_t status = 0;
+      sx1262->GetStatus(status);
+      switch (sx1262->ParseChipModeStatus(status)) {
         case cpp_bus_driver::Sx126x::ChipModeStatus::kStbyRc:
           printf("Sx1262 chip mode status: STBY_RC\n");
           break;
@@ -95,17 +100,13 @@ extern "C" void app_main(void) {
       cycle_time = esp_log_timestamp() + 1000;
     }
 
-    if (esp32p4->GpioRead(ESP32P4_BOOT) == 0) {
-      sx1262->SetRxTxFallbackMode(cpp_bus_driver::Sx126x::FallbackMode::kFs);
-      sx1262->SetIrqGpioMode(
-          kTxIrqMask, 0, 0, kTxIrqMask);
-      sx1262->ClearIrqFlag(kTxIrqMask);
-
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
       printf("Sx1262 send start\n");
       uint16_t timeout_count = 0;
-      if (sx1262->SendData(send_package, sizeof(send_package))) {
+      if (sx1262->StartTransmit(send_package, sizeof(send_package),
+              Sx126x::kTimeoutDisabled, Sx126x::FallbackMode::kFs)) {
         while (1) {
-          if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
+          if (xl9535->GpioRead(board::gpio::xl9535::kSx1262Dio1) == 1) {
             Sx126x::SendStatus send_status;
             if (!sx1262->GetSendStatus(send_status)) {
               printf("Get send status failed\n");
@@ -124,7 +125,7 @@ extern "C" void app_main(void) {
           timeout_count++;
           if (timeout_count > 1000) {
             printf("Sx1262 send timeout\n");
-            sx1262->ClearIrqFlag(kTxIrqMask);
+            sx1262->ClearIrqFlag(Sx126x::IrqMaskFlag::kAll);
             break;
           }
           vTaskDelay(pdMS_TO_TICKS(10));
@@ -133,18 +134,15 @@ extern "C" void app_main(void) {
         printf("Sx1262 send failed\n");
       }
 
-      sx1262->StartLora(cpp_bus_driver::Sx126x::ChipMode::kRx);
-      sx1262->SetIrqGpioMode(
-          kRxDoneIrqMask, 0, 0, kRxIrqMask);
-      sx1262->ClearIrqFlag(kRxIrqMask);
+      sx1262->StartReceive();
     }
 
-    if (xl9535->GpioRead(XL9535_SX1262_DIO1) == 1) {
+    if (xl9535->GpioRead(board::gpio::xl9535::kSx1262Dio1) == 1) {
       Sx126x::ReceiveStatus receive_status;
       std::memset(receive_package, 0, sizeof(receive_package));
-      uint8_t length_buffer =
-          sx1262->ReceiveData(receive_package, 0, &receive_status);
-      if (length_buffer == 0) {
+      size_t length_buffer = 0;
+      if (!sx1262->ReadReceivedPacket(receive_package,
+              sizeof(receive_package), length_buffer, &receive_status)) {
         printf("Sx1262 receive failed\n");
       } else {
         cpp_bus_driver::Sx126x::PacketMetrics packet_metrics;
@@ -157,10 +155,12 @@ extern "C" void app_main(void) {
               packet_metrics.lora.snr);
         }
 
-        for (uint8_t i = 0; i < length_buffer; i++) {
-          printf("Get sx1262 data[%d]: %d\n", i, receive_package[i]);
+        for (size_t i = 0; i < length_buffer; i++) {
+          printf("Get sx1262 data[%zu]: %u\n", i,
+              static_cast<unsigned int>(receive_package[i]));
         }
       }
+      sx1262->StartReceive();
     }
 
     vTaskDelay(pdMS_TO_TICKS(10));
