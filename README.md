@@ -85,37 +85,15 @@ Example Configuration
 `-- Select the example to build
 ```
 
-### T-Display-P4 Examples
+### Examples
 
-| Example | Description |
-| --- | --- |
-| [`afe`](./main/examples/afe) | Audio front-end example |
-| [`bq27220`](./main/examples/bq27220) | Battery gauge example |
-| [`es8311`](./main/examples/es8311) | ES8311 audio codec example |
-| [`es8311_sd_mp3`](./main/examples/es8311_sd_mp3) | MP3 playback from an SD card |
-| [`es8311_sd_wav`](./main/examples/es8311_sd_wav) | WAV playback from an SD card |
-| [`esp32c6_at_host_sdio_uart`](./main/examples/esp32c6_at_host_sdio_uart) | ESP-AT UART service over the ESP32-C6 SDIO link |
-| [`esp32c6_at_host_sdio_wifi`](./main/examples/esp32c6_at_host_sdio_wifi) | ESP-AT Wi-Fi service over the ESP32-C6 SDIO link |
-| [`icm20948`](./main/examples/icm20948) | ICM20948 IMU example |
-| [`iperf_ethernet`](./main/examples/iperf_ethernet) | Onboard Ethernet throughput test |
-| [`l76k`](./main/examples/l76k) | L76K GPS example |
-| [`pcf8563`](./main/examples/pcf8563) | PCF8563 RTC and alarm example |
-| [`radiolib_sx1262_send_receive`](./main/examples/radiolib_sx1262_send_receive) | SX1262 send/receive example using RadioLib |
-| [`semtech_sx1262_lora_send_receive`](./main/examples/semtech_sx1262_lora_send_receive) | SX1262 LoRa example using the Semtech driver |
-| [`sx1262_gfsk_send_receive`](./main/examples/sx1262_gfsk_send_receive) | Native SX1262 GFSK send/receive example |
-| [`sx1262_lora_send_receive`](./main/examples/sx1262_lora_send_receive) | Native SX1262 LoRa send/receive example |
-| [`sx1262_tx_continuous_wave`](./main/examples/sx1262_tx_continuous_wave) | SX1262 continuous-wave transmit example |
+| Example Collection | Link | Description |
+| --- | --- | --- |
+| General device-driver examples | [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | Shared examples maintained in a dedicated repository |
+| T-Display-P4 examples | [`main/examples`](./main/examples) | Examples specific to the T-Display-P4 board |
+| T-Display-P4-Keyboard examples | [`main/keyboard_examples`](./main/keyboard_examples) | Examples for the keyboard expansion board |
 
-### T-Display-P4-Keyboard Examples
-
-| Example | Description |
-| --- | --- |
-| [`radiolib_cc1101_send_receive`](./main/keyboard_examples/radiolib_cc1101_send_receive) | CC1101 send/receive example using RadioLib |
-| [`radiolib_nrf24l01_send_receive`](./main/keyboard_examples/radiolib_nrf24l01_send_receive) | NRF24L01 send/receive example using RadioLib |
-| [`screen_tca8418_lvgl_touch_draw`](./main/keyboard_examples/screen_tca8418_lvgl_touch_draw) | LVGL touch drawing and keyboard input example |
-| [`st25r3916`](./main/keyboard_examples/st25r3916) | ST25R3916 NFC example |
-| [`tca8418`](./main/keyboard_examples/tca8418) | TCA8418 keyboard example |
-| [`xl9555`](./main/keyboard_examples/xl9555) | XL9555 IO expansion example |
+Open an example collection above for the current source and supported example list.
 
 ### Prebuilt Firmware
 
@@ -125,12 +103,12 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 
 | Firmware | Flash Address | Description |
 | --- | --- | --- |
-| [`T-Display-P4 LVGL UI`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 factory UI firmware |
-| [`T-Display-P4-Keyboard LVGL UI`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | Keyboard expansion board factory UI firmware |
-| [`ESP32-C6 AT`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT coprocessor firmware |
-| [`ESP32-C6 network adapter`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO network-adapter firmware |
-| [`Edge Agent`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
-| [`Xiaozhi`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
+| [`[T-Display-P4][lvgl_9_ui]`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 factory UI firmware |
+| [`[T-Display-P4-Keyboard][lvgl_9_ui]`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | Keyboard expansion board factory UI firmware |
+| [`[T-Display-P4][esp32c6_at_slave]`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT coprocessor firmware |
+| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO network-adapter firmware |
+| [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
+| [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
 
 > [!IMPORTANT]
 > Select `ESP32-P4` when flashing T-Display-P4 or T-Display-P4-Keyboard firmware. Select `ESP32-C6` when flashing ESP32-C6 AT or network-adapter firmware. Firmware images are not interchangeable between the two chips.

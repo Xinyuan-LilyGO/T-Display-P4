@@ -85,37 +85,15 @@ Example Configuration
 `-- Select the example to build
 ```
 
-### T-Display-P4 示例
+### 示例
 
-| 示例 | 说明 |
-| --- | --- |
-| [`afe`](./main/examples/afe) | 音频前端示例 |
-| [`bq27220`](./main/examples/bq27220) | 电池电量计示例 |
-| [`es8311`](./main/examples/es8311) | ES8311 音频编解码器示例 |
-| [`es8311_sd_mp3`](./main/examples/es8311_sd_mp3) | 从 SD 卡播放 MP3 |
-| [`es8311_sd_wav`](./main/examples/es8311_sd_wav) | 从 SD 卡播放 WAV |
-| [`esp32c6_at_host_sdio_uart`](./main/examples/esp32c6_at_host_sdio_uart) | 通过 ESP32-C6 SDIO 链路使用 ESP-AT UART 服务 |
-| [`esp32c6_at_host_sdio_wifi`](./main/examples/esp32c6_at_host_sdio_wifi) | 通过 ESP32-C6 SDIO 链路使用 ESP-AT Wi-Fi 服务 |
-| [`icm20948`](./main/examples/icm20948) | ICM20948 惯性传感器示例 |
-| [`iperf_ethernet`](./main/examples/iperf_ethernet) | 板载以太网吞吐量测试 |
-| [`l76k`](./main/examples/l76k) | L76K GPS 示例 |
-| [`pcf8563`](./main/examples/pcf8563) | PCF8563 RTC 和闹钟示例 |
-| [`radiolib_sx1262_send_receive`](./main/examples/radiolib_sx1262_send_receive) | 使用 RadioLib 的 SX1262 收发示例 |
-| [`semtech_sx1262_lora_send_receive`](./main/examples/semtech_sx1262_lora_send_receive) | 使用 Semtech 驱动的 SX1262 LoRa 示例 |
-| [`sx1262_gfsk_send_receive`](./main/examples/sx1262_gfsk_send_receive) | 原生 SX1262 GFSK 收发示例 |
-| [`sx1262_lora_send_receive`](./main/examples/sx1262_lora_send_receive) | 原生 SX1262 LoRa 收发示例 |
-| [`sx1262_tx_continuous_wave`](./main/examples/sx1262_tx_continuous_wave) | SX1262 连续波发射示例 |
+| 示例集合 | 链接 | 说明 |
+| --- | --- | --- |
+| 通用设备驱动示例 | [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | 在独立仓库中集中维护的通用示例 |
+| T-Display-P4 示例 | [`main/examples`](./main/examples) | T-Display-P4 板级专用示例 |
+| T-Display-P4-Keyboard 示例 | [`main/keyboard_examples`](./main/keyboard_examples) | 键盘扩展板专用示例 |
 
-### T-Display-P4-Keyboard 示例
-
-| 示例 | 说明 |
-| --- | --- |
-| [`radiolib_cc1101_send_receive`](./main/keyboard_examples/radiolib_cc1101_send_receive) | 使用 RadioLib 的 CC1101 收发示例 |
-| [`radiolib_nrf24l01_send_receive`](./main/keyboard_examples/radiolib_nrf24l01_send_receive) | 使用 RadioLib 的 NRF24L01 收发示例 |
-| [`screen_tca8418_lvgl_touch_draw`](./main/keyboard_examples/screen_tca8418_lvgl_touch_draw) | LVGL 触摸绘图与键盘输入示例 |
-| [`st25r3916`](./main/keyboard_examples/st25r3916) | ST25R3916 NFC 示例 |
-| [`tca8418`](./main/keyboard_examples/tca8418) | TCA8418 键盘示例 |
-| [`xl9555`](./main/keyboard_examples/xl9555) | XL9555 IO 扩展示例 |
+请通过上方入口查看最新源码和当前支持的示例。
 
 ### 预编译固件
 
@@ -125,12 +103,12 @@ Example Configuration
 
 | 固件 | 烧录地址 | 说明 |
 | --- | --- | --- |
-| [`T-Display-P4 LVGL UI`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 出厂 UI 固件 |
-| [`T-Display-P4-Keyboard LVGL UI`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | 键盘扩展板出厂 UI 固件 |
-| [`ESP32-C6 AT`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT 协处理器固件 |
-| [`ESP32-C6 网络适配器`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO 网络适配器固件 |
-| [`Edge Agent`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent 应用固件 |
-| [`小智`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
+| [`[T-Display-P4][lvgl_9_ui]`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 出厂 UI 固件 |
+| [`[T-Display-P4-Keyboard][lvgl_9_ui]`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | 键盘扩展板出厂 UI 固件 |
+| [`[T-Display-P4][esp32c6_at_slave]`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT 协处理器固件 |
+| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO 网络适配器固件 |
+| [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent 应用固件 |
+| [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
 
 > [!IMPORTANT]
 > 烧录 T-Display-P4 和 T-Display-P4-Keyboard 固件时选择 `ESP32-P4`；烧录 ESP32-C6 AT 或网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
