@@ -89,7 +89,8 @@ Example Configuration
 
 | Example Collection | Link | Description |
 | --- | --- | --- |
-| General device-driver examples | [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | Shared examples maintained in a dedicated repository |
+| Factory example | [`lilygobox-espidf`](./apps/lilygobox-espidf) | Factory application example for T-Display-P4 |
+| General device-driver examples | [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | Shared examples maintained in a dedicated application project |
 | T-Display-P4 examples | [`main/examples`](./main/examples) | Examples specific to the T-Display-P4 board |
 | T-Display-P4-Keyboard examples | [`main/keyboard_examples`](./main/keyboard_examples) | Examples for the keyboard expansion board |
 
@@ -103,15 +104,12 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 
 | Firmware | Flash Address | Description |
 | --- | --- | --- |
-| [`[T-Display-P4][lvgl_9_ui]`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 factory UI firmware |
-| [`[T-Display-P4-Keyboard][lvgl_9_ui]`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | Keyboard expansion board factory UI firmware |
-| [`[T-Display-P4][esp32c6_at_slave]`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT coprocessor firmware |
-| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO network-adapter firmware |
+| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | Factory network-adapter firmware for the ESP32-C6 onboard the T-Display-P4 |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
 
 > [!IMPORTANT]
-> Select `ESP32-P4` when flashing T-Display-P4 or T-Display-P4-Keyboard firmware. Select `ESP32-C6` when flashing ESP32-C6 AT or network-adapter firmware. Firmware images are not interchangeable between the two chips.
+> Select `ESP32-P4` when flashing T-Display-P4 application firmware. Select `ESP32-C6` when flashing ESP32-C6 AT or network-adapter firmware. Firmware images are not interchangeable between the two chips.
 
 ## Hardware Modules
 

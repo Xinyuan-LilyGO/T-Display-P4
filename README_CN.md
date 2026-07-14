@@ -1,6 +1,6 @@
 <h1 align="center">T-Display-P4</h1>
 
-## [English](./README.md) | **中文**
+## [英语](./README.md) | **中文**
 
 [![License](https://img.shields.io/github/license/Xinyuan-LilyGO/T-Display-P4?style=flat-square)](./LICENSE)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.4%2B-ff6f00?style=flat-square)](https://github.com/espressif/esp-idf)
@@ -89,7 +89,8 @@ Example Configuration
 
 | 示例集合 | 链接 | 说明 |
 | --- | --- | --- |
-| 通用设备驱动示例 | [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | 在独立仓库中集中维护的通用示例 |
+| 出厂示例 | [`lilygobox-espidf`](./apps/lilygobox-espidf) | T-Display-P4 出厂应用示例 |
+| 通用设备驱动示例 | [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | 在独立应用工程中集中维护的通用示例 |
 | T-Display-P4 示例 | [`main/examples`](./main/examples) | T-Display-P4 板级专用示例 |
 | T-Display-P4-Keyboard 示例 | [`main/keyboard_examples`](./main/keyboard_examples) | 键盘扩展板专用示例 |
 
@@ -103,15 +104,12 @@ Example Configuration
 
 | 固件 | 烧录地址 | 说明 |
 | --- | --- | --- |
-| [`[T-Display-P4][lvgl_9_ui]`](<./firmware/[T-Display-P4][lvgl_9_ui]>) | `0x0` | T-Display-P4 出厂 UI 固件 |
-| [`[T-Display-P4-Keyboard][lvgl_9_ui]`](<./firmware/[T-Display-P4-Keyboard][lvgl_9_ui]>) | `0x0` | 键盘扩展板出厂 UI 固件 |
-| [`[T-Display-P4][esp32c6_at_slave]`](<./firmware/[T-Display-P4][esp32c6_at_slave]>) | `0x0` | ESP32-C6 ESP-AT 协处理器固件 |
-| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | ESP32-C6 SDIO 网络适配器固件 |
+| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | T-Display-P4 板载 ESP32-C6 的网络适配器出厂固件 |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent 应用固件 |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
 
 > [!IMPORTANT]
-> 烧录 T-Display-P4 和 T-Display-P4-Keyboard 固件时选择 `ESP32-P4`；烧录 ESP32-C6 AT 或网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
+> 烧录 T-Display-P4 应用固件时选择 `ESP32-P4`；烧录 ESP32-C6 AT 或网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
 
 ## 硬件模块
 
