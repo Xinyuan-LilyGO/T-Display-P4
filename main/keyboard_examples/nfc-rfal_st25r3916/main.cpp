@@ -1,8 +1,8 @@
 /*
- * @Description: st25r3916
+ * @Description: nfc-rfal_st25r3916
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2026-04-27 15:55:08
+ * @LastEditTime: 2026-07-15
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"

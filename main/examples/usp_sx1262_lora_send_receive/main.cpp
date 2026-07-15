@@ -1,12 +1,68 @@
 /*
- * @Description: semtech_sx1262_lora_send_receive
+ * @Description: usp_sx1262_lora_send_receive
  * @Author: LILYGO_L
- * @Date: 2026-07-10
- * @LastEditTime: 2026-07-12 12:32:29
+ * @Date: 2026-07-15 08:55:18
+ * @LastEditTime: 2026-07-15 09:51:15
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
 #include "sx126x/sx126x_driver.h"
+
+namespace {
+
+/**
+ * @brief Convert the SX1262 chip mode to readable text.
+ * @param mode SX1262 chip mode
+ * @return Text describing the chip mode
+ */
+const char* ChipModeToString(sx126x_chip_modes_t mode) {
+  switch (mode) {
+    case SX126X_CHIP_MODE_UNUSED:
+      return "unused";
+    case SX126X_CHIP_MODE_RFU:
+      return "reserved for future use";
+    case SX126X_CHIP_MODE_STBY_RC:
+      return "standby RC";
+    case SX126X_CHIP_MODE_STBY_XOSC:
+      return "standby XOSC";
+    case SX126X_CHIP_MODE_FS:
+      return "frequency synthesis";
+    case SX126X_CHIP_MODE_RX:
+      return "receive";
+    case SX126X_CHIP_MODE_TX:
+      return "transmit";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * @brief Convert the SX1262 command status to readable text.
+ * @param status SX1262 command status
+ * @return Text describing the command status
+ */
+const char* CommandStatusToString(sx126x_cmd_status_t status) {
+  switch (status) {
+    case SX126X_CMD_STATUS_RESERVED:
+      return "reserved";
+    case SX126X_CMD_STATUS_RFU:
+      return "reserved for future use";
+    case SX126X_CMD_STATUS_DATA_AVAILABLE:
+      return "data available";
+    case SX126X_CMD_STATUS_CMD_TIMEOUT:
+      return "command timeout";
+    case SX126X_CMD_STATUS_CMD_PROCESS_ERROR:
+      return "command processing error";
+    case SX126X_CMD_STATUS_CMD_EXEC_FAILURE:
+      return "command execution failure";
+    case SX126X_CMD_STATUS_CMD_TX_DONE:
+      return "transmit done";
+    default:
+      return "unknown";
+  }
+}
+
+}  // namespace
 
 extern "C" void app_main(void) {
   printf("Ciallo\n");
@@ -27,13 +83,13 @@ extern "C" void app_main(void) {
       std::make_shared<cpp_bus_driver::HardwareSpi>(board::gpio::sx1262::kMosi,
           board::gpio::sx1262::kSclk, board::gpio::sx1262::kMiso, SPI2_HOST, 0);
 
-  semtech_cpp_bus_driver::Sx126x::HardwareConfig hardware_config;
+  usp_cpp_bus_driver::Sx126x::HardwareConfig hardware_config;
   hardware_config.regulator_mode = SX126X_REG_MODE_DCDC;
   hardware_config.dio2_controls_rf_switch = true;
   hardware_config.enable_tcxo = true;
   hardware_config.tcxo_voltage = SX126X_TCXO_CTRL_1_6V;
 
-  semtech_cpp_bus_driver::Sx126x sx1262(
+  usp_cpp_bus_driver::Sx126x sx1262(
       sx1262_spi_bus, board::gpio::sx1262::kBusy, board::gpio::sx1262::kCs,
       [&xl9535](bool level) {
         return xl9535->GpioWrite(
@@ -50,7 +106,7 @@ extern "C" void app_main(void) {
     return;
   }
 
-  semtech_cpp_bus_driver::Sx126x::LoraConfig lora_config;
+  usp_cpp_bus_driver::Sx126x::LoraConfig lora_config;
   lora_config.frequency_hz = 920000000;
   lora_config.spreading_factor = SX126X_LORA_SF9;
   lora_config.bandwidth = SX126X_LORA_BW_125;
@@ -107,7 +163,7 @@ extern "C" void app_main(void) {
           sx1262.StartReceive();
         } else if ((irq_mask & SX126X_IRQ_RX_DONE) != 0) {
           uint8_t received_size = 0;
-          semtech_cpp_bus_driver::Sx126x::PacketMetrics metrics;
+          usp_cpp_bus_driver::Sx126x::PacketMetrics metrics;
           if (sx1262.ReadPacket(receive_package, sizeof(receive_package),
                   received_size, &metrics)) {
             printf("SX1262 receive RSSI: %d dBm SNR: %d dB\n",
@@ -129,8 +185,10 @@ extern "C" void app_main(void) {
     if (current_time >= status_print_time) {
       sx126x_chip_status_t chip_status = {};
       if (sx1262.GetChipStatus(chip_status)) {
-        printf("SX1262 chip mode: %d command status: %d\n",
+        printf("SX1262 chip mode: %s (%d) command status: %s (%d)\n",
+            ChipModeToString(chip_status.chip_mode),
             static_cast<int>(chip_status.chip_mode),
+            CommandStatusToString(chip_status.cmd_status),
             static_cast<int>(chip_status.cmd_status));
       }
       status_print_time = current_time + 1000;

@@ -10,8 +10,8 @@ dependencies:
   radiolib_cpp_bus_driver:
     override_path: "../libraries/radiolib_cpp_bus_driver"
 
-  semtech_cpp_bus_driver:
-    override_path: "../libraries/semtech_cpp_bus_driver"
+  usp_cpp_bus_driver:
+    override_path: "../libraries/usp_cpp_bus_driver"
 
   icm20948_we:
     override_path: "../libraries/icm20948_we"
@@ -73,9 +73,14 @@ dependencies:
   ST25R3916:
     override_path: "../libraries/ST25R3916"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_NFC_RFAL_ST25R3916} == True"
 
   NFC-RFAL:
     override_path: "../libraries/NFC-RFAL"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ST25R3916} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_NFC_RFAL_ST25R3916} == True"
+
+  stsw-st25rfal002_cpp_bus_driver:
+    override_path: "../libraries/stsw-st25rfal002_cpp_bus_driver"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_STSW_ST25RFAL002_ST25R3916} == True"

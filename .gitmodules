@@ -28,6 +28,9 @@
 [submodule "apps/lilygo_device_driver_example"]
 	path = apps/lilygo_device_driver_example
 	url = https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example.git
-[submodule "libraries/semtech_cpp_bus_driver"]
-	path = libraries/semtech_cpp_bus_driver
-	url = https://github.com/Llgok/semtech_cpp_bus_driver.git
+[submodule "libraries/usp_cpp_bus_driver"]
+	path = libraries/usp_cpp_bus_driver
+	url = https://github.com/Llgok/usp_cpp_bus_driver.git
+[submodule "libraries/stsw-st25rfal002_cpp_bus_driver"]
+	path = libraries/stsw-st25rfal002_cpp_bus_driver
+	url = https://github.com/Llgok/stsw-st25rfal002_cpp_bus_driver.git
