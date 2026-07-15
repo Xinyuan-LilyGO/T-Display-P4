@@ -2,11 +2,10 @@
  * @Description: usp_sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2026-07-15 08:55:18
- * @LastEditTime: 2026-07-15 09:51:15
+ * @LastEditTime: 2026-07-15 17:00:00
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
-#include "sx126x/sx126x_driver.h"
 
 namespace {
 
@@ -72,37 +71,20 @@ extern "C" void app_main(void) {
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
   driver.CreateDrivers();
 
-  if (!driver.InitXl9535() || !driver.InitPower() || !driver.ConfigXl9535()) {
+  if (!driver.InitXl9535() || !driver.InitPower() || !driver.ConfigXl9535() ||
+      !driver.InitSx1262()) {
     printf("Board radio power init failed\n");
     return;
   }
 
   auto& xl9535 = driver.chip().xl9535;
+  auto& sx1262 = *driver.chip().sx1262;
   auto tool = std::make_unique<cpp_bus_driver::Tool>();
-  auto sx1262_spi_bus =
-      std::make_shared<cpp_bus_driver::HardwareSpi>(board::gpio::sx1262::kMosi,
-          board::gpio::sx1262::kSclk, board::gpio::sx1262::kMiso, SPI2_HOST, 0);
 
-  usp_cpp_bus_driver::Sx126x::HardwareConfig hardware_config;
-  hardware_config.regulator_mode = SX126X_REG_MODE_DCDC;
-  hardware_config.dio2_controls_rf_switch = true;
-  hardware_config.enable_tcxo = true;
-  hardware_config.tcxo_voltage = SX126X_TCXO_CTRL_1_6V;
-
-  usp_cpp_bus_driver::Sx126x sx1262(
-      sx1262_spi_bus, board::gpio::sx1262::kBusy, board::gpio::sx1262::kCs,
-      [&xl9535](bool level) {
-        return xl9535->GpioWrite(
-            board::gpio::xl9535::kSx1262Rst, static_cast<uint8_t>(level));
-      },
-      hardware_config);
-
-  tool->SetGpioMode(board::gpio::button::kEsp32p4Boot,
-      cpp_bus_driver::Tool::GpioMode::kInput,
-      cpp_bus_driver::Tool::GpioStatus::kPullup);
-
-  if (!sx1262.Init(10000000)) {
-    printf("SX1262 init failed\n");
+  if (!tool->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+          cpp_bus_driver::Tool::GpioMode::kInput,
+          cpp_bus_driver::Tool::GpioStatus::kPullup)) {
+    printf("Button init failed\n");
     return;
   }
 
@@ -120,7 +102,6 @@ extern "C" void app_main(void) {
 
   const uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
   uint8_t receive_package[255] = {};
-  bool button_latched = false;
   bool transmitting = false;
   uint32_t status_print_time = 0;
 
@@ -129,8 +110,7 @@ extern "C" void app_main(void) {
   while (true) {
     const bool button_pressed =
         tool->GpioRead(board::gpio::button::kEsp32p4Boot) == 0;
-    if (button_pressed && !button_latched && !transmitting) {
-      button_latched = true;
+    if (button_pressed && !transmitting) {
       printf("SX1262 send start\n");
       if (sx1262.StartTransmit(send_package, sizeof(send_package))) {
         transmitting = true;
@@ -138,8 +118,6 @@ extern "C" void app_main(void) {
         printf("SX1262 send failed\n");
         sx1262.StartReceive();
       }
-    } else if (!button_pressed) {
-      button_latched = false;
     }
 
     if (xl9535->GpioRead(board::gpio::xl9535::kSx1262Dio1) == 1) {

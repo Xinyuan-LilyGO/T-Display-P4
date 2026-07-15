@@ -2,7 +2,7 @@
  * @Description: sx1262_gfsk_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:54:47
- * @LastEditTime: 2026-04-30 10:31:24
+ * @LastEditTime: 2026-07-15 16:30:00
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -18,9 +18,22 @@ extern "C" void app_main(void) {
   size_t cycle_time = 0;
 
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
-  driver.Init();
+  driver.CreateDrivers();
 
-  auto& sx1262 = driver.chip().sx1262;
+  if (!driver.InitXl9535() || !driver.InitPower() ||
+      !driver.ConfigXl9535()) {
+    printf("Board radio power init failed\n");
+    return;
+  }
+
+  auto sx1262 = std::make_unique<Sx126x>(driver.bus().sx1262_spi_bus,
+      Sx126x::ChipType::kSx1262, board::gpio::sx1262::kBusy,
+      board::gpio::sx1262::kCs);
+  if (!sx1262->Init(10000000)) {
+    printf("Sx1262 init failed\n");
+    return;
+  }
+
   auto& xl9535 = driver.chip().xl9535;
   auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
@@ -34,9 +47,7 @@ extern "C" void app_main(void) {
   gfsk_config.bandwidth = Sx126x::GfskBw::kBw467000Hz;
   gfsk_config.current_limit = 140.0f;
   gfsk_config.power = 22;
-  gfsk_config.frequency_deviation_khz = 10.0;
-  gfsk_config.sync_word = {};
-  gfsk_config.sync_word_length = 0;
+  gfsk_config.frequency_deviation_khz = 50.0;
   gfsk_config.pulse_shape = Sx126x::PulseShape::kGaussianBt1;
   gfsk_config.crc_type = Sx126x::GfskCrcType::kCrc2ByteInv;
   gfsk_config.crc_initial = 0x1D0F;
