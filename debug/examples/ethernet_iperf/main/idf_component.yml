@@ -1,3 +1,0 @@
-dependencies:
-  espressif/iperf-cmd:
-    version: "~0.1.1"

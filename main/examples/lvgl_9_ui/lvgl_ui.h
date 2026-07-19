@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-01-14 11:11:47
+ * @LastEditTime: 2026-03-24 15:34:54
  * @License: GPL 3.0
  */
 #pragma once
@@ -229,10 +229,14 @@ namespace Lvgl_Ui
                         lv_obj_t *root;
                         lv_obj_t *data_label;
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
                         lv_obj_t *otg_label;
                         bool otg_switch_status = false;
                         lv_obj_t *otg_switch;
+
+                        lv_obj_t *hcc_label;
+                        bool hcc_switch_status = false;
+                        lv_obj_t *hcc_switch;
 #endif
                     } battery_health_test;
 
@@ -258,7 +262,7 @@ namespace Lvgl_Ui
                     {
                         lv_obj_t *root;
                         lv_obj_t *data_label;
-                    } esp32c6_at_test;
+                    } esp32c6_test;
 
                     // lv_obj_t *sleep_test;
 
@@ -357,6 +361,7 @@ namespace Lvgl_Ui
                                 struct
                                 {
                                     lv_obj_t *rf_switch;
+                                    lv_obj_t *modulation;
                                     lv_obj_t *bandwidth;
                                 } dropdown;
                             } cc1101;
@@ -523,6 +528,12 @@ namespace Lvgl_Ui
             BW_812KHZ,
         };
 
+        enum class Cc1101_Modulation
+        {
+            FSK_2,
+            OOK,
+        };
+
         struct Device_Cc1101
         {
             struct
@@ -534,14 +545,15 @@ namespace Lvgl_Ui
 
             struct
             {
-                uint8_t rf_switch = 0; // 射频开关
-                double freq = 315.0;
+                uint8_t rf_switch = 2; // RF switch
+                double freq = 868.0;
+                Cc1101_Modulation modulation = Cc1101_Modulation::OOK;
                 Cc1101_Bw bandwidth = Cc1101_Bw::BW_58KHZ;
-                float bit_rate = 4.8;
-                float freq_deviation_khz = 5.0;
+                float bit_rate = 1.2;
+                float freq_deviation_khz = 5.2;
                 int8_t power = 10;
                 uint16_t preamble_length = 16;
-                uint16_t sync_word = 0xAABB;
+                uint16_t sync_word = 0x12AD;
             } params;
         };
 
@@ -577,7 +589,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
         Gt9895::Touch_Point _touch_point;
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         bool _edge_touch_flag = false;
@@ -596,7 +608,7 @@ namespace Lvgl_Ui
 
         void (*_win_cit_ethernet_test_callback)(bool status) = nullptr;
 
-        void (*_win_cit_esp32c6_at_test_callback)(bool status) = nullptr;
+        void (*_win_cit_esp32c6_test_callback)(bool status) = nullptr;
 
         // void (*_device_start_sleep_test_callback)(Sleep_Mode mode) = nullptr;
 
@@ -612,8 +624,10 @@ namespace Lvgl_Ui
 
         void (*_set_music_current_time_s_callback)(double current_time_s) = nullptr;
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
         void (*_win_cit_otg_switch_callback)(bool status) = nullptr;
+
+        void (*_win_cit_hcc_switch_callback)(bool status) = nullptr;
 #endif
 
         System(uint32_t width, uint32_t height)
@@ -640,7 +654,7 @@ namespace Lvgl_Ui
         void set_imu_test(bool status);
         void set_gps_test(bool status);
         void set_ethernet_test(bool status);
-        void set_esp32c6_at_test(bool status);
+        void set_esp32c6_test(bool status);
         // void start_sleep_test(Sleep_Mode mode);
 
         void set_camera_status(bool status);
@@ -680,7 +694,7 @@ namespace Lvgl_Ui
 
         void init_win_cit_rtc_test(void);
 
-        void init_win_cit_esp32c6_at_test(void);
+        void init_win_cit_esp32c6_test(void);
 
         // void init_win_cit_sleep_test(void);
 
@@ -708,6 +722,12 @@ namespace Lvgl_Ui
 
         void create_system_message_box(lv_obj_t *parent, std::string message_title, std::string message_data);
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+        void set_otg_switch_status(bool status);
+
+        void set_hcc_switch_status(bool status);
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
         void (*_win_cit_nfc_test_callback)(bool status) = nullptr;
 
@@ -726,8 +746,6 @@ namespace Lvgl_Ui
 
         bool set_config_rf_params(Device_Cc1101 device_cc1101);
         bool set_config_rf_params(Device_Nrf24l01 device_nrf24l01);
-
-        void set_otg_switch_status(bool status);
 #endif
     };
 

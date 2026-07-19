@@ -23,59 +23,6 @@ menu "Example Configuration"
         # H0410S001AMT001-V0
         default "2799104"
 
-    config EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
-        bool "Enable MIPI CSI Camera Sensor"
-        default y
-        depends on SOC_MIPI_CSI_SUPPORTED
-
-    if EXAMPLE_ENABLE_MIPI_CSI_CAM_SENSOR
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_PORT
-            int "MIPI CSI SCCB I2C Port Number"
-            default 1
-            range 0 1
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_SCL_PIN
-            int "MIPI CSI SCCB I2C SCL Pin"
-            default 21
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_SDA_PIN
-            int "MIPI CSI SCCB I2C SDA Pin"
-            default 20
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_SCCB_I2C_FREQ
-            int "MIPI CSI SCCB I2C Frequency"
-            default 100000
-            range 50000 400000
-            help
-                Increasing this value can reduce the initialization time of the camera sensor.
-                Please refer to the relevant instructions of the camera sensor to adjust the value.
-
-        config EXAMPLE_MIPI_CSI_CAM_SENSOR_RESET_PIN
-            int "MIPI CSI Camera Sensor Reset Pin"
-            default -1
-            range -1 56
-
-        config EXAMPLE_MIPI_CSI_CAM_SENSOR_PWDN_PIN
-            int "MIPI CSI Camera Sensor Power Down Pin"
-            default -1
-            range -1 56
-    endif
-
-    config EXAMPLE_USE_MEMORY_MAPPING
-        bool "Use Memory Mapping for Buffer Allocation"
-        default n
-        help
-        Enable this option if you want to allocate memory using memory mapping.
-        This is typically useful for performance optimization or when working
-        with hardware that requires mapped memory access
-
-    config EXAMPLE_CAM_BUF_COUNT
-        int "Camera Buffer Count"
-        default 2
-        range 2 3
-
     choice
         prompt "Select the camera type"
         default CAMERA_TYPE_OV2710
@@ -96,10 +43,6 @@ menu "Example Configuration"
                 bool "RM69A10"
     endchoice
 
-    config ENABLE_USB_DISPLAY
-        bool "Enable USB Display"
-        default n
-
     config ENABLE_PPA_SCREEN_ROTATION
         bool "Enable ppa screen rotation"
         default y
@@ -113,13 +56,31 @@ menu "Example Configuration"
                 bool "RGB888"
     endchoice
 
+    choice
+        prompt "Select the color format of the camera"
+        default CAMERA_PIXEL_FORMAT_RGB565
+            config CAMERA_PIXEL_FORMAT_RGB565
+                bool "RGB565"
+            config CAMERA_PIXEL_FORMAT_RGB888
+                bool "RGB888"
+    endchoice
+
     choice BOARD_TYPE
         prompt "Board type"
         default BOARD_TYPE_T_DISPLAY_P4
         config BOARD_TYPE_T_DISPLAY_P4
-            bool "t_display_p4"
+            bool "t-display-p4"
         config BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
-            bool "t_display_p4_keyboard"
+            bool "t-display-p4-keyboard"
+    endchoice
+
+    choice BOARD_VERSION_T_DISPLAY_P4
+        prompt "Board version T-Display-P4"
+        default BOARD_VERSION_T_DISPLAY_P4_V2_0
+        config BOARD_VERSION_T_DISPLAY_P4_V1_0
+            bool "t-display-p4_v1.0"
+        config BOARD_VERSION_T_DISPLAY_P4_V2_0
+            bool "t-display-p4_v2.0"
     endchoice
 
     choice
@@ -131,8 +92,8 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_BQ27220
                 bool "bq27220"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_DEEP_SLEEP
-                bool "deep_sleep"
+            config EXAMPLE_BUILD_SLEEP
+                bool "sleep"
                 depends on BOARD_TYPE_T_DISPLAY_P4 || BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_ES8311
                 bool "es8311"
@@ -182,9 +143,6 @@ menu "Example Configuration"
             config EXAMPLE_BUILD_SX1262_TX_CONTINUOUS_WAVE
                 bool "sx1262_tx_continuous_wave"
                 depends on BOARD_TYPE_T_DISPLAY_P4
-            config EXAMPLE_BUILD_TUSB_SERIAL_DEVICE
-                bool "tusb_serial_device"
-                depends on BOARD_TYPE_T_DISPLAY_P4
             config EXAMPLE_BUILD_XL9535
                 bool "xl9535"
                 depends on BOARD_TYPE_T_DISPLAY_P4
@@ -217,12 +175,13 @@ menu "Example Configuration"
                 depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             config EXAMPLE_BUILD_BQ25896
                 bool "bq25896"
-                depends on BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+                depends on BOARD_TYPE_T_DISPLAY_P4 && BOARD_VERSION_T_DISPLAY_P4_V2_0
+            config EXAMPLE_BUILD_IPERF_ETHERNET
+                bool "iperf_ethernet"
+                depends on BOARD_TYPE_T_DISPLAY_P4
+            config EXAMPLE_BUILD_ES8311_SD_MP3
+                bool "es8311_sd_mp3"
+                depends on BOARD_TYPE_T_DISPLAY_P4
     endchoice
-
-    # config ESP_HOSTED_SDIO_GPIO_RESET_SLAVE
-    #     int "CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE"
-    #     default -1
-    #     range -1 -1
 
 endmenu

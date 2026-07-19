@@ -2,7 +2,7 @@
  * @Description: None
  * @Author: LILYGO_L
  * @Date: 2024-11-28 17:07:50
- * @LastEditTime: 2026-01-21 14:05:06
+ * @LastEditTime: 2026-06-02 10:39:24
  * @License: GPL 3.0
  */
 #include "lvgl_ui.h"
@@ -13,6 +13,21 @@
 
 namespace Lvgl_Ui
 {
+#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+    static void Normalize_Cc1101_Factory_Test_Params(System::Device_Cc1101 &device_cc1101)
+    {
+        constexpr uint16_t FACTORY_TEST_BOOT_SYNC_WORD = 0x0123;
+        constexpr uint16_t RADIOLIB_DEFAULT_SYNC_WORD = 0x12AD;
+
+        if (device_cc1101.params.modulation == System::Cc1101_Modulation::OOK &&
+            device_cc1101.params.sync_word == FACTORY_TEST_BOOT_SYNC_WORD &&
+            device_cc1101.params.freq >= 387.0)
+        {
+            device_cc1101.params.sync_word = RADIOLIB_DEFAULT_SYNC_WORD;
+        }
+    }
+#endif
+
     const System::Win_Home_App_Icon System::_win_home_app_icon_list[] =
         {
             {"Cit", &win_home_app_icon_cit_110x110px_rgb565a8},
@@ -39,8 +54,7 @@ namespace Lvgl_Ui
             {"gps test", LV_SYMBOL_WARNING, 0xFFA500},
             {"ethernet test", LV_SYMBOL_WARNING, 0xFFA500},
             {"rtc test", LV_SYMBOL_WARNING, 0xFFA500},
-            {"esp32c6 at test", LV_SYMBOL_WARNING, 0xFFA500},
-// {"sleep test", LV_SYMBOL_WARNING, 0xFFA500},
+            {"esp32c6 wifi test", LV_SYMBOL_WARNING, 0xFFA500},
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             {"keyboard test", LV_SYMBOL_WARNING, 0xFFA500},
             {"nfc test", LV_SYMBOL_WARNING, 0xFFA500},
@@ -59,11 +73,17 @@ namespace Lvgl_Ui
             {"espidf version:\n     ", ""},
             {"company: ", "lilygo"},
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4
-            {"board name: ", "t-display-p4"},
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V1_0
+            {"board name: ", "t-display-p4_v1.0"},
+#elif defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+            {"board name: ", "t-display-p4_v2.0"},
+#else
+#error "no macro definition is set"
+#endif
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
             {"board name: ", "t-display-p4-keyboard"},
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
             {"software name: ", "lvgl_9_ui"},
 
@@ -72,7 +92,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
             {"screen type: ", "rm69a10"},
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 #if defined CONFIG_SCREEN_PIXEL_FORMAT_RGB565
@@ -80,7 +100,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_SCREEN_PIXEL_FORMAT_RGB888
             {"screen pixel format: ", "rgb888"},
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 #if defined CONFIG_CAMERA_TYPE_SC2336
@@ -90,15 +110,15 @@ namespace Lvgl_Ui
 #elif defined CONFIG_CAMERA_TYPE_OV5645
             {"camera type: ", "ov5645"},
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
-            {"firmware build date:\n     ", "202601211405"},
+            {"firmware build date:\n     ", "202606021039"},
     };
 
     void System::begin()
     {
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         _app_style.icon.edge_distance.height = std::min(_width, _height) / 5;
         _app_style.icon.edge_distance.width = _app_style.icon.edge_distance.height / 5;
         _app_style.icon.icon_distance.width = (_width - (_app_style.icon.edge_distance.width * 2) - (4 * APP_STYLE_ICON_WIDTH_HEIGHT)) / 3;
@@ -108,7 +128,7 @@ namespace Lvgl_Ui
         _app_style.icon.edge_distance_fixed.width = _app_style.icon.edge_distance.width + 40;
         _app_style.icon.edge_distance_fixed.height = 10;
         _app_style.icon.icon_distance.fixed_width = (_width - (_app_style.icon.edge_distance_fixed.width * 2) - (3 * APP_STYLE_ICON_WIDTH_HEIGHT)) / 2;
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         _app_style.icon.edge_distance.height = std::min(_width, _height) / 6;
         _app_style.icon.edge_distance.width = _app_style.icon.edge_distance.height / 5;
         _app_style.icon.icon_distance.width = (_width - (_app_style.icon.edge_distance.width * 2) - (9 * APP_STYLE_ICON_WIDTH_HEIGHT)) / 3;
@@ -119,7 +139,7 @@ namespace Lvgl_Ui
         _app_style.icon.edge_distance_fixed.height = 10;
         _app_style.icon.icon_distance.fixed_width = (_width - (_app_style.icon.edge_distance_fixed.width * 2) - (8 * APP_STYLE_ICON_WIDTH_HEIGHT)) / 2;
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         _device_information_list[0].info = "esp32p4";
@@ -253,16 +273,17 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
         lv_obj_set_size(pass_button, 200, 60);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(pass_button, LV_ALIGN_LEFT_MID, 10, 0);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_align(pass_button, LV_ALIGN_LEFT_MID, 150, 0);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_radius(pass_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(pass_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
@@ -294,12 +315,12 @@ namespace Lvgl_Ui
         // 创建FAIL按键
         lv_obj_t *fail_button = lv_button_create(button_container);
         lv_obj_set_size(fail_button, 200, 60);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(fail_button, LV_ALIGN_RIGHT_MID, -10, 0);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_align(fail_button, LV_ALIGN_RIGHT_MID, -150, 0);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_radius(fail_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(fail_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
@@ -385,11 +406,11 @@ namespace Lvgl_Ui
         }
     }
 
-    void System::set_esp32c6_at_test(bool status)
+    void System::set_esp32c6_test(bool status)
     {
-        if (_win_cit_esp32c6_at_test_callback != nullptr)
+        if (_win_cit_esp32c6_test_callback != nullptr)
         {
-            _win_cit_esp32c6_at_test_callback(status);
+            _win_cit_esp32c6_test_callback(status);
         }
     }
 
@@ -415,24 +436,24 @@ namespace Lvgl_Ui
         _registry.win.home.root = lv_obj_create(NULL);
         lv_obj_set_style_bg_color(_registry.win.home.root, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN);
 
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
 #if defined CONFIG_SCREEN_TYPE_HI8561
         lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_540x1168px.png"), (lv_style_selector_t)LV_PART_MAIN);
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_568x1232px.png"), (lv_style_selector_t)LV_PART_MAIN);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
 #if defined CONFIG_SCREEN_TYPE_HI8561
         lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_1168x540px.png"), (lv_style_selector_t)LV_PART_MAIN);
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_set_style_bg_image_src(_registry.win.home.root, GET_WALLPAPER_PATH("wallpaper_1_1232x568px.png"), (lv_style_selector_t)LV_PART_MAIN);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         lv_obj_set_size(_registry.win.home.root, _width, _height);
@@ -481,18 +502,18 @@ namespace Lvgl_Ui
             // 应用样式
             lv_obj_add_style(image_button[i], &style_def, (lv_style_selector_t)LV_PART_MAIN);
             lv_obj_add_style(image_button[i], &style_pr, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_PRESSED);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
             // 设置按钮位置
             lv_obj_align(image_button[i], LV_ALIGN_TOP_LEFT,
                          _app_style.icon.edge_distance.width + (APP_STYLE_ICON_WIDTH_HEIGHT * i) + (_app_style.icon.icon_distance.width * i),
                          _app_style.icon.edge_distance.height + 300);
 
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
             // 设置按钮位置
             lv_obj_align(image_button[i], LV_ALIGN_TOP_LEFT,
                          _app_style.icon.edge_distance.width + (APP_STYLE_ICON_WIDTH_HEIGHT * i) + (_app_style.icon.icon_distance.width * i) + 400, _app_style.icon.edge_distance.height);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
             lv_obj_t *image_button_label = lv_label_create(tileview_tile_1);
             lv_label_set_text(image_button_label, _win_home_app_icon_list[i].name.c_str());
@@ -861,7 +882,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建列表
@@ -1089,9 +1110,9 @@ namespace Lvgl_Ui
                                 case LV_EVENT_CLICKED:
                                 self->_registry.win.cit.current_test_item_index = 11;
 
-                                self->init_win_cit_esp32c6_at_test();
+                                self->init_win_cit_esp32c6_test();
 
-                                lv_screen_load_anim(self->_registry.win.cit.esp32c6_at_test.root, LV_SCR_LOAD_ANIM_MOVE_LEFT, 100, 0, true);
+                                lv_screen_load_anim(self->_registry.win.cit.esp32c6_test.root, LV_SCR_LOAD_ANIM_MOVE_LEFT, 100, 0, true);
                                 break;
                                 default:
                                 break;
@@ -1194,7 +1215,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建列表
@@ -1233,7 +1254,19 @@ namespace Lvgl_Ui
 
         // 创建画布并初始化调色板
         _registry.win.cit.touch_test.canvas = lv_canvas_create(_registry.win.cit.touch_test.root);
-        lv_canvas_set_buffer(_registry.win.cit.touch_test.canvas, _lv_color_win_draw_buf.get(), _width, _height, LVGL_COLOR_FORMAT);
+        lv_canvas_set_buffer(_registry.win.cit.touch_test.canvas, _lv_color_win_draw_buf.get(), _width, _height,
+                             [](uint8_t format) -> lv_color_format_t
+                             {
+                                    switch (format)
+                                    {
+                                    case 16:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                                    case 24:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+                                    default:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                                    } }(SCREEN_BITS_PER_PIXEL));
+
         lv_canvas_fill_bg(_registry.win.cit.touch_test.canvas, lv_color_hex(0xCCCCCC), LV_OPA_COVER);
         lv_obj_center(_registry.win.cit.touch_test.canvas);
 
@@ -1343,7 +1376,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1478,7 +1511,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1551,7 +1584,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1614,7 +1647,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1703,6 +1736,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
@@ -1817,7 +1851,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1842,6 +1876,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
@@ -1953,7 +1988,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -1972,7 +2007,7 @@ namespace Lvgl_Ui
         lv_label_set_text(_registry.win.cit.battery_health_test.data_label, "battery health data:");
         lv_obj_align(_registry.win.cit.battery_health_test.data_label, LV_ALIGN_CENTER, 0, 0);
 
-#if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
 
         _registry.win.cit.battery_health_test.otg_label = lv_label_create(container);
         lv_label_set_text(_registry.win.cit.battery_health_test.otg_label, "OTG");
@@ -2012,6 +2047,46 @@ namespace Lvgl_Ui
                                 else
                                 {
                                     self->set_otg_switch_status(false);
+                                } }, LV_EVENT_VALUE_CHANGED, this);
+
+        _registry.win.cit.battery_health_test.hcc_label = lv_label_create(container);
+        lv_label_set_text(_registry.win.cit.battery_health_test.hcc_label, "HCC");
+        lv_obj_set_style_text_font(_registry.win.cit.battery_health_test.hcc_label, &lv_font_montserrat_26, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(_registry.win.cit.battery_health_test.hcc_label, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_align_to(_registry.win.cit.battery_health_test.hcc_label, _registry.win.cit.battery_health_test.data_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+        _registry.win.cit.battery_health_test.hcc_switch = lv_switch_create(container);
+        lv_obj_set_size(_registry.win.cit.battery_health_test.hcc_switch, 90, 50);
+        lv_obj_align_to(_registry.win.cit.battery_health_test.hcc_switch, _registry.win.cit.battery_health_test.hcc_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+        if (_registry.win.cit.battery_health_test.hcc_switch_status == true)
+        {
+            lv_obj_add_state(_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+            set_hcc_switch_status(true);
+        }
+        else
+        {
+            lv_obj_remove_state(_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+            set_hcc_switch_status(false);
+        }
+
+        lv_obj_add_flag(_registry.win.cit.battery_health_test.hcc_label, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(_registry.win.cit.battery_health_test.hcc_switch, LV_OBJ_FLAG_HIDDEN);
+
+        lv_obj_add_event_cb(_registry.win.cit.battery_health_test.hcc_switch, [](lv_event_t *e)
+                            {
+                                System *self = static_cast<System *>(lv_event_get_user_data(e));
+                                self->_registry.win.cit.battery_health_test.hcc_switch_status = lv_obj_has_state(self->_registry.win.cit.battery_health_test.hcc_switch, LV_STATE_CHECKED);
+
+                                if (self->_registry.win.cit.battery_health_test.hcc_switch_status == true)
+                                {
+                                    self->set_hcc_switch_status(true);
+                                }
+                                else
+                                {
+                                    self->set_hcc_switch_status(false);
                                 } }, LV_EVENT_VALUE_CHANGED, this);
 
 #endif
@@ -2060,7 +2135,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -2086,6 +2161,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
@@ -2197,7 +2273,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -2223,6 +2299,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
@@ -2334,7 +2411,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -2384,25 +2461,25 @@ namespace Lvgl_Ui
         _current_win = Current_Win::CIT_RTC_TEST;
     }
 
-    void System::init_win_cit_esp32c6_at_test(void)
+    void System::init_win_cit_esp32c6_test(void)
     {
         // 主界面
-        _registry.win.cit.esp32c6_at_test.root = lv_obj_create(NULL);
-        lv_obj_set_style_bg_color(_registry.win.cit.esp32c6_at_test.root, lv_color_hex(0xFF7F58), (lv_style_selector_t)LV_PART_MAIN);
-        lv_obj_set_size(_registry.win.cit.esp32c6_at_test.root, _width, _height);
-        lv_obj_set_scrollbar_mode(_registry.win.cit.esp32c6_at_test.root, LV_SCROLLBAR_MODE_OFF);
+        _registry.win.cit.esp32c6_test.root = lv_obj_create(NULL);
+        lv_obj_set_style_bg_color(_registry.win.cit.esp32c6_test.root, lv_color_hex(0xFF7F58), (lv_style_selector_t)LV_PART_MAIN);
+        lv_obj_set_size(_registry.win.cit.esp32c6_test.root, _width, _height);
+        lv_obj_set_scrollbar_mode(_registry.win.cit.esp32c6_test.root, LV_SCROLLBAR_MODE_OFF);
 
         // 创建标题
-        lv_obj_t *title_label = lv_label_create(_registry.win.cit.esp32c6_at_test.root);
-        lv_label_set_text(title_label, "Esp32c6 At");
+        lv_obj_t *title_label = lv_label_create(_registry.win.cit.esp32c6_test.root);
+        lv_label_set_text(title_label, "Esp32c6 Wifi");
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
-        lv_obj_t *container = lv_obj_create(_registry.win.cit.esp32c6_at_test.root);
+        lv_obj_t *container = lv_obj_create(_registry.win.cit.esp32c6_test.root);
         lv_obj_set_size(container, _width, _height - 50 - 80 - 140);
         lv_obj_align(container, LV_ALIGN_TOP_MID, 0, 50 + 80);
         lv_obj_set_style_bg_color(container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
@@ -2411,19 +2488,20 @@ namespace Lvgl_Ui
         lv_obj_set_scrollbar_mode(container, LV_SCROLLBAR_MODE_ACTIVE);
 
         // 创建一个标签用于显示电池健康数据
-        _registry.win.cit.esp32c6_at_test.data_label = lv_label_create(container);
-        lv_obj_set_style_text_color(_registry.win.cit.esp32c6_at_test.data_label, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_style_text_font(_registry.win.cit.esp32c6_at_test.data_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_label_set_text(_registry.win.cit.esp32c6_at_test.data_label, "esp32c6 at time data:");
-        lv_obj_align(_registry.win.cit.esp32c6_at_test.data_label, LV_ALIGN_CENTER, 0, 0);
+        _registry.win.cit.esp32c6_test.data_label = lv_label_create(container);
+        lv_obj_set_style_text_color(_registry.win.cit.esp32c6_test.data_label, lv_color_black(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(_registry.win.cit.esp32c6_test.data_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_label_set_text(_registry.win.cit.esp32c6_test.data_label, "esp32c6 wifi time data:");
+        lv_obj_align(_registry.win.cit.esp32c6_test.data_label, LV_ALIGN_CENTER, 0, 0);
 
         // 创建一个容器来存放两个按键
-        lv_obj_t *button_container = lv_obj_create(_registry.win.cit.esp32c6_at_test.root);
+        lv_obj_t *button_container = lv_obj_create(_registry.win.cit.esp32c6_test.root);
         lv_obj_set_size(button_container, _width, 140);
         lv_obj_align(button_container, LV_ALIGN_BOTTOM_MID, 0, 0);
         lv_obj_set_style_bg_color(button_container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
         lv_obj_set_style_radius(button_container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(button_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
+        lv_obj_remove_flag(button_container, LV_OBJ_FLAG_SCROLLABLE);                          // 禁止滚动
 
         // 创建PASS按键
         lv_obj_t *pass_button = lv_button_create(button_container);
@@ -2445,7 +2523,7 @@ namespace Lvgl_Ui
                                 switch (code)
                                 {
                                 case LV_EVENT_CLICKED:
-                                    self->set_esp32c6_at_test(false);
+                                    self->set_esp32c6_test(false);
 
                                     _win_cit_test_item_list[self->_registry.win.cit.current_test_item_index].symbol = LV_SYMBOL_OK;
                                     _win_cit_test_item_list[self->_registry.win.cit.current_test_item_index].color = 0x008B45;
@@ -2478,7 +2556,7 @@ namespace Lvgl_Ui
                                 switch (code)
                                 {
                                 case LV_EVENT_CLICKED:
-                                    self->set_esp32c6_at_test(false);
+                                    self->set_esp32c6_test(false);
 
                                     _win_cit_test_item_list[self->_registry.win.cit.current_test_item_index].symbol = LV_SYMBOL_CLOSE;
                                     _win_cit_test_item_list[self->_registry.win.cit.current_test_item_index].color = 0xEE2C2C;
@@ -2491,7 +2569,7 @@ namespace Lvgl_Ui
                                     break;
                                 } }, LV_EVENT_ALL, this);
 
-        lv_obj_add_event_cb(_registry.win.cit.esp32c6_at_test.root, [](lv_event_t *e)
+        lv_obj_add_event_cb(_registry.win.cit.esp32c6_test.root, [](lv_event_t *e)
                             {
                                     System *self = static_cast<System *>(lv_event_get_user_data(e));
                                     lv_event_code_t code = lv_event_get_code(e);
@@ -2503,7 +2581,7 @@ namespace Lvgl_Ui
                                         // 边缘检测以及左右滑动
                                         if ((gesture_dir == LV_DIR_LEFT || gesture_dir == LV_DIR_RIGHT)&&(self->_edge_touch_flag == true))
                                         {
-                                            self->set_esp32c6_at_test(false);
+                                            self->set_esp32c6_test(false);
                                             
                                             self->set_vibration();
                                             self->init_win_cit();
@@ -2514,103 +2592,12 @@ namespace Lvgl_Ui
                                         }
                                     } }, LV_EVENT_ALL, this);
 
-        init_status_bar(_registry.win.cit.esp32c6_at_test.root);
+        init_status_bar(_registry.win.cit.esp32c6_test.root);
 
-        lv_obj_update_layout(_registry.win.cit.esp32c6_at_test.root);
+        lv_obj_update_layout(_registry.win.cit.esp32c6_test.root);
 
-        set_esp32c6_at_test(true);
+        set_esp32c6_test(true);
     }
-
-    // void System::init_win_cit_sleep_test(void)
-    // {
-    //     // 主界面
-    //     _registry.win.cit.sleep_test = lv_obj_create(NULL);
-    //     lv_obj_set_style_bg_color(_registry.win.cit.sleep_test, lv_color_hex(0xFF7F58), (lv_style_selector_t)LV_PART_MAIN);
-    //     lv_obj_set_size(_registry.win.cit.sleep_test, _width, _height);
-    //     lv_obj_set_scrollbar_mode(_registry.win.cit.sleep_test, LV_SCROLLBAR_MODE_OFF);
-
-    //     // 创建标题
-    //     lv_obj_t *title_label = lv_label_create(_registry.win.cit.sleep_test);
-    //     lv_label_set_text(title_label, "Sleep");
-    //     lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_size(title_label, _width - 100, 40);
-    //     lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
-
-    //     // 创建容器
-    //     lv_obj_t *container = lv_obj_create(_registry.win.cit.sleep_test);
-    //     lv_obj_set_size(container, _width, _height - 50 - 80 - 140);
-    //     lv_obj_align(container, LV_ALIGN_TOP_MID, 0, 50 + 80);
-    //     lv_obj_set_style_bg_color(container, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN); // 设置背景颜色为白色
-    //     lv_obj_set_style_radius(container, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_border_width(container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
-
-    //     // 创建NORMAL_SLEEP按键
-    //     lv_obj_t *light_sleep_button = lv_button_create(container);
-    //     lv_obj_set_size(light_sleep_button, 250, 80);
-    //     lv_obj_align(light_sleep_button, LV_ALIGN_RIGHT_MID, -10, 0);
-    //     lv_obj_set_style_radius(light_sleep_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_shadow_width(light_sleep_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
-    //     lv_obj_set_style_bg_color(light_sleep_button, lv_color_hex(0xFF6A6A), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_align(light_sleep_button, LV_ALIGN_CENTER, 0, -50);
-
-    //     lv_obj_t *light_sleep_label = lv_label_create(light_sleep_button);
-    //     lv_obj_set_style_text_font(light_sleep_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_label_set_text(light_sleep_label, "NORMAL SLEEP");
-    //     lv_obj_center(light_sleep_label);
-
-    //     lv_obj_add_event_cb(light_sleep_button, [](lv_event_t *e)
-    //                         {
-    //                             System *self = static_cast<System *>(lv_event_get_user_data(e));
-    //                             lv_event_code_t code = lv_event_get_code(e);
-
-    //                             switch (code)
-    //                             {
-    //                             case LV_EVENT_CLICKED:
-
-    //                                 break;
-    //                             default:
-    //                                 break;
-    //                             } }, LV_EVENT_ALL, this);
-
-    //     // 创建LIGHT_SLEEP按键
-    //     lv_obj_t *deep_sleep_button = lv_button_create(container);
-    //     lv_obj_set_size(deep_sleep_button, 250, 80);
-    //     lv_obj_align(deep_sleep_button, LV_ALIGN_RIGHT_MID, -10, 0);
-    //     lv_obj_set_style_radius(deep_sleep_button, 10, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_set_style_shadow_width(deep_sleep_button, 0, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT); // 移除阴影
-    //     lv_obj_set_style_bg_color(deep_sleep_button, lv_color_hex(0xFF6A6A), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_obj_align(deep_sleep_button, LV_ALIGN_CENTER, 0, 50);
-
-    //     lv_obj_t *deep_sleep_label = lv_label_create(deep_sleep_button);
-    //     lv_obj_set_style_text_font(deep_sleep_label, &lv_font_montserrat_24, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-    //     lv_label_set_text(deep_sleep_label, "LIGHT SLEEP");
-    //     lv_obj_center(deep_sleep_label);
-
-    //     lv_obj_add_event_cb(deep_sleep_button, [](lv_event_t *e)
-    //                         {
-    //                             System *self = static_cast<System *>(lv_event_get_user_data(e));
-    //                             lv_event_code_t code = lv_event_get_code(e);
-
-    //                             switch (code)
-    //                             {
-    //                             case LV_EVENT_CLICKED:
-    //                             self->start_sleep_test(Sleep_Mode::LIGHT_SLEEP);
-
-    //                                 break;
-    //                             default:
-    //                                 break;
-    //                             } }, LV_EVENT_ALL, this);
-
-    //     add_win_cit_test_item_pass_fail_button(_registry.win.cit.sleep_test);
-
-    //     add_event_cb_win_return_to_cit(_registry.win.cit.sleep_test);
-
-    //     init_status_bar(_registry.win.cit.sleep_test);
-
-    //     lv_obj_update_layout(_registry.win.cit.sleep_test);
-    // }
 
     void System::init_win_camera(void)
     {
@@ -2621,9 +2608,19 @@ namespace Lvgl_Ui
         lv_obj_set_size(_registry.win.camera.root, _width, _height);
         lv_obj_set_scrollbar_mode(_registry.win.camera.root, LV_SCROLLBAR_MODE_OFF);
 
-        // // 创建画布来显示摄像头数据
+        // 创建画布来显示摄像头数据
         // _registry.win.camera.canvas = lv_canvas_create(_registry.win.camera.root);
-        // lv_canvas_set_buffer(_registry.win.camera.canvas, _lv_color_win_draw_buf.get(), _width, _height, LVGL_COLOR_FORMAT);
+        // lv_canvas_set_buffer(_registry.win.camera.canvas, _lv_color_win_draw_buf.get(), _width, 720, [](uint8_t format) -> lv_color_format_t
+        //                      {
+        //                     switch (format)
+        //                     {
+        //                     case 16:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     case 24:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+        //                     default:
+        //                         return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+        //                     } }(SCREEN_BITS_PER_PIXEL));
         // lv_canvas_fill_bg(_registry.win.camera.canvas, lv_color_black(), LV_OPA_COVER);
         // lv_obj_center(_registry.win.camera.canvas);
 
@@ -2806,7 +2803,7 @@ namespace Lvgl_Ui
                                     lv_group_add_obj(self->_registry.keyboard_group, textarea);
                                     break;
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
                                 // case LV_EVENT_DEFOCUSED:
                                     //     lv_obj_add_flag(self->_registry.keyboard, LV_OBJ_FLAG_HIDDEN); // 隐藏键盘
@@ -3007,7 +3004,7 @@ namespace Lvgl_Ui
 
             // 判断 wlcm[i].data 的长度并插入换行符
             std::string message_text = wlcm[i].data;
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
             if (wlcm[i].data.size() > 15)
             {
                 for (size_t pos = 15; pos < message_text.length(); pos += 16)
@@ -3015,7 +3012,7 @@ namespace Lvgl_Ui
                     message_text.insert(pos, "\n");
                 }
             }
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
             if (wlcm[i].data.size() > 30)
             {
                 for (size_t pos = 30; pos < message_text.length(); pos += 31)
@@ -3024,7 +3021,7 @@ namespace Lvgl_Ui
                 }
             }
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
             // 消息内容
@@ -3264,7 +3261,7 @@ namespace Lvgl_Ui
                                     break;
                                 }
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
                             },
                             LV_EVENT_ALL, this);
@@ -3352,12 +3349,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.6);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.5);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_border_width(_registry.win.rf.setings.message_box.parameter_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
         lv_obj_set_scrollbar_mode(_registry.win.rf.setings.message_box.parameter_container, LV_SCROLLBAR_MODE_ACTIVE);
@@ -3383,7 +3380,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
                                     lv_group_remove_all_objs(self->_registry.keyboard_group);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
                                 } }, LV_EVENT_ALL, this);
 
@@ -3402,7 +3399,7 @@ namespace Lvgl_Ui
                                                                                         "cc1101\n"
                                                                                         "nrf24l01");
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_dropdown_set_selected(_registry.win.rf.setings.rf_chip_type.dropdown.rf_chip, static_cast<uint32_t>(_rf_chip_type));
         lv_obj_set_style_pad_top(_registry.win.rf.setings.rf_chip_type.dropdown.rf_chip, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
@@ -3614,12 +3611,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.6);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.5);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_border_width(_registry.win.rf.setings.message_box.parameter_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
         lv_obj_set_scrollbar_mode(_registry.win.rf.setings.message_box.parameter_container, LV_SCROLLBAR_MODE_ACTIVE);
@@ -3645,7 +3642,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
                                     lv_group_remove_all_objs(self->_registry.keyboard_group);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
                                 } }, LV_EVENT_ALL, this);
 
@@ -4176,12 +4173,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.6);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.5);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_border_width(_registry.win.rf.setings.message_box.parameter_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
         lv_obj_set_scrollbar_mode(_registry.win.rf.setings.message_box.parameter_container, LV_SCROLLBAR_MODE_ACTIVE);
@@ -4207,7 +4204,7 @@ namespace Lvgl_Ui
 #elif defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
                                     lv_group_remove_all_objs(self->_registry.keyboard_group);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
                                 } }, LV_EVENT_ALL, this);
 
@@ -4382,40 +4379,54 @@ namespace Lvgl_Ui
         lv_obj_t *album_cover_img = lv_image_create(_registry.win.music.root);
         lv_image_set_src(album_cover_img, &win_music_album_cover_540x540px_rgb565a8);
         lv_obj_set_size(album_cover_img, 540, 540);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, 0, 50);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, -320, 0);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(album_cover_img, LV_ALIGN_TOP_MID, -330, 20);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
 
         lv_obj_set_size(_registry.win.music.root, _width, _height);
         lv_obj_set_scrollbar_mode(_registry.win.music.root, LV_SCROLLBAR_MODE_OFF);
 
         lv_obj_t *song_name_btn = lv_button_create(_registry.win.music.root);
-        lv_obj_set_size(song_name_btn, 260, 60);
+        lv_obj_set_size(song_name_btn, 350, 60);
         lv_obj_set_style_radius(song_name_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(song_name_btn, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(song_name_btn, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(song_name_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 30, 590);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 540, 70);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(song_name_btn, LV_ALIGN_TOP_LEFT, 560, 70);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
 
         lv_obj_t *song_name_label = lv_label_create(song_name_btn);
-        lv_label_set_text(song_name_label, "Gymnopedie 1");
+        lv_label_set_text(song_name_label, "Nocturne Op. 9 No. 2");
         lv_obj_set_style_text_color(song_name_label, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(song_name_label, &lvgl_font_misans_bold_27, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(song_name_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_center(song_name_label);
 
         lv_obj_t *artist_btn = lv_button_create(_registry.win.music.root);
-        lv_obj_set_size(artist_btn, 170, 50);
+        lv_obj_set_size(artist_btn, 150, 50);
         lv_obj_set_style_radius(artist_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(artist_btn, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(artist_btn, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4423,7 +4434,7 @@ namespace Lvgl_Ui
         lv_obj_align_to(artist_btn, song_name_btn, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
 
         lv_obj_t *artist_label = lv_label_create(artist_btn);
-        lv_label_set_text(artist_label, "Erik Satie");
+        lv_label_set_text(artist_label, "Chopin");
         lv_obj_set_style_text_color(artist_label, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(artist_label, &lv_font_montserrat_26, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(song_name_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4490,12 +4501,19 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(current_time_btn, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(current_time_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(current_time_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 30, 795);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 540, 210);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(current_time_btn, LV_ALIGN_TOP_LEFT, 560, 210);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
 
         _registry.win.music.label.current_time = lv_label_create(current_time_btn);
@@ -4510,12 +4528,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(total_time_btn, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(total_time_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(total_time_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(total_time_btn, LV_ALIGN_TOP_RIGHT, -30, 795);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_align(total_time_btn, LV_ALIGN_TOP_RIGHT, -30, 210);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
         _registry.win.music.label.total_time = lv_label_create(total_time_btn);
@@ -4547,22 +4565,36 @@ namespace Lvgl_Ui
         lv_obj_set_style_radius(_registry.win.music.slider, 50, LV_PART_KNOB);
         lv_obj_set_style_width(_registry.win.music.slider, 8, LV_PART_KNOB);
         lv_obj_set_style_height(_registry.win.music.slider, 8, LV_PART_KNOB);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.music.slider, 460, 8);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_set_size(_registry.win.music.slider, 600, 8);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_set_size(_registry.win.music.slider, 640, 8);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
         lv_obj_add_style(_registry.win.music.slider, &style_indic, LV_PART_INDICATOR);
         lv_obj_add_style(_registry.win.music.slider, &style_indic_pr, LV_PART_INDICATOR | LV_STATE_PRESSED);
 // lv_slider_set_value(_registry.win.music.slider, 0, LV_ANIM_OFF);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 40, 860);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 540, 270);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(_registry.win.music.slider, LV_ALIGN_TOP_LEFT, 560, 270);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
 
         lv_obj_add_event_cb(_registry.win.music.slider, [](lv_event_t *e)
@@ -4587,14 +4619,22 @@ namespace Lvgl_Ui
         lv_obj_set_style_bg_color(bottom_bar_btn, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_radius(bottom_bar_btn, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(bottom_bar_btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(bottom_bar_btn, _width - 60, 70);
         lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 0, -30);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(bottom_bar_btn, _width / 2 + 20, 70);
+
+#if defined CONFIG_SCREEN_TYPE_HI8561
+        lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 255, -20);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
         lv_obj_align(bottom_bar_btn, LV_ALIGN_BOTTOM_MID, 260, -30);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
 
         // 长条按钮添加一个标签
@@ -4646,12 +4686,19 @@ namespace Lvgl_Ui
             lv_obj_remove_state(_registry.win.music.imagebutton.play, LV_STATE_CHECKED);
 
             lv_obj_set_size(_registry.win.music.imagebutton.play, 140, 140);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 0, -130);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 255, -110);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 260, -130);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
             lv_obj_align_to(_registry.win.music.imagebutton.switch_left, _registry.win.music.imagebutton.play, LV_ALIGN_OUT_LEFT_MID, -10, 0);
             lv_obj_align_to(_registry.win.music.imagebutton.switch_right, _registry.win.music.imagebutton.play, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
@@ -4661,12 +4708,19 @@ namespace Lvgl_Ui
             lv_obj_add_state(_registry.win.music.imagebutton.play, LV_STATE_CHECKED);
 
             lv_obj_set_size(_registry.win.music.imagebutton.play, 117, 117);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 0, -142);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 255, -122);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
             lv_obj_align(_registry.win.music.imagebutton.play, LV_ALIGN_BOTTOM_MID, 260, -142);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
+#endif
+
+#else
+#error "no macro definition is set"
 #endif
             lv_obj_align_to(_registry.win.music.imagebutton.switch_left, _registry.win.music.imagebutton.play, LV_ALIGN_OUT_LEFT_MID, -10, 0);
             lv_obj_align_to(_registry.win.music.imagebutton.switch_right, _registry.win.music.imagebutton.play, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
@@ -4776,7 +4830,7 @@ namespace Lvgl_Ui
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
 
                 // 字母键盘第二行
-                LV_BUTTONMATRIX_CTRL_HIDDEN | LV_BUTTONMATRIX_CTRL_WIDTH_1,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_HIDDEN | LV_BUTTONMATRIX_CTRL_WIDTH_1),
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
@@ -4786,10 +4840,10 @@ namespace Lvgl_Ui
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
                 LV_BUTTONMATRIX_CTRL_WIDTH_2,
-                LV_BUTTONMATRIX_CTRL_HIDDEN | LV_BUTTONMATRIX_CTRL_WIDTH_1,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_HIDDEN | LV_BUTTONMATRIX_CTRL_WIDTH_1),
 
                 // 字母键盘第三行
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2),
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
@@ -4797,30 +4851,31 @@ namespace Lvgl_Ui
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
                 LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2),
 
                 // 字母键盘第四行
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2, // 键盘切换按钮
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1, // 左箭头
-                LV_BUTTONMATRIX_CTRL_WIDTH_3,                                // Space
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1, // 右箭头
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2, // New line
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2), // 键盘切换按钮
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1), // 左箭头
+                LV_BUTTONMATRIX_CTRL_WIDTH_3,                                                          // Space
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1), // 右箭头
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2), // New line
             };
 
         // 为数字键盘创建单独的控制数组
         static const lv_buttonmatrix_ctrl_t kb_ctrl_num[] =
             {
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2),
 
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1),
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1),
 
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2,
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2),
 
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2};
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2)};
 
         // 为符号键盘创建单独的控制数组
         static const lv_buttonmatrix_ctrl_t kb_ctrl_sym[] =
@@ -4840,10 +4895,10 @@ namespace Lvgl_Ui
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
                 LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1, LV_BUTTONMATRIX_CTRL_WIDTH_1,
 
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1,
-                LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2};
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2),
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1),
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_1),
+                (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKED | LV_BUTTONMATRIX_CTRL_WIDTH_2)};
 
         lv_keyboard_set_map(_registry.keyboard, LV_KEYBOARD_MODE_USER_1, kb_map_lower, kb_ctrl);
         lv_keyboard_set_map(_registry.keyboard, LV_KEYBOARD_MODE_USER_2, kb_map_upper, kb_ctrl);
@@ -5082,6 +5137,24 @@ namespace Lvgl_Ui
         _registry.system_message_box.occupancy_flag = true;
     }
 
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+    void System::set_otg_switch_status(bool status)
+    {
+        if (_win_cit_otg_switch_callback != nullptr)
+        {
+            _win_cit_otg_switch_callback(status);
+        }
+    }
+
+    void System::set_hcc_switch_status(bool status)
+    {
+        if (_win_cit_hcc_switch_callback != nullptr)
+        {
+            _win_cit_hcc_switch_callback(status);
+        }
+    }
+#endif
+
 #if defined CONFIG_BOARD_TYPE_T_DISPLAY_P4_KEYBOARD
     void System::init_win_cit_keyboard_test(void)
     {
@@ -5097,7 +5170,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -5204,7 +5277,7 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_color(title_label, lv_color_white(), (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_align(title_label, LV_TEXT_ALIGN_LEFT, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-        lv_obj_set_size(title_label, _width - 100, 40);
+        lv_obj_set_size(title_label, _width - 100, 50);
         lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 20, 10 + 50);
 
         // 创建容器
@@ -5366,6 +5439,22 @@ namespace Lvgl_Ui
                                     }
                                 }
 
+                                if (dc.params.freq < 387.0)
+                                {
+                                    dc.params.rf_switch = 0;
+                                }
+                                else if (dc.params.freq <= 464.0)
+                                {
+                                    dc.params.rf_switch = 1;
+                                }
+                                else
+                                {
+                                    dc.params.rf_switch = 2;
+                                }
+
+                                uint32_t modulation_buffer_index = lv_dropdown_get_selected(self->_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation);
+                                dc.params.modulation = static_cast<Cc1101_Modulation>(modulation_buffer_index);
+
                                 uint32_t bandwidth_buffer_index = lv_dropdown_get_selected(self->_registry.win.rf.setings.config_rf_params.cc1101.dropdown.bandwidth);
                                 dc.params.bandwidth = static_cast<Cc1101_Bw>(bandwidth_buffer_index);
 
@@ -5460,8 +5549,10 @@ namespace Lvgl_Ui
                                 const char* sync_word_text = lv_textarea_get_text(self->_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word);
                                 if (sync_word_text != nullptr && sync_word_text[0] != '\0') // 同时检查NULL和空字符串
                                 {  
-                                    dc.params.sync_word = std::stoi(sync_word_text);  
+                                    dc.params.sync_word = static_cast<uint16_t>(std::stoul(sync_word_text, nullptr, 0) & 0xFFFF);
                                 }
+
+                                Normalize_Cc1101_Factory_Test_Params(dc);
 
                                 if(self->set_config_rf_params(dc) == true)
                                 {
@@ -5475,12 +5566,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.6);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.5);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_border_width(_registry.win.rf.setings.message_box.parameter_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
         lv_obj_set_scrollbar_mode(_registry.win.rf.setings.message_box.parameter_container, LV_SCROLLBAR_MODE_ACTIVE);
@@ -5569,11 +5660,48 @@ namespace Lvgl_Ui
         lv_obj_set_style_text_font(freq_unit_text, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_align_to(freq_unit_text, _registry.win.rf.setings.config_rf_params.cc1101.textarea.freq, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
 
+        lv_obj_t *msgbox_modulation_text = lv_label_create(_registry.win.rf.setings.message_box.parameter_container);
+        lv_label_set_text(msgbox_modulation_text, "modulation");
+        lv_obj_set_size(msgbox_modulation_text, 200, 40);
+        lv_obj_set_style_text_font(msgbox_modulation_text, &lv_font_montserrat_26, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_align_to(msgbox_modulation_text, _registry.win.rf.setings.config_rf_params.cc1101.textarea.freq, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
+
+        _registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation = lv_dropdown_create(_registry.win.rf.setings.message_box.parameter_container);
+        lv_dropdown_set_dir(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, LV_DIR_BOTTOM);
+        lv_dropdown_set_options(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, "2-FSK\n"
+                                                                                                      "OOK");
+        lv_dropdown_set_selected(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation,
+                                 static_cast<uint32_t>(_device_cc1101.params.modulation));
+        lv_obj_set_style_pad_top(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_bottom(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_left(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_pad_right(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
+        lv_obj_set_style_min_width(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 200, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_min_height(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, &lv_font_montserrat_24, LV_PART_ITEMS | LV_STATE_DEFAULT);
+        lv_obj_align_to(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, msgbox_modulation_text, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
+
+        lv_obj_add_event_cb(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, [](lv_event_t *e)
+                            {
+                                lv_obj_t *dropdown = lv_event_get_target_obj(e);
+                                lv_event_code_t code = lv_event_get_code(e);
+
+                                if (code == LV_EVENT_CLICKED)
+                                {
+                                    lv_obj_t *list = lv_dropdown_get_list(dropdown);
+                                    lv_obj_set_style_bg_color(list, lv_color_hex(0xEEE9E9), LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_ACTIVE);
+                                    lv_obj_set_style_border_width(list, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(list, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+                                    lv_obj_set_style_text_font(list, &lv_font_montserrat_24, LV_PART_ITEMS | LV_STATE_DEFAULT);
+                                } }, LV_EVENT_ALL, NULL);
+
         lv_obj_t *msgbox_bandwidth_text = lv_label_create(_registry.win.rf.setings.message_box.parameter_container);
         lv_label_set_text(msgbox_bandwidth_text, "bandwidth");
         lv_obj_set_size(msgbox_bandwidth_text, 200, 40);
         lv_obj_set_style_text_font(msgbox_bandwidth_text, &lv_font_montserrat_26, LV_PART_MAIN | LV_STATE_DEFAULT);
-        lv_obj_align_to(msgbox_bandwidth_text, _registry.win.rf.setings.config_rf_params.cc1101.textarea.freq, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
+        lv_obj_align_to(msgbox_bandwidth_text, _registry.win.rf.setings.config_rf_params.cc1101.dropdown.modulation, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
 
         _registry.win.rf.setings.config_rf_params.cc1101.dropdown.bandwidth = lv_dropdown_create(_registry.win.rf.setings.message_box.parameter_container);
         lv_dropdown_set_dir(_registry.win.rf.setings.config_rf_params.cc1101.dropdown.bandwidth, LV_DIR_BOTTOM);
@@ -5739,7 +5867,7 @@ namespace Lvgl_Ui
         lv_obj_align_to(msgbox_sync_word, _registry.win.rf.setings.config_rf_params.cc1101.textarea.preamble_length, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 10);
 
         _registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word = lv_textarea_create(_registry.win.rf.setings.message_box.parameter_container);
-        lv_textarea_set_accepted_chars(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, "0123456789"); // 只允许输入数字
+        lv_textarea_set_accepted_chars(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, "0123456789abcdefABCDEFxX");
         lv_obj_set_style_pad_top(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, 15, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
@@ -5747,7 +5875,7 @@ namespace Lvgl_Ui
         lv_obj_set_width(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, 300);
         lv_textarea_set_one_line(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, true);
         char sync_word_str[10];
-        snprintf(sync_word_str, sizeof(sync_word_str), "%d", _device_cc1101.params.sync_word);
+        snprintf(sync_word_str, sizeof(sync_word_str), "0x%04X", _device_cc1101.params.sync_word);
         lv_textarea_set_text(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, sync_word_str); // 设置初始内容
         lv_obj_set_style_text_font(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_align_to(_registry.win.rf.setings.config_rf_params.cc1101.textarea.sync_word, msgbox_sync_word, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
@@ -5933,12 +6061,12 @@ namespace Lvgl_Ui
         lv_obj_set_style_pad_bottom(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_left(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
         lv_obj_set_style_pad_right(_registry.win.rf.setings.message_box.parameter_container, 30, (lv_style_selector_t)LV_PART_MAIN | (lv_style_selector_t)LV_STATE_DEFAULT);
-#if defined SCREEN_ROTATION_DIRECTION_0
+#if SCREEN_ROTATION_DIRECTION == 0
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.6);
-#elif defined SCREEN_ROTATION_DIRECTION_90
+#elif SCREEN_ROTATION_DIRECTION == 90
         lv_obj_set_size(_registry.win.rf.setings.message_box.parameter_container, 450, _height * 0.5);
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
         lv_obj_set_style_border_width(_registry.win.rf.setings.message_box.parameter_container, 0, (lv_style_selector_t)LV_PART_MAIN); // 移除边框
         lv_obj_set_scrollbar_mode(_registry.win.rf.setings.message_box.parameter_container, LV_SCROLLBAR_MODE_ACTIVE);
@@ -6080,10 +6208,13 @@ namespace Lvgl_Ui
 
     bool System::set_config_rf_params(Device_Cc1101 device_cc1101)
     {
+        Normalize_Cc1101_Factory_Test_Params(device_cc1101);
+
         if (_win_rf_config_cc1101_params_callback != nullptr)
         {
             if (_win_rf_config_cc1101_params_callback(device_cc1101) == true)
             {
+                _device_cc1101.params = device_cc1101.params;
                 return true;
             }
         }
@@ -6102,14 +6233,6 @@ namespace Lvgl_Ui
         }
 
         return false;
-    }
-
-    void System::set_otg_switch_status(bool status)
-    {
-        if (_win_cit_otg_switch_callback != nullptr)
-        {
-            _win_cit_otg_switch_callback(status);
-        }
     }
 
 #endif

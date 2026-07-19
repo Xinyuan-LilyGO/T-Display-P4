@@ -2,43 +2,43 @@
  * @Description: Afe
  * @Author: LILYGO_L
  * @Date: 2025-07-22 15:02:53
- * @LastEditTime: 2025-07-23 16:06:33
+ * @LastEditTime: 2026-03-26 14:58:43
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_wn_iface.h"
-#include "esp_wn_models.h"
-#include "esp_afe_sr_models.h"
-#include "esp_mn_iface.h"
-#include "esp_mn_models.h"
-#include "model_path.h"
-#include "string.h"
-#include "t_display_p4_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
+
+#include "esp_afe_sr_models.h"
 #include "hiesp.h"
 #include "hilexin.h"
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+#include "kode_bq25896.h"
+#endif
 
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 16000
 
-auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_1);
 
-auto IIC_Bus_1 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_1);
+auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK);
 
-auto IIS_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK);
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
+Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
-auto ES8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(IIC_Bus_0, IIS_Bus, ES8311_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
+#endif
 
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_1, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Es8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(Es8311_Iic_Bus, Es8311_Iis_Bus, ES8311_IIC_ADDRESS);
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
 
 esp_afe_sr_iface_t *afe_handle = NULL;
 
 void feed_Task(void *arg)
 {
-    esp_afe_sr_data_t *afe_data = arg;
+    esp_afe_sr_data_t *afe_data = (esp_afe_sr_data_t *)arg;
     int audio_chunksize = afe_handle->get_feed_chunksize(afe_data);
     int nch = afe_handle->get_feed_channel_num(afe_data);
 
@@ -46,9 +46,9 @@ void feed_Task(void *arg)
 
     while (1)
     {
-        ES8311->read_data(iis_buffer.get(), audio_chunksize * sizeof(uint16_t));
+        Es8311->read_data(iis_buffer.get(), audio_chunksize * sizeof(uint16_t));
 
-        // ES8311->write_data(iis_buffer, audio_chunksize * sizeof(uint16_t));
+        // Es8311->write_data(iis_buffer, audio_chunksize * sizeof(uint16_t));
 
         // for (uint8_t i = 0; i < 10; i++)
         // {
@@ -65,7 +65,7 @@ void feed_Task(void *arg)
 
 void detect_Task(void *arg)
 {
-    esp_afe_sr_data_t *afe_data = arg;
+    esp_afe_sr_data_t *afe_data = (esp_afe_sr_data_t *)arg;
     int afe_chunksize = afe_handle->get_fetch_chunksize(afe_data);
     printf("------------detect start------------\n");
 
@@ -131,7 +131,7 @@ void Afe_Init()
         printf("wakeword model in AFE config: %s\n", afe_config->wakenet_model_name_2);
     }
 
-    afe_handle = esp_afe_handle_from_config(afe_config);
+    afe_handle = const_cast<esp_afe_sr_iface_t *>(esp_afe_handle_from_config(afe_config));
     esp_afe_sr_data_t *afe_data = afe_handle->create_from_config(afe_config);
 
     //
@@ -195,18 +195,41 @@ void Wakenet_Init()
 extern "C" void app_main()
 {
     printf("Ciallo\n");
-    XL9535->begin();
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
+    if (assert != ESP_OK)
+    {
+        printf("bq25896 init fail (error code: %#X)\n", assert);
+    }
+    else
+    {
+        printf("bq25896 init success\n");
 
-    ES8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
+        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
+        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
+        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
+        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
+        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
+        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    }
+
+    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
+#endif
+
+    Xl9535->begin();
+    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+    Es8311->begin(MCLK_MULTIPLE, SAMPLE_RATE, i2s_data_bit_width_t::I2S_DATA_BIT_WIDTH_16BIT);
 
     while (1)
     {
-        if (ES8311->begin(50000) == true)
+        if (Es8311->begin(50000) == true)
         {
             printf("es8311 initialization success\n");
             break;
@@ -218,16 +241,16 @@ extern "C" void app_main()
         }
     }
 
-    ES8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
-    ES8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
+    Es8311->set_master_clock_source(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_MCLK, true);
+    Es8311->set_clock(Cpp_Bus_Driver::Es8311::Clock_Source::ADC_DAC_BCLK, true);
 
-    ES8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
+    Es8311->set_clock_coeff(MCLK_MULTIPLE, SAMPLE_RATE);
 
-    ES8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
+    Es8311->set_serial_port_mode(Cpp_Bus_Driver::Es8311::Serial_Port_Mode::SLAVE);
 
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
-    ES8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::ADC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
+    Es8311->set_sdp_data_bit_length(Cpp_Bus_Driver::Es8311::Sdp::DAC, Cpp_Bus_Driver::Es8311::Bits_Per_Sample::DATA_16BIT);
     Cpp_Bus_Driver::Es8311::Power_Status ps =
         {
             .contorl =
@@ -241,25 +264,25 @@ extern "C" void app_main()
                 },
             .vmid = Cpp_Bus_Driver::Es8311::Vmid::START_UP_VMID_NORMAL_SPEED_CHARGE,
         };
-    ES8311->set_power_status(ps);
-    ES8311->set_pga_power(true);
-    ES8311->set_adc_power(true);
-    ES8311->set_dac_power(true);
-    ES8311->set_output_to_hp_drive(true);
-    ES8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
-    ES8311->set_adc_hpf_stage2_coeff(10);
-    ES8311->set_dac_equalizer(false);
+    Es8311->set_power_status(ps);
+    Es8311->set_pga_power(true);
+    Es8311->set_adc_power(true);
+    Es8311->set_dac_power(true);
+    Es8311->set_output_to_hp_drive(true);
+    Es8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
+    Es8311->set_adc_hpf_stage2_coeff(10);
+    Es8311->set_dac_equalizer(false);
 
-    ES8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
-    ES8311->set_adc_auto_volume_control(false);
-    ES8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
-    ES8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
+    Es8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
+    Es8311->set_adc_auto_volume_control(false);
+    Es8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
+    Es8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
 
-    ES8311->set_adc_volume(191);
-    ES8311->set_dac_volume(220);
+    Es8311->set_adc_volume(191);
+    Es8311->set_dac_volume(220);
 
     // 将ADC的数据自动输出到DAC上
-    // ES8311->set_adc_data_to_dac(true);
+    // Es8311->set_adc_data_to_dac(true);
 
     // Wakenet_Init();
     Afe_Init();

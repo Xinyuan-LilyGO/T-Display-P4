@@ -2,19 +2,16 @@
  * @Description: radiolib_cc1101_send_receive
  * @Author: LILYGO_L
  * @Date: 2025-06-13 14:20:16
- * @LastEditTime: 2025-09-10 11:22:43
+ * @LastEditTime: 2026-03-26 14:54:44
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "t_display_p4_keyboard_config.h"
+#include "lilygo_device_driver_library.h"
 #include "cpp_bus_driver_library.h"
-#include "RadioLib.h"
 #include "radiolib_bridge_driver.h"
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+#include "kode_bq25896.h"
+#endif
 
 enum class Cc1101_Rf_Switch
 {
@@ -63,34 +60,55 @@ const uint8_t Send_Package[] =
         'a', 'b', 'c', 'd', 'e', 'f', 'g'};
 
 volatile bool Interrupt_Flag = false;
+volatile bool Transmitted_Flag = false;
+int16_t Transmission_State = RADIOLIB_ERR_NONE;
+bool Transmit_In_Progress = false;
+uint32_t Transmit_Start_Time = 0;
 
-auto IIC_Bus_0 = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
+void IRAM_ATTR Set_Received_Flag(void)
+{
+    Interrupt_Flag = true;
+}
 
-auto SPI_Bus_2 = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_CC1101_MOSI, T_MIXRF_CC1101_SCLK, T_MIXRF_CC1101_MISO, SPI2_HOST, 0);
+void IRAM_ATTR Set_Transmitted_Flag(void)
+{
+    Transmitted_Flag = true;
+}
 
-auto XL9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(IIC_Bus_0, XL9555_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Xl9555_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9555_SDA, XL9555_SCL, I2C_NUM_0);
 
-RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(SPI_Bus_2, 10000000, T_MIXRF_CC1101_CS);
+auto Cc1101_Spi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Spi>(T_MIXRF_CC1101_MOSI, T_MIXRF_CC1101_SCLK, T_MIXRF_CC1101_MISO, SPI2_HOST, 0);
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
+Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
+
+auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
+#endif
+
+auto Xl9555 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9555_Iic_Bus, XL9555_IIC_ADDRESS);
+
+RadioLibHal *Radiolib_Hal = new Radiolib_Cpp_Bus_Driver_Hal(Cc1101_Spi_Bus, 10000000, T_MIXRF_CC1101_CS);
 CC1101 Cc1101 = new Module(Radiolib_Hal, static_cast<uint32_t>(RADIOLIB_NC),
-                           static_cast<uint32_t>(RADIOLIB_NC), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
+                           static_cast<uint32_t>(T_MIXRF_CC1101_INT), static_cast<uint32_t>(RADIOLIB_NC), T_MIXRF_CC1101_BUSY);
 
-auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 void Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch rf_switch)
 {
     switch (rf_switch)
     {
     case Cc1101_Rf_Switch::RF_SWITCH_315MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         break;
     case Cc1101_Rf_Switch::RF_SWITCH_434MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
         break;
     case Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ:
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-        XL9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+        Xl9555->pin_write(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Value::LOW);
         break;
 
     default:
@@ -101,38 +119,57 @@ void Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch rf_switch)
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    XL9555->begin();
-    XL9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
+    if (assert != ESP_OK)
+    {
+        printf("bq25896 init fail (error code: %#X)\n", assert);
+    }
+    else
+    {
+        printf("bq25896 init success\n");
+
+        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
+        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
+        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
+        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
+        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
+        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    }
+
+    Xl9555_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
+#endif
+
+    Xl9555->begin();
+    Xl9555->pin_mode(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_write(XL9555_T_MIXRF_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
 
     vTaskDelay(pdMS_TO_TICKS(10));
 
-    ESP32P4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
+    Esp32p4->pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT);
 
-    ESP32P4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_mode(T_MIXRF_ST25R3916_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
-    ESP32P4->pin_write(T_MIXRF_CC1101_CS, 1);
-    ESP32P4->pin_write(T_MIXRF_NRF24L01_CS, 1);
-    ESP32P4->pin_write(T_MIXRF_ST25R3916_CS, 1);
+    Esp32p4->pin_mode(T_MIXRF_CC1101_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_mode(T_MIXRF_NRF24L01_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_mode(T_MIXRF_ST25R3916_CS, Cpp_Bus_Driver::Tool::Pin_Mode::OUTPUT);
+    Esp32p4->pin_write(T_MIXRF_CC1101_CS, 1);
+    Esp32p4->pin_write(T_MIXRF_NRF24L01_CS, 1);
+    Esp32p4->pin_write(T_MIXRF_ST25R3916_CS, 1);
 
-    XL9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_0, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9555->pin_mode(XL9555_T_MIXRF_CC1101_RF_SWITCH_1, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
 
-    ESP32P4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
+    Esp32p4->pin_mode(T_MIXRF_CC1101_BUSY, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLDOWN);
 
-    ESP32P4->create_gpio_interrupt(T_MIXRF_CC1101_INT, Cpp_Bus_Driver::Tool::Interrupt_Mode::RISING,
-                                   [](void *arg) -> IRAM_ATTR void
-                                   {
-                                       Interrupt_Flag = true;
-                                   });
+    Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch::RF_SWITCH_434MHZ);
 
-    Cc1101_Rf_Switch_Control(Cc1101_Rf_Switch::RF_SWITCH_868_915MHZ);
-
-    int16_t status = Cc1101.begin(868.0);
-    // int16_t status = Cc1101.beginFSK4(868.0);
+    int16_t status = Cc1101.begin(434.0);
+    // int16_t status = Cc1101.beginFSK4(434.0);
     if (status == RADIOLIB_ERR_NONE)
     {
+        Cc1101.setPacketReceivedAction(Set_Received_Flag);
+        Cc1101.setPacketSentAction(Set_Transmitted_Flag);
         printf("cc1101 init success\n");
     }
     else
@@ -140,7 +177,7 @@ extern "C" void app_main(void)
         printf("cc1101 init fail (error code: %d)\n", status);
     }
 
-    status = Cc1101.setSyncWord(0xAA, 0xBB);
+    status = Cc1101.setSyncWord(0x12, 0xAD);
     if (status != RADIOLIB_ERR_NONE)
     {
         printf("setSyncWord fail (error code: %d)\n", status);
@@ -149,41 +186,102 @@ extern "C" void app_main(void)
     Cc1101.startReceive();
 
     Interrupt_Flag = false;
+    Transmitted_Flag = false;
+    Transmit_In_Progress = false;
 
     while (1)
     {
-        if (ESP32P4->pin_read(ESP32P4_BOOT) == 0)
+        if (Esp32p4->pin_read(ESP32P4_BOOT) == 0 && Transmit_In_Progress == false)
         {
             vTaskDelay(pdMS_TO_TICKS(300));
 
             printf("T_MIXRF_CC1101 send package\n");
 
-            Cc1101.finishTransmit();
-
-            status = Cc1101.transmit(Send_Package, 10);
+            Interrupt_Flag = false;
+            Transmitted_Flag = false;
+            Transmission_State = Cc1101.startTransmit(Send_Package, 10);
+            Transmit_In_Progress = Transmission_State == RADIOLIB_ERR_NONE;
+            Transmit_Start_Time = esp_log_timestamp();
+            status = Transmission_State;
             if (status != RADIOLIB_ERR_NONE)
             {
-                printf("transmit fail (error code: %d)\n", status);
+                printf("startTransmit fail (error code: %d)\n", status);
+                status = Cc1101.startReceive();
+                if (status != RADIOLIB_ERR_NONE)
+                {
+                    printf("startReceive fail (error code: %d)\n", status);
+                }
+            }
+        }
+
+        if (Transmitted_Flag == true)
+        {
+            Transmitted_Flag = false;
+
+            if (Transmission_State == RADIOLIB_ERR_NONE)
+            {
+                printf("transmission finished\n");
+            }
+            else
+            {
+                printf("transmission state fail (error code: %d)\n", Transmission_State);
+            }
+
+            status = Cc1101.finishTransmit();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("finishTransmit fail (error code: %d)\n", status);
+            }
+
+            Transmit_In_Progress = false;
+            Interrupt_Flag = false;
+            status = Cc1101.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
+            }
+        }
+
+        if (Transmit_In_Progress == true && (esp_log_timestamp() - Transmit_Start_Time) > 3000)
+        {
+            printf("transmit interrupt timeout\n");
+            Transmit_In_Progress = false;
+            Transmitted_Flag = false;
+
+            status = Cc1101.finishTransmit();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("finishTransmit fail (error code: %d)\n", status);
+            }
+
+            Interrupt_Flag = false;
+            status = Cc1101.startReceive();
+            if (status != RADIOLIB_ERR_NONE)
+            {
+                printf("startReceive fail (error code: %d)\n", status);
+            }
+        }
+
+        if (Interrupt_Flag == true) // 接收完成中断
+        {
+            uint8_t receive_package[255] = {0};
+            size_t length_buffer = Cc1101.getPacketLength();
+            if (length_buffer > sizeof(receive_package))
+            {
+                length_buffer = sizeof(receive_package);
+            }
+            if (Cc1101.readData(receive_package, length_buffer) == RADIOLIB_ERR_NONE)
+            {
+                for (size_t i = 0; i < length_buffer; i++)
+                {
+                    printf("get T_MIXRF_CC1101 data[%u]: %d\n", static_cast<unsigned int>(i), receive_package[i]);
+                }
             }
 
             status = Cc1101.startReceive();
             if (status != RADIOLIB_ERR_NONE)
             {
                 printf("startReceive fail (error code: %d)\n", status);
-            }
-
-            Interrupt_Flag = false;
-        }
-
-        if (Interrupt_Flag == true) // 接收完成中断
-        {
-            uint8_t receive_package[255] = {0};
-            if (Cc1101.readData(receive_package, 9) == RADIOLIB_ERR_NONE)
-            {
-                for (uint8_t i = 0; i < 9; i++)
-                {
-                    printf("get T_MIXRF_CC1101 data[%d]: %d\n", i, receive_package[i]);
-                }
             }
 
             Interrupt_Flag = false;

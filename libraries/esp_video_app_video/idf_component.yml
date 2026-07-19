@@ -1,0 +1,3 @@
+dependencies:
+  espressif/esp_video:
+    version: "^2.0.0"

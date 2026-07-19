@@ -1,24 +1,24 @@
-[submodule "components/cpp_bus_driver"]
-	path = components/cpp_bus_driver
+[submodule "libraries/cpp_bus_driver"]
+	path = libraries/cpp_bus_driver
 	url = https://github.com/Llgok/cpp_bus_driver.git
 [submodule "main/examples/esp-at"]
 	path = main/examples/esp-at
 	url = https://github.com/espressif/esp-at.git
-[submodule "components/ST25R3916"]
-	path = components/ST25R3916
+[submodule "libraries/ST25R3916"]
+	path = libraries/ST25R3916
 	url = https://github.com/Llgok/ST25R3916.git
-[submodule "components/NFC-RFAL"]
-	path = components/NFC-RFAL
+[submodule "libraries/NFC-RFAL"]
+	path = libraries/NFC-RFAL
 	url = https://github.com/Llgok/NFC-RFAL.git
-[submodule "components/arduino_cpp_bus_driver"]
-	path = components/arduino_cpp_bus_driver
+[submodule "libraries/arduino_cpp_bus_driver"]
+	path = libraries/arduino_cpp_bus_driver
 	url = https://github.com/Llgok/arduino_cpp_bus_driver.git
-[submodule "components/ICM20948_WE"]
-	path = components/ICM20948_WE
+[submodule "libraries/ICM20948_WE"]
+	path = libraries/ICM20948_WE
 	url = https://github.com/Llgok/ICM20948_WE.git
-[submodule "components/RadioLib"]
-	path = components/RadioLib
-	url = https://github.com/jgromes/RadioLib.git
-[submodule "components/kode_bq25896"]
-	path = components/kode_bq25896
+[submodule "libraries/kode_bq25896"]
+	path = libraries/kode_bq25896
 	url = https://github.com/Llgok/kode_bq25896.git
+[submodule "libraries/lilygo_device_driver"]
+	path = libraries/lilygo_device_driver
+	url = https://github.com/Xinyuan-LilyGO/lilygo_device_driver.git

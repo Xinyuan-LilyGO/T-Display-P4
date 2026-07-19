@@ -2,36 +2,20 @@
  * @Description: screen_lvgl_touch_draw
  * @Author: LILYGO_L
  * @Date: 2025-06-13 11:35:38
- * @LastEditTime: 2025-12-06 11:59:22
+ * @LastEditTime: 2026-03-26 15:01:30
  * @License: GPL 3.0
  */
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/lock.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "esp_timer.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_lcd_mipi_dsi.h"
-#include "esp_ldo_regulator.h"
-#include "driver/gpio.h"
-#include "esp_err.h"
-#include "esp_log.h"
-#include "lvgl.h"
-#include "t_display_p4_driver.h"
-#include "t_display_p4_config.h"
 #include "cpp_bus_driver_library.h"
-#if CONFIG_ENABLE_USB_DISPLAY == true
-#include "esp_lcd_usb_display.h"
+#include "lilygo_device_driver_library.h"
+#include "lvgl.h"
+
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+#include "kode_bq25896.h"
 #endif
 
 #define LVGL_TICK_PERIOD_MS 1
 
 size_t Cycle_Time = 0;
-
-esp_lcd_panel_handle_t Screen_Mipi_Dpi_Panel = NULL;
 
 std::vector<uint16_t> Lvgl_Draw_X_Data;
 std::vector<uint16_t> Lvgl_Draw_Y_Data;
@@ -51,26 +35,49 @@ static lv_layer_t layer;
 
 lv_point_t point;
 
-auto XL9535_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
+auto Screen_Mipi_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Mipi>(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_MIPI_DSI_HSYNC, SCREEN_MIPI_DSI_HBP, SCREEN_MIPI_DSI_HFP,
+                                                                       SCREEN_MIPI_DSI_VSYNC, SCREEN_MIPI_DSI_VBP, SCREEN_MIPI_DSI_VFP, SCREEN_DATA_LANE_NUM,
+                                                                       [](uint8_t format) -> Cpp_Bus_Driver::Hardware_Mipi::Color_Format
+                                                                       {
+                                                                    switch (format)
+                                                                    {
+                                                                    case 16:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    case 24:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB888;
+                                                                    default:
+                                                                        return Cpp_Bus_Driver::Hardware_Mipi::Color_Format::RGB565;
+                                                                    } }(SCREEN_BITS_PER_PIXEL));
 
-auto XL9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(XL9535_Bus, XL9535_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
+Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
 
-auto ESP32P4 = std::make_unique<Cpp_Bus_Driver::Tool>();
+auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
+#endif
+
+auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+
+auto Esp32p4 = std::make_unique<Cpp_Bus_Driver::Tool>();
 
 #if defined CONFIG_SCREEN_TYPE_HI8561
-auto HI8561_T_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
+auto Hi8561_Iic_Touch_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(HI8561_TOUCH_SDA, HI8561_TOUCH_SCL, I2C_NUM_0);
 
-auto HI8561_T = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(HI8561_T_Bus, HI8561_TOUCH_IIC_ADDRESS, DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Hi8561_Touch = std::make_unique<Cpp_Bus_Driver::Hi8561_Touch>(Hi8561_Iic_Touch_Bus, HI8561_TOUCH_IIC_ADDRESS);
+
+auto Screen = std::make_unique<Cpp_Bus_Driver::Hi8561>(Screen_Mipi_Bus);
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-auto GT9895_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_TOUCH_SDA, GT9895_TOUCH_SCL, I2C_NUM_0);
+auto Gt9895_Touch_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(GT9895_SDA, GT9895_SCL, I2C_NUM_0);
 
-auto GT9895 = std::make_unique<Cpp_Bus_Driver::Gt9895>(GT9895_Bus, GT9895_IIC_ADDRESS, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR,
-                                                       DEFAULT_CPP_BUS_DRIVER_VALUE);
+auto Gt9895_Touch = std::make_unique<Cpp_Bus_Driver::Gt9895>(Gt9895_Touch_Iic_Bus, GT9895_IIC_ADDRESS, -1, GT9895_X_SCALE_FACTOR, GT9895_Y_SCALE_FACTOR);
+
+auto Screen = std::make_unique<Cpp_Bus_Driver::Rm69a10>(Screen_Mipi_Bus);
 
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
 void lvgl_port_task(void *arg)
@@ -106,12 +113,12 @@ void lvgl_port_task(void *arg)
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
-    // if (XL9535->pin_read(XL9535_TOUCH_INT) == 0)
+    // if (Xl9535->pin_read(XL9535_TOUCH_INT) == 0)
     // {
 #if defined CONFIG_SCREEN_TYPE_HI8561
     Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
 
-    if (HI8561_T->get_single_touch_point(tp) == true)
+    if (Hi8561_Touch->get_single_touch_point(tp) == true)
     {
         // printf("touch finger: %d edge touch flag: %d\nx: %d y: %d p: %d\n",
         //        tp.finger_count, tp.edge_touch_flag, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
@@ -131,10 +138,10 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 
     Cpp_Bus_Driver::Gt9895::Touch_Point tp;
 
-    if (GT9895->get_single_touch_point(tp) == true)
+    if (Gt9895_Touch->get_single_touch_point(tp) == true)
     {
-        printf("touch finger: %d edge touch flag: %d\n id: %d x: %d y: %d p: %d\n",
-               tp.finger_count, tp.edge_touch_flag, tp.info[0].finger_id, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
+        // printf("touch finger: %d edge touch flag: %d\n id: %d x: %d y: %d p: %d\n",
+        //        tp.finger_count, tp.edge_touch_flag, tp.info[0].finger_id, tp.info[0].x, tp.info[0].y, tp.info[0].pressure_value);
 
         data->state = LV_INDEV_STATE_PR;
 
@@ -147,7 +154,7 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
         data->state = LV_INDEV_STATE_REL;
     }
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
     // }
@@ -223,7 +230,17 @@ void lv_example_canvas_7(void)
     /*Create a canvas and initialize its palette*/
     canvas = lv_canvas_create(lv_screen_active());
     // lv_canvas_set_draw_buf(canvas, (lv_draw_buf_t *)draw_buf);
-    lv_canvas_set_buffer(canvas, draw_buf, SCREEN_WIDTH, SCREEN_HEIGHT, LVGL_COLOR_FORMAT);
+    lv_canvas_set_buffer(canvas, draw_buf, SCREEN_WIDTH, SCREEN_HEIGHT, [](uint8_t format) -> lv_color_format_t
+                         {
+                            switch (format)
+                            {
+                            case 16:
+                                return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                            case 24:
+                                return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+                            default:
+                                return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                            } }(SCREEN_BITS_PER_PIXEL));
     lv_canvas_fill_bg(canvas, lv_color_hex3(0xCCC), LV_OPA_COVER);
     lv_obj_center(canvas);
 
@@ -256,40 +273,50 @@ void Lvgl_Init(void)
     // create a lvgl display
     lv_display_t *display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
     // associate the mipi panel handle to the display
-    lv_display_set_user_data(display, Screen_Mipi_Dpi_Panel);
+    lv_display_set_user_data(display, Screen.get());
     // set color depth
-    lv_display_set_color_format(display, LVGL_COLOR_FORMAT);
+    lv_display_set_color_format(display, [](uint8_t format) -> lv_color_format_t
+                                {
+                                    switch (format)
+                                    {
+                                    case 16:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                                    case 24:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
+                                    default:
+                                        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
+                                    } }(SCREEN_BITS_PER_PIXEL));
     // create draw buffer
     printf("allocate separate lvgl draw buffers\n");
     size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
-    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+    void *buf1 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
     assert(buf1);
-    // void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
+    // void *buf2 = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
     // assert(buf2);
     // initialize LVGL draw buffers
     lv_display_set_buffers(display, buf1, NULL, draw_buffer_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
     // set the callback which can copy the rendered image to an area of the display
     lv_display_set_flush_cb(display, [](lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
                             {
-                                esp_lcd_panel_handle_t panel_handle = (esp_lcd_panel_handle_t)lv_display_get_user_data(disp);
+#if defined CONFIG_SCREEN_TYPE_HI8561
+                                auto screen = (Cpp_Bus_Driver::Hi8561 *)lv_display_get_user_data(disp);
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+                                auto screen = (Cpp_Bus_Driver::Rm69a10 *)lv_display_get_user_data(disp);
+#else
+#error "no macro definition is set"
+#endif
+
                                 int offsetx1 = area->x1;
                                 int offsetx2 = area->x2;
                                 int offsety1 = area->y1;
                                 int offsety2 = area->y2;
                                 // pass the draw buffer to the driver
-                                esp_lcd_panel_draw_bitmap(panel_handle, offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map);
-
-#if CONFIG_ENABLE_USB_DISPLAY == true
-                                lv_display_flush_ready(disp);
-#endif
-                            });
+                                screen->send_color_stream_coordinate(offsetx1, offsety1, offsetx2 + 1, offsety2 + 1, px_map); });
 
     lv_indev_t *indev = lv_indev_create();
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
     lv_indev_set_read_cb(indev, my_touchpad_read);
 
-#if CONFIG_ENABLE_USB_DISPLAY == true
-#else
     printf("register dpi panel event callback for lvgl flush ready notification\n");
     esp_lcd_dpi_panel_event_callbacks_t cbs = {
         .on_color_trans_done = [](esp_lcd_panel_handle_t panel, esp_lcd_dpi_panel_event_data_t *edata, void *user_ctx) -> bool
@@ -305,8 +332,7 @@ void Lvgl_Init(void)
             // io_level = !io_level;
             return false; },
     };
-    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Dpi_Panel, &cbs, display));
-#endif
+    ESP_ERROR_CHECK(esp_lcd_dpi_panel_register_event_callbacks(Screen_Mipi_Bus->get_device_handle(), &cbs, display));
 
     printf("use esp_timer as lvgl tick timer\n");
     const esp_timer_create_args_t lvgl_tick_timer_args = {
@@ -320,95 +346,87 @@ void Lvgl_Init(void)
     ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LVGL_TICK_PERIOD_MS * 1000));
 }
 
-#if CONFIG_ENABLE_USB_DISPLAY == true
-bool Usb_Screen_Init(esp_lcd_panel_handle_t *mipi_dpi_panel)
-{
-    usb_display_vendor_config_t vendor_config_usb = DEFAULT_USB_DISPLAY_VENDOR_CONFIG(SCREEN_WIDTH, SCREEN_HEIGHT,
-                                                                                      SCREEN_BITS_PER_PIXEL, *mipi_dpi_panel);
-
-    if (esp_lcd_new_panel_usb_display(&vendor_config_usb, mipi_dpi_panel) != ESP_OK)
-    {
-        printf("esp_lcd_new_panel_usb_display fail\n");
-        return false;
-    }
-
-    return true;
-}
-#endif
-
 extern "C" void app_main(void)
 {
     printf("Ciallo\n");
-    XL9535->begin();
 
-    XL9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    XL9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    XL9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    XL9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    vTaskDelay(pdMS_TO_TICKS(200));
-
-    Init_Ldo_Channel_Power(3, 1830);
-
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    XL9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-    vTaskDelay(pdMS_TO_TICKS(200));
-    XL9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    XL9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    vTaskDelay(pdMS_TO_TICKS(200));
-
-#if CONFIG_ENABLE_USB_DISPLAY == true
-    Usb_Screen_Init(&Screen_Mipi_Dpi_Panel);
-#else
-    Screen_Init(&Screen_Mipi_Dpi_Panel);
-#endif
-
-    esp_err_t assert = esp_lcd_panel_init(Screen_Mipi_Dpi_Panel);
+#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
+    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
     if (assert != ESP_OK)
     {
-        printf("esp_lcd_panel_init fail (error code: %#X)\n", assert);
+        printf("bq25896 init fail (error code: %#X)\n", assert);
+    }
+    else
+    {
+        printf("bq25896 init success\n");
+
+        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
+        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
+        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
+        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
+        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
+        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
+        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
     }
 
+    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
+#endif
+
+    Xl9535->begin();
+
+    Xl9535->pin_mode(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+
+    Xl9535->pin_mode(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+
+    Xl9535->pin_mode(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+    Xl9535->pin_mode(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
+
+    Xl9535->pin_write(XL9535_GPS_WAKE_UP, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_ESP32C6_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+    Xl9535->pin_write(XL9535_ESP32P4_VCCA_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+
+    Lilygo_Device_Driver::Init_Ldo_Channel_Power(3, 2500);
+
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(5));
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::LOW);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    Xl9535->pin_write(XL9535_SCREEN_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    Xl9535->pin_write(XL9535_TOUCH_RST, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
+    vTaskDelay(pdMS_TO_TICKS(120));
+
+    Screen->begin(SCREEN_MIPI_DSI_DPI_CLK_MHZ, SCREEN_LANE_BIT_RATE_MBPS);
+
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    ESP32P4->create_pwm(HI8561_SCREEN_BL, ledc_channel_t::LEDC_CHANNEL_0, 2000);
+    Esp32p4->create_pwm(HI8561_SCREEN_BL, ledc_timer_t::LEDC_TIMER_0, ledc_channel_t::LEDC_CHANNEL_0, 2000);
 
-    HI8561_T_Bus->set_bus_handle(XL9535_Bus->get_bus_handle());
+    Hi8561_Iic_Touch_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
-    HI8561_T->begin();
+    Hi8561_Touch->begin();
 
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
 
-    GT9895_Bus->set_bus_handle(XL9535_Bus->get_bus_handle());
+    Gt9895_Touch_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
 
-    GT9895->begin();
+    Gt9895_Touch->begin();
 
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
 
     Lvgl_Init();
@@ -416,56 +434,53 @@ extern "C" void app_main(void)
 
     lv_example_canvas_7();
 
-#if CONFIG_ENABLE_USB_DISPLAY == true
-#else
 #if defined CONFIG_SCREEN_TYPE_HI8561
-    HI8561_T->start_pwm_gradient_time(100, 500);
+    Hi8561_Touch->start_pwm_gradient_time(100, 500);
 #elif defined CONFIG_SCREEN_TYPE_RM69A10
     for (uint8_t i = 0; i < 255; i += 5)
     {
-        set_rm69a10_brightness(Screen_Mipi_Dpi_Panel, i);
+        Screen->set_brightness(i);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 #else
-#error "unknown macro definition, please select the correct macro definition."
+#error "no macro definition is set"
 #endif
+
+    while (1)
+    {
+        if (esp_log_timestamp() > Cycle_Time)
+        {
+#if defined CONFIG_SCREEN_TYPE_HI8561
+            Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
+
+            if (Hi8561_Touch->get_multiple_touch_point(tp) == true)
+            {
+                printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+
+                for (uint8_t i = 0; i < tp.info.size(); i++)
+                {
+                    printf("touch num:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+                }
+            }
+#elif defined CONFIG_SCREEN_TYPE_RM69A10
+            Cpp_Bus_Driver::Gt9895::Touch_Point tp;
+
+            if (Gt9895_Touch->get_multiple_touch_point(tp) == true)
+            {
+                printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
+
+                for (uint8_t i = 0; i < tp.info.size(); i++)
+                {
+                    printf("touch num:[%d] id:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].finger_id, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
+                }
+            }
+#else
+#error "no macro definition is set"
 #endif
 
-    //     while (1)
-    //     {
-    //         if (esp_log_timestamp() > Cycle_Time)
-    //         {
-    // #if defined CONFIG_SCREEN_TYPE_HI8561
-    //             Cpp_Bus_Driver::Hi8561_Touch::Touch_Point tp;
+            Cycle_Time = esp_log_timestamp() + 1000;
+        }
 
-    //             if (HI8561_T->get_multiple_touch_point(tp) == true)
-    //             {
-    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
-
-    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
-    //                 {
-    //                     printf("touch num:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-    //                 }
-    //             }
-    // #elif defined CONFIG_SCREEN_TYPE_RM69A10
-    //             Cpp_Bus_Driver::Gt9895::Touch_Point tp;
-
-    //             if (GT9895->get_multiple_touch_point(tp) == true)
-    //             {
-    //                 printf("touch finger: %d edge touch flag: %d\n", tp.finger_count, tp.edge_touch_flag);
-
-    //                 for (uint8_t i = 0; i < tp.info.size(); i++)
-    //                 {
-    //                     printf("touch num:[%d] id:[%d] x: %d y: %d p: %d\n", i + 1, tp.info[i].finger_id, tp.info[i].x, tp.info[i].y, tp.info[i].pressure_value);
-    //                 }
-    //             }
-    // #else
-    // #error "unknown macro definition, please select the correct macro definition."
-    // #endif
-
-    //             Cycle_Time = esp_log_timestamp() + 1000;
-    //         }
-
-    //         vTaskDelay(pdMS_TO_TICKS(10));
-    //     }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
 }
