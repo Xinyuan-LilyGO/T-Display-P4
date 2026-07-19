@@ -2,135 +2,155 @@
  * @Description: bq27220
  * @Author: LILYGO_L
  * @Date: 2025-01-04 15:06:05
- * @LastEditTime: 2026-03-26 14:59:03
+ * @LastEditTime: 2026-07-13 22:30:41
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
-#include "cpp_bus_driver_library.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-#include "kode_bq25896.h"
-#endif
+namespace {
+constexpr uint16_t kBatteryCapacityMah = 1000;
 
-auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_0);
-auto Bq27220_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ27220_SDA, BQ27220_SCL, I2C_NUM_0);
+void PrintSeparator() {
+  printf(
+      "--------------------------------------------------------------------------"
+      "\n");
+}
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
-Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
+const char* SecurityModeToString(
+    cpp_bus_driver::Bq27220::SecurityMode mode) {
+  switch (mode) {
+    case cpp_bus_driver::Bq27220::SecurityMode::kFullAccess:
+      return "full-access";
+    case cpp_bus_driver::Bq27220::SecurityMode::kUnsealed:
+      return "unsealed";
+    case cpp_bus_driver::Bq27220::SecurityMode::kSealed:
+      return "sealed";
+    case cpp_bus_driver::Bq27220::SecurityMode::kUnknown:
+    default:
+      return "unknown";
+  }
+}
+}  // namespace
 
-auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
-#endif
+extern "C" void app_main(void) {
+  printf("BQ27220 example\n");
 
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
-auto Bq27220 = std::make_unique<Cpp_Bus_Driver::Bq27220xxxx>(Bq27220_Iic_Bus, BQ27220_IIC_ADDRESS);
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  driver.Init();
 
-extern "C" void app_main(void)
-{
-    printf("Ciallo\n");
+  auto& bq27220 = driver.chip().bq27220;
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
-    if (assert != ESP_OK)
-    {
-        printf("bq25896 init fail (error code: %#X)\n", assert);
+  cpp_bus_driver::Bq27220::CedvProfile battery_profile;
+  battery_profile.design_capacity = kBatteryCapacityMah;
+  battery_profile.full_charge_capacity = kBatteryCapacityMah;
+
+  cpp_bus_driver::Bq27220::GaugingConfig gauging_config;
+
+  bool config_ok =
+      bq27220->ApplyBatteryProfileIfNeeded(battery_profile, gauging_config);
+  printf("BQ27220 example config: %s, capacity: %u mAh\n",
+      config_ok ? "ok" : "failed", kBatteryCapacityMah);
+
+  while (true) {
+    cpp_bus_driver::Bq27220::BatteryStatus battery_status;
+    cpp_bus_driver::Bq27220::OperationStatus operation_status;
+    const bool battery_status_ok = bq27220->GetBatteryStatus(battery_status);
+    const bool operation_status_ok =
+        bq27220->GetOperationStatus(operation_status);
+    const int16_t current_ma = bq27220->GetCurrent();
+
+    printf("\nBQ27220 snapshot\n");
+    PrintSeparator();
+    printf("Device ID: 0x%04X\n", bq27220->GetDeviceId());
+    printf("Firmware version: 0x%04X\n", bq27220->GetFirmwareVersion());
+    printf("Hardware version: 0x%04X\n", bq27220->GetHardwareVersion());
+
+    if (operation_status_ok) {
+      printf("Security mode: %s\n",
+          SecurityModeToString(operation_status.security));
+      printf("Calibration mode: %d\n",
+          operation_status.flag.calibration_mode);
+      printf("Config update: %d\n",
+          operation_status.flag.config_update_mode);
+      printf("Init complete: %d\n",
+          operation_status.flag.initialization_complete);
+      printf("EDV2 reached: %d\n", operation_status.flag.edv2_reached);
+      printf("Valid discharge qualified: %d\n",
+          operation_status.flag.valid_discharge_qualified);
+      printf("Smoothing active: %d\n",
+          operation_status.flag.smoothing_active);
+      printf("Battery trip point interrupt: %d\n",
+          operation_status.flag.battery_trip_point_interrupt);
     }
-    else
-    {
-        printf("bq25896 init success\n");
 
-        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
-        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
-        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
-        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
-        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
-        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
-        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
+    PrintSeparator();
+    printf("Design capacity: %u mAh\n", bq27220->GetDesignCapacity());
+    printf("Remaining capacity: %u mAh\n",
+        bq27220->GetRemainingCapacity());
+    printf("Full charge capacity: %u mAh\n",
+        bq27220->GetFullChargeCapacity());
+    printf("State of charge: %u%%\n", bq27220->GetStatusOfCharge());
+    printf("State of health: %u%%\n", bq27220->GetStatusOfHealth());
+    printf("Cycle count: %u\n", bq27220->GetCycleCount());
+    printf("Raw coulomb count: %d c\n", bq27220->GetRawCoulombCount());
+
+    PrintSeparator();
+    printf("Voltage: %u mV\n", bq27220->GetVoltage());
+    printf("Current: %d mA\n", current_ma);
+    printf("Average current: %d mA\n", bq27220->GetAverageCurrent());
+    printf("Average power: %d mW\n", bq27220->GetAveragePower());
+    printf("Charging voltage request: %u mV\n",
+        bq27220->GetChargingVoltage());
+    printf("Charging current request: %u mA\n",
+        bq27220->GetChargingCurrent());
+    printf("Standby current: %d mA\n", bq27220->GetStandbyCurrent());
+    printf("Max load current: %d mA\n", bq27220->GetMaxLoadCurrent());
+
+    PrintSeparator();
+    printf("Gauge temperature: %.2f C\n", bq27220->GetTemperatureCelsius());
+    printf("Internal temperature: %.2f C\n",
+        bq27220->GetChipTemperatureCelsius());
+
+    PrintSeparator();
+    bq27220->SetAtRate(current_ma);
+    printf("AtRate: %d mA\n", bq27220->GetAtRate());
+    printf("AtRate time to empty: %u min\n",
+        bq27220->GetAtRateTimeToEmpty());
+    printf("Time to empty: %u min\n", bq27220->GetTimeToEmpty());
+    printf("Time to full: %u min\n", bq27220->GetTimeToFull());
+    printf("Standby time to empty: %u min\n",
+        bq27220->GetStandbyTimeToEmpty());
+    printf("Max load time to empty: %u min\n",
+        bq27220->GetMaxLoadTimeToEmpty());
+
+    if (battery_status_ok) {
+      PrintSeparator();
+      printf("Discharging: %d\n", battery_status.flag.discharging);
+      printf("Battery present: %d\n", battery_status.flag.battery_present);
+      printf("Authentication good: %d\n",
+          battery_status.flag.authentication_good);
+      printf("Open circuit voltage good: %d\n",
+          battery_status.flag.open_circuit_voltage_good);
+      printf("Open circuit voltage failed: %d\n",
+          battery_status.flag.open_circuit_voltage_failed);
+      printf("Open circuit voltage complete: %d\n",
+          battery_status.flag.open_circuit_voltage_complete);
+      printf("Full charged: %d\n", battery_status.flag.full_charged);
+      printf("Full discharged: %d\n", battery_status.flag.full_discharged);
+      printf("Charge inhibit: %d\n", battery_status.flag.charge_inhibit);
+      printf("Charge overtemperature: %d\n",
+          battery_status.flag.over_temperature_charge);
+      printf("Discharge overtemperature: %d\n",
+          battery_status.flag.over_temperature_discharge);
+      printf("Sleep: %d\n", battery_status.flag.sleep_mode);
+      printf("Terminate charge alarm: %d\n",
+          battery_status.flag.terminate_charge_alarm);
+      printf("Terminate discharge alarm: %d\n",
+          battery_status.flag.terminate_discharge_alarm);
+      printf("System down: %d\n", battery_status.flag.system_down);
     }
 
-    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
-#endif
-
-    Xl9535->begin();
-    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
+    PrintSeparator();
     vTaskDelay(pdMS_TO_TICKS(1000));
-
-    Bq27220_Iic_Bus->set_bus_handle(Xl9535_Iic_Bus->get_bus_handle());
-
-    Bq27220->begin();
-
-    printf("BQ27220 ID: %#X\n", Bq27220->get_device_id());
-
-    // 设置的电池容量会在没有电池插入的时候自动还原为默认值
-    Bq27220->set_design_capacity(400);
-    Bq27220->set_temperature_mode(Cpp_Bus_Driver::Bq27220xxxx::Temperature_Mode::EXTERNAL_NTC);
-    Bq27220->set_sleep_current_threshold(5);
-
-    while (1)
-    {
-        // printf("BQ27220 ID: %#X\n", Bq27220->get_device_id());
-
-        // Iic_Scan();
-        printf("////////////////////////////////////////////////////\n");
-        printf("--------------------------------------------------------------------------\n");
-        printf("BQ27220 ID: %#X\n", Bq27220->get_device_id());
-        printf("--------------------------------------------------------------------------\n");
-        printf("design capacity: %dmah\n", Bq27220->get_design_capacity());
-        printf("remaining capacity: %dmah\n", Bq27220->get_remaining_capacity());
-        // 放电后才更新full_charge_capacity
-        printf("full charge capacity: %dmah\n", Bq27220->get_full_charge_capacity());
-        printf("raw coulomb count: %dc\n", Bq27220->get_raw_coulomb_count());
-        printf("cycle count: %d\n", Bq27220->get_cycle_count());
-        printf("battery level: %d%%\n", Bq27220->get_status_of_health());
-        printf("battery health: %d%%\n", Bq27220->get_status_of_health());
-        printf("--------------------------------------------------------------------------\n");
-        printf("voltage: %dmv\n", Bq27220->get_voltage());
-        int16_t current = Bq27220->get_current();
-        printf("charging voltage: %dmv\n", Bq27220->get_charging_voltage());
-        printf("current: %dma\n", current);
-        printf("charging current: %dma\n", Bq27220->get_charging_current());
-        printf("standby current: %dma\n", Bq27220->get_standby_current());
-        printf("max load current current: %dma\n", Bq27220->get_max_load_current());
-        printf("average power: %dmw\n", Bq27220->get_average_power());
-        printf("--------------------------------------------------------------------------\n");
-        printf("chip temperature: %.03f^C\n", Bq27220->get_chip_temperature_celsius());
-        printf("ntc temperature: %.03f^C\n", Bq27220->get_temperature_celsius());
-        printf("--------------------------------------------------------------------------\n");
-        Bq27220->set_at_rate(current);
-        printf("at rate: %dma\n", Bq27220->get_at_rate());
-        printf("at rate battery time to empty: %dmin\n", Bq27220->get_at_rate_time_to_empty());
-        printf("battery time to empty: %dmin\n", Bq27220->get_time_to_empty());
-        printf("battery time to full charge: %dmin\n", Bq27220->get_time_to_full());
-        printf("battery standby time to empty: %dmin\n", Bq27220->get_standby_time_to_empty());
-        printf("battery max load time to empty: %dmin\n", Bq27220->get_max_load_time_to_empty());
-        printf("--------------------------------------------------------------------------\n");
-
-        // Cpp_Bus_Driver::Bq27220xxxx::Operation_Status os;
-        // Bq27220->get_operation_status(os);
-
-        Cpp_Bus_Driver::Bq27220xxxx::Battery_Status bs;
-        if (Bq27220->get_battery_status(bs) == true)
-        {
-            printf("fully discharged flag: %d\n", bs.flag.fd);
-            printf("sleep flag: %d\n", bs.flag.sleep);
-            printf("charging overheat flag: %d\n", bs.flag.otc);
-            printf("discharging overheat flag: %d\n", bs.flag.otd);
-            printf("fully discharged flag: %d\n", bs.flag.fc);
-            printf("charging prohibited flag: %d\n", bs.flag.chginh);
-            printf("terminate charging alarm flag: %d\n", bs.flag.tca);
-            printf("terminate discharging alarm flag: %d\n", bs.flag.tda);
-            printf("battery insertion detection flag: %d\n", bs.flag.auth_gd);
-            printf("battery present flag: %d\n", bs.flag.battpres);
-            printf("discharge flag: %d\n", bs.flag.dsg);
-        }
-        printf("--------------------------------------------------------------------------\n");
-        printf("////////////////////////////////////////////////////\n");
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+  }
 }

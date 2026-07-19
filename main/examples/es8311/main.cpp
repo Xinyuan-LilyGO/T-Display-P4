@@ -2,441 +2,65 @@
  * @Description: es8311
  * @Author: LILYGO_L
  * @Date: 2024-12-23 15:18:58
- * @LastEditTime: 2026-04-13 17:28:13
+ * @LastEditTime: 2026-05-13 18:08:41
  * @License: GPL 3.0
  */
+#include "new_notification_010_c2_b16_s44100.h"
 #include "lilygo_device_driver_library.h"
-#include "cpp_bus_driver_library.h"
-#include "New Notification 010_c2_b16_s44100.h"
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-#include "kode_bq25896.h"
-#endif
+namespace board = lilygo_device_driver::t_display_p4;
 
-#define AUDIO_MCLK_MULTIPLE 256
-#define AUDIO_BITS_PER_SAMPLE 16
-#define AUDIO_SAMPLE_RATE 44100
+extern "C" void app_main(void) {
+  printf("Ciallo\n");
 
-auto Es8311_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(ES8311_SDA, ES8311_SCL, I2C_NUM_0);
-auto Xl9535_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(XL9535_SDA, XL9535_SCL, I2C_NUM_1);
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  driver.Init();
 
-auto Es8311_Iis_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iis>(ES8311_ADC_DATA, ES8311_DAC_DATA, ES8311_WS_LRCK, ES8311_BCLK, ES8311_MCLK,
-                                                                     i2s_port_t::I2S_NUM_0, Cpp_Bus_Driver::Hardware_Iis::Data_Mode::INPUT_OUTPUT, Cpp_Bus_Driver::Hardware_Iis::Iis_Mode::STD,
-                                                                     i2s_clock_src_t::I2S_CLK_SRC_DEFAULT);
+  auto& es8311 = driver.chip().es8311;
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-auto Bq25896_Dev = std::make_shared<Kode_Bq25896::bq25896_dev_t>();
-Kode_Bq25896::bq25896_handle_t Bq25896_Handle = Bq25896_Dev.get();
+  // 将ADC的数据自动输出到DAC上
+  // es8311->SetAdcDataToDac(true);
 
-auto Bq25896_Iic_Bus = std::make_shared<Cpp_Bus_Driver::Hardware_Iic_1>(BQ25896_SDA, BQ25896_SCL, I2C_NUM_0);
-#endif
+  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
 
-auto Es8311 = std::make_unique<Cpp_Bus_Driver::Es8311>(Es8311_Iic_Bus, Es8311_Iis_Bus, ES8311_IIC_ADDRESS);
-auto Xl9535 = std::make_unique<Cpp_Bus_Driver::Xl95x5>(Xl9535_Iic_Bus, XL9535_IIC_ADDRESS);
+  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
+      cpp_bus_driver::Tool::GpioMode::kInput,
+      cpp_bus_driver::Tool::GpioStatus::kPullup);
 
-void Iic_Scan(void)
-{
-    std::vector<uint8_t> address;
-    if (Es8311_Iic_Bus->scan_7bit_address(&address) == true)
-    {
-        for (size_t i = 0; i < address.size(); i++)
-        {
-            printf("discovered iic devices[%u]: %#x\n", i, address[i]);
-        }
-    }
-    else
-    {
-        printf("No IIC device found\n");
-    }
-}
+  size_t play_count = 1;
 
-extern "C" void app_main(void)
-{
-    printf("Ciallo\n");
+  // 播放音乐测试
+  // es8311->WriteI2s(c2_b16_s44100, sizeof(c2_b16_s44100));
 
-#if defined CONFIG_BOARD_VERSION_T_DISPLAY_P4_V2_0
-    int16_t assert = Kode_Bq25896::bq25896_init(Bq25896_Iic_Bus, Bq25896_Handle);
-    if (assert != ESP_OK)
-    {
-        printf("bq25896 init fail (error code: %#X)\n", assert);
-    }
-    else
-    {
-        printf("bq25896 init success\n");
+  while (1) {
+    // ADC和DAC相互回环测试
+    // size_t data_lenght = 2048;
+    // std::shared_ptr<uint16_t[]> data =
+    //     std::make_shared<uint16_t[]>(data_lenght);
+    // if (es8311->ReadI2s(data.get(), data_lenght * sizeof(uint16_t)) > 0) {
+    //   // for (uint8_t i = 0; i < 10; i++)
+    //   // {
+    //   //     printf("ReadI2s: %d\n", data[i]);
+    //   // }
 
-        Kode_Bq25896::bq25896_set_input_current_limit(Bq25896_Handle, Kode_Bq25896::bq25896_ilim_t ::BQ25896_ILIM_2000MA);
-        // 禁用看门狗后不能读取看门狗寄存器状态，否者看门狗禁用会失效
-        Kode_Bq25896::bq25896_set_watchdog_timer(Bq25896_Handle, Kode_Bq25896::bq25896_watchdog_t::BQ25896_WATCHDOG_DISABLE);
-        // Kode_Bq25896::bq25896_set_adc_conversion(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_state_t::BQ25896_ADC_CONV_START);
-        // Kode_Bq25896::bq25896_set_adc_conversion_rate(Bq25896_Handle, Kode_Bq25896::bq25896_adc_conv_rate_t ::BQ25896_ADC_CONV_RATE_CONTINUOUS);
-        Kode_Bq25896::bq25896_set_charge_current(Bq25896_Handle, Kode_Bq25896::bq25896_ichg_t::BQ25896_ICHG_512MA);
-        // Kode_Bq25896::bq25896_set_otg(Bq25896_Handle, Kode_Bq25896::bq25896_otg_state_t::BQ25896_OTG_ENABLE);
-    }
-
-    Xl9535_Iic_Bus->set_bus_handle(Bq25896_Iic_Bus->get_bus_handle());
-#endif
-
-    Xl9535->begin();
-    Xl9535->pin_mode(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-    Xl9535->pin_mode(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Mode::OUTPUT);
-
-    Xl9535->pin_write(XL9535_5_0_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::HIGH);
-    Xl9535->pin_write(XL9535_3_3_V_POWER_EN, Cpp_Bus_Driver::Xl95x5::Value::LOW);
-
-    if (Es8311->begin() == true)
-    {
-        printf("Es8311->begin success\n");
-    }
-    else
-    {
-        printf("Es8311->begin fail\n");
-    }
-
-    Es8311->begin(AUDIO_MCLK_MULTIPLE, AUDIO_SAMPLE_RATE, AUDIO_BITS_PER_SAMPLE);
-
-    Cpp_Bus_Driver::Es8311::Power_Status ps =
-        {
-            .contorl =
-                {
-                    .analog_circuits = true,               // 开启模拟电路
-                    .analog_bias_circuits = true,          // 开启模拟偏置电路
-                    .analog_adc_bias_circuits = true,      // 开启模拟ADC偏置电路
-                    .analog_adc_reference_circuits = true, // 开启模拟ADC参考电路
-                    .analog_dac_reference_circuit = true,  // 开启模拟DAC参考电路
-                    .internal_reference_circuits = false,  // 关闭内部参考电路
-                },
-            .vmid = Cpp_Bus_Driver::Es8311::Vmid::START_UP_VMID_NORMAL_SPEED_CHARGE,
-        };
-    Es8311->set_power_status(ps);
-    Es8311->set_pga_power(true);
-    Es8311->set_adc_power(true);
-    Es8311->set_dac_power(true);
-    Es8311->set_output_to_hp_drive(true);
-    Es8311->set_adc_offset_freeze(Cpp_Bus_Driver::Es8311::Adc_Offset_Freeze::DYNAMIC_HPF);
-    Es8311->set_adc_hpf_stage2_coeff(10);
-    Es8311->set_dac_equalizer(false);
-
-    Es8311->set_mic(Cpp_Bus_Driver::Es8311::Mic_Type::ANALOG_MIC, Cpp_Bus_Driver::Es8311::Mic_Input::MIC1P_1N);
-    Es8311->set_adc_auto_volume_control(false);
-    Es8311->set_adc_gain(Cpp_Bus_Driver::Es8311::Adc_Gain::GAIN_18DB);
-    Es8311->set_adc_pga_gain(Cpp_Bus_Driver::Es8311::Adc_Pga_Gain::GAIN_30DB);
-
-    Es8311->set_adc_volume(191);
-    Es8311->set_dac_volume(200);
-
-    // 将ADC的数据自动输出到DAC上
-    // Es8311->set_adc_data_to_dac(true);
-
-    // 配置mclk_multiple为256
-    // 配置sample_rate为44100
-    // 配置data_bit_length为16
-    // [2025-03-14 11:35:11.633] es8311 register[0]: 0X84
-    // [2025-03-14 11:35:11.633] es8311 register[1]: 0X3F
-    // [2025-03-14 11:35:11.633] es8311 register[2]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[3]: 0X10
-    // [2025-03-14 11:35:11.633] es8311 register[4]: 0X10
-    // [2025-03-14 11:35:11.633] es8311 register[5]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[6]: 0X3
-    // [2025-03-14 11:35:11.633] es8311 register[7]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[8]: 0XFF
-    // [2025-03-14 11:35:11.633] es8311 register[9]: 0XC
-    // [2025-03-14 11:35:11.633] es8311 register[10]: 0XC
-    // [2025-03-14 11:35:11.633] es8311 register[11]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[12]: 0X20
-    // [2025-03-14 11:35:11.633] es8311 register[13]: 0X1
-    // [2025-03-14 11:35:11.633] es8311 register[14]: 0XA
-    // [2025-03-14 11:35:11.633] es8311 register[15]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[16]: 0X13
-    // [2025-03-14 11:35:11.633] es8311 register[17]: 0X7C
-    // [2025-03-14 11:35:11.633] es8311 register[18]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[19]: 0X10
-    // [2025-03-14 11:35:11.633] es8311 register[20]: 0X1A
-    // [2025-03-14 11:35:11.633] es8311 register[21]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[22]: 0X3
-    // [2025-03-14 11:35:11.633] es8311 register[23]: 0XBF
-    // [2025-03-14 11:35:11.633] es8311 register[24]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[25]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[26]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[27]: 0XC
-    // [2025-03-14 11:35:11.633] es8311 register[28]: 0X6A
-    // [2025-03-14 11:35:11.633] es8311 register[29]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[30]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[31]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[32]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[33]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[34]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[35]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[36]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[37]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[38]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[39]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[40]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[41]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[42]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[43]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[44]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[45]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[46]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[47]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[48]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[49]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[50]: 0XDC
-    // [2025-03-14 11:35:11.633] es8311 register[51]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[52]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[53]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[54]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[55]: 0X8
-    // [2025-03-14 11:35:11.633] es8311 register[56]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[57]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[58]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[59]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[60]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[61]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[62]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[63]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[64]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[65]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[66]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[67]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[68]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[69]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[70]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[71]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[72]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[73]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[74]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[75]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[76]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[77]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[78]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[79]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[80]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[81]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[82]: 0XFE
-    // [2025-03-14 11:35:11.633] es8311 register[83]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[84]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[85]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[86]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[87]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[88]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[89]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[90]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[91]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[92]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[93]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[94]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[95]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[96]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[97]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[98]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[99]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[100]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[101]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[102]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[103]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[104]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[105]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[106]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[107]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[108]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[109]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[110]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[111]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[112]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[113]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[114]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[115]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[116]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[117]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[118]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[119]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[120]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[121]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[122]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[123]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[124]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[125]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[126]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[127]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[128]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[129]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[130]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[131]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[132]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[133]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[134]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[135]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[136]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[137]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[138]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[139]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[140]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[141]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[142]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[143]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[144]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[145]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[146]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[147]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[148]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[149]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[150]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[151]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[152]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[153]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[154]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[155]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[156]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[157]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[158]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[159]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[160]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[161]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[162]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[163]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[164]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[165]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[166]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[167]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[168]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[169]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[170]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[171]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[172]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[173]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[174]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[175]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[176]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[177]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[178]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[179]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[180]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[181]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[182]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[183]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[184]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[185]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[186]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[187]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[188]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[189]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[190]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[191]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[192]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[193]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[194]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[195]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[196]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[197]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[198]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[199]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[200]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[201]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[202]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[203]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[204]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[205]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[206]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[207]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[208]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[209]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[210]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[211]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[212]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[213]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[214]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[215]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[216]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[217]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[218]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[219]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[220]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[221]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[222]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[223]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[224]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[225]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[226]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[227]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[228]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[229]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[230]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[231]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[232]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[233]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[234]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[235]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[236]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[237]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[238]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[239]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[240]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[241]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[242]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[243]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[244]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[245]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[246]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[247]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[248]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[249]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[250]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[251]: 0
-    // [2025-03-14 11:35:11.633] es8311 register[252]: 0X70
-    // [2025-03-14 11:35:11.633] es8311 register[253]: 0X83
-    // [2025-03-14 11:35:11.633] es8311 register[254]: 0X11
-    // [2025-03-14 11:35:11.633] es8311 register[255]: 0X1
-
-    // // 打印所有寄存器
-    // uint8_t buffer = 0;
-    // for (size_t i = 0; i < 256; i++)
-    // {
-    //     Es8311_Iic_Bus->Bus_Iic_Guide::read(i, &buffer);
-    //     printf("es8311 register[%d]: %#X\n", i, buffer);
+    //   es8311->WriteI2s(data.get(), data_lenght * sizeof(uint16_t));
     // }
 
-    Xl9535->Tool::pin_mode(ESP32P4_BOOT, Cpp_Bus_Driver::Tool::Pin_Mode::INPUT, Cpp_Bus_Driver::Tool::Pin_Status::PULLUP);
+    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
+      uint8_t buffer = 0;
+      for (size_t i = 0; i < 256; i++) {
+        driver.bus().es8311_i2c_bus->BusI2cGuide::Read(
+            static_cast<uint8_t>(i), &buffer);
+        printf("Es8311 register[%d]: %#X\n", i, buffer);
+      }
 
-    size_t play_count = 1;
+      play_count++;
+      printf("play_count: %d\n", play_count);
 
-    // 播放音乐测试
-    // Es8311->write_data(c2_b16_s44100, sizeof(c2_b16_s44100));
-
-    while (1)
-    {
-        // Iic_Scan();
-        // vTaskDelay(pdMS_TO_TICKS(1000));
-
-        // ADC和DAC相互回环测试
-        // size_t data_lenght = 2048;
-        // std::shared_ptr<uint16_t[]> data = std::make_shared<uint16_t[]>(data_lenght);
-        // if (Es8311->read_data(data.get(), data_lenght * sizeof(uint16_t)) > 0)
-        // {
-        //     // for (uint8_t i = 0; i < 10; i++)
-        //     // {
-        //     //     printf("read_data: %d\n", data[i]);
-        //     // }
-
-        //     Es8311->write_data(data.get(), data_lenght * sizeof(uint16_t));
-        // }
-
-        if (Xl9535->Tool::pin_read(ESP32P4_BOOT) == 0)
-        {
-            Iic_Scan();
-            uint8_t buffer = 0;
-            for (size_t i = 0; i < 256; i++)
-            {
-                Es8311_Iic_Bus->Bus_Iic_Guide::read(static_cast<uint8_t>(i), &buffer);
-                printf("es8311 register[%d]: %#X\n", i, buffer);
-            }
-
-            play_count++;
-            printf("play_count: %d\n", play_count);
-
-            // 播放音乐测试
-            Es8311->write_data(c2_b16_s44100, sizeof(c2_b16_s44100));
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(10));
+      // 播放音乐测试
+      es8311->WriteI2s(c2_b16_s44100, sizeof(c2_b16_s44100));
     }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
