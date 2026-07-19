@@ -62,7 +62,6 @@ Clone the repository together with its submodules:
 
 ```bash
 git clone --recursive https://github.com/Xinyuan-LilyGO/T-Display-P4.git
-cd T-Display-P4
 ```
 
 If the repository was cloned without `--recursive`, initialize the submodules manually:

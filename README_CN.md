@@ -62,7 +62,6 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 
 ```bash
 git clone --recursive https://github.com/Xinyuan-LilyGO/T-Display-P4.git
-cd T-Display-P4
 ```
 
 如果克隆时没有使用 `--recursive`，请手动初始化子模块：
