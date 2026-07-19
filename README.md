@@ -1,38 +1,10 @@
-<<<<<<< HEAD
-<!--
- * @Description: None
- * @Author: LILYGO_L
- * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-06-25 11:49:40
- * @License: GPL 3.0
--->
-<h1 align = "center">T-Display-P4</h1>
-=======
 <h1 align="center">T-Display-P4</h1>
->>>>>>> origin/debug2
 
 ## **English** | [Chinese](./README_CN.md)
 
-<<<<<<< HEAD
-> [!IMPORTANT]
-> The `main` branch is currently outdated and does not represent the latest development state of this project.
-> Active development has moved to the `debug2` branch while we prepare major updates.
-> Complex changes targeting `main` will be handled after the latest updates in the `debug2` branch are completed.
-> Once the latest branch is ready, we will push the updated code back to `main`.
->
-> T-Display-P4 v2.0 hardware revision is currently under evaluation preview.
-> For more details, please see: [T-Display-P4 v2.0 Hardware Revision - Evaluation Preview](https://github.com/Xinyuan-LilyGO/T-Display-P4/issues/20)
-
-## VersionIteration:
-| Version                               | Update date                       |Update description|
-| :-------------------------------: | :-------------------------------: |:--------------: |
-| T-Display-P4_V1.0                      | 2025-06-13                    |   Original version      |
-| T-Display-P4-Keyboard_V1.0                      | 2025-09-12                    |   Original version      |
-=======
 [![License](https://img.shields.io/github/license/Xinyuan-LilyGO/T-Display-P4?style=flat-square)](./LICENSE)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.4%2B-ff6f00?style=flat-square)](https://github.com/espressif/esp-idf)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%2B-00599c?style=flat-square)](https://isocpp.org/)
->>>>>>> origin/debug2
 
 <p align="center">
   <img src="image/1.jpg" alt="T-Display-P4 product photo" width="720">
@@ -225,12 +197,7 @@ Board pin definitions are provided in the device-driver configuration files:
 
 A. Hold down the `BOOT` button while starting the download, then release it after flashing begins.
 
-<<<<<<< HEAD
-* Q. Why does my board keep failing to burn the firmware or fail to burn the program?
-* A. Please enter download mode before burning the program. To enter download mode, hold down the boot button before powering on. Please note that for the auxiliary processor, the burning procedure requires that the board be completely powered off first, then the main processor must enter download mode, followed by the auxiliary processor entering download mode, only then can the auxiliary processor download the program.
-=======
 </details>
->>>>>>> origin/debug2
 
 <details>
 <summary>Q. Why are submodule headers or components missing?</summary>

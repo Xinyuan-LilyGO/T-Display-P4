@@ -1,38 +1,10 @@
-<<<<<<< HEAD
-<!--
- * @Description: None
- * @Author: LILYGO_L
- * @Date: 2025-06-13 15:12:02
- * @LastEditTime: 2026-06-25 11:48:53
- * @License: GPL 3.0
--->
-<h1 align = "center">T-Display-P4</h1>
-=======
 <h1 align="center">T-Display-P4</h1>
->>>>>>> origin/debug2
 
 ## [英语](./README.md) | **中文**
 
-<<<<<<< HEAD
-> [!IMPORTANT]
-> 当前 `main` 分支已经不是最新开发分支，内容可能已经陈旧。
-> 最新开发进度请以 `debug2` 分支为准。
-> 针对 `main` 的复杂修改，将会在 `debug2` 最新分支处理完成后再进行处理。
-> 待最新分支整理完成后，我们会将更新后的代码推送回 `main`。
->
-> T-Display-P4 v2.0 硬件版本目前处于评估预览阶段。
-> 更多说明请查看：[T-Display-P4 v2.0 Hardware Revision - Evaluation Preview](https://github.com/Xinyuan-LilyGO/T-Display-P4/issues/20)
-
-## 版本迭代:
-| Version                               | Update date                       |Update description|
-| :-------------------------------: | :-------------------------------: |:--------------: |
-| T-Display-P4_V1.0                      | 2025-06-13                    |   初始版本      |
-| T-Display-P4-Keyboard_V1.0                      | 2025-09-12                    |   初始版本      |
-=======
 [![License](https://img.shields.io/github/license/Xinyuan-LilyGO/T-Display-P4?style=flat-square)](./LICENSE)
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.4%2B-ff6f00?style=flat-square)](https://github.com/espressif/esp-idf)
 [![C++](https://img.shields.io/badge/C%2B%2B-17%2B-00599c?style=flat-square)](https://isocpp.org/)
->>>>>>> origin/debug2
 
 <p align="center">
   <img src="image/1.jpg" alt="T-Display-P4 产品图" width="720">
@@ -225,16 +197,10 @@ Example Configuration
 
 A. 开始下载时按住 `BOOT` 按键，烧录开始后再松开。
 
-<<<<<<< HEAD
-* Q. 为什么我的板子一直烧录失败或者无法烧录程序呢？
-* A. 请进入下载模式后再烧录程序，下载模式的进入方法是上电之前按住boot按键就行，请注意辅助处理器的烧录方式是需要先将板子完全断电后，先让主处理器进入下载模式，再让辅助处理器进入下载模式，辅助处理器才能下载程序。
-<br />
-=======
 </details>
 
 <details>
 <summary>Q. 为什么缺少子模块头文件或组件？</summary>
->>>>>>> origin/debug2
 
 A. 请初始化仓库的全部子模块：
 
