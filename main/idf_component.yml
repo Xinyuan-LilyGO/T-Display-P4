@@ -1,11 +1,20 @@
 dependencies:
   idf: '>=5.5.4'
 
+  common:
+    override_path: "../libraries/common"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
+
   cpp_bus_driver:
     override_path: "../libraries/cpp_bus_driver"
 
   arduino_cpp_bus_driver:
     override_path: "../libraries/arduino_cpp_bus_driver"
+
+  lilygo_device_driver:
+    override_path: "../libraries/lilygo_device_driver"
 
   radiolib_cpp_bus_driver:
     override_path: "../libraries/radiolib_cpp_bus_driver"
@@ -15,15 +24,6 @@ dependencies:
 
   icm20948_we:
     override_path: "../libraries/icm20948_we"
-
-  lilygo_device_driver:
-    override_path: "../libraries/lilygo_device_driver"
-
-  common:
-    override_path: "../libraries/common"
-    matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   espressif/esp-sr:
     version: "^2.1.3"
@@ -79,8 +79,3 @@ dependencies:
     override_path: "../libraries/NFC-RFAL"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_NFC_RFAL_ST25R3916} == True"
-
-  stsw-st25rfal002_cpp_bus_driver:
-    override_path: "../libraries/stsw-st25rfal002_cpp_bus_driver"
-    matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_STSW_ST25RFAL002_ST25R3916} == True"

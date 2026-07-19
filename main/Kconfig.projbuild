@@ -43,8 +43,6 @@ menu "Example Configuration"
                 bool "radiolib_nrf24l01_send_receive"
             config EXAMPLE_BUILD_NFC_RFAL_ST25R3916
                 bool "nfc-rfal_st25r3916"
-            config EXAMPLE_BUILD_STSW_ST25RFAL002_ST25R3916
-                bool "stsw-st25rfal002_st25r3916"
             config EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW
                 bool "screen_tca8418_lvgl_touch_draw"
             config EXAMPLE_BUILD_IPERF_ETHERNET

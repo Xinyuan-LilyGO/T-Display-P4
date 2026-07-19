@@ -2,7 +2,7 @@
  * @Description: usp_sx1262_lora_send_receive
  * @Author: LILYGO_L
  * @Date: 2026-07-15 08:55:18
- * @LastEditTime: 2026-07-15 17:00:00
+ * @LastEditTime: 2026-07-17 17:21:49
  * @License: GPL 3.0
  */
 #include "lilygo_device_driver_library.h"
@@ -95,7 +95,7 @@ extern "C" void app_main(void) {
   lora_config.coding_rate = SX126X_LORA_CR_4_7;
   lora_config.output_power_dbm = 22;
   lora_config.crc_enabled = true;
-  if (!sx1262.ConfigureLora(lora_config) || !sx1262.StartReceive()) {
+  if (!sx1262.Configure(lora_config) || !sx1262.StartReceive()) {
     printf("SX1262 LoRa config failed\n");
     return;
   }
