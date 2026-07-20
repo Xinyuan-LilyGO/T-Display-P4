@@ -108,7 +108,7 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
 
 > [!IMPORTANT]
-> Select `ESP32-P4` when flashing T-Display-P4 application firmware. Select `ESP32-C6` when flashing ESP32-C6 AT or network-adapter firmware. Firmware images are not interchangeable between the two chips.
+> Select `ESP32-P4` when flashing T-Display-P4 application firmware. Select `ESP32-C6` when flashing ESP32-C6 network-adapter firmware. Firmware images are not interchangeable between the two chips.
 
 ## Hardware Modules
 

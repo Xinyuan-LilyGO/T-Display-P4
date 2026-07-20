@@ -108,7 +108,7 @@ Example Configuration
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
 
 > [!IMPORTANT]
-> 烧录 T-Display-P4 应用固件时选择 `ESP32-P4`；烧录 ESP32-C6 AT 或网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
+> 烧录 T-Display-P4 应用固件时选择 `ESP32-P4`；烧录 ESP32-C6 网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
 
 ## 硬件模块
 
