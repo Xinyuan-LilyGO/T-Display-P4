@@ -19,7 +19,7 @@ Two display assemblies are supported: a 4.05-inch 540 x 1168 TFT panel and a 4.1
 ## Directory
 
 - [Overview](#overview)
-- [Hardware Versions](#hardware-versions)
+- [Device Versions](#device-versions)
 - [Preview](#preview)
 - [Supported Frameworks](#supported-frameworks)
 - [Quick Start](#quick-start)
@@ -28,11 +28,11 @@ Two display assemblies are supported: a 4.05-inch 540 x 1168 TFT panel and a 4.1
 - [Project Materials](#project-materials)
 - [FAQ](#faq)
 
-## Hardware Versions
+## Device Versions
 
 | Version | Date | Description |
 | :---: | :---: | --- |
-| T-Display-P4 V1.0 | 2025-06-13 | Initial hardware version |
+| T-Display-P4 V1.0 | 2025-06-13 | Initial device version |
 | T-Display-P4-Keyboard V1.0 | 2025-09-12 | Initial keyboard expansion board |
 | T-Display-P4 V2.0 Evaluation Preview | 2026-05-22 | Evaluation-preview hardware documentation |
 
@@ -88,8 +88,8 @@ Example Configuration
 
 | Example Link | Description |
 | --- | --- |
-| [`lilygobox-espidf`](./apps/lilygobox-espidf) | Factory application example for T-Display-P4 |
-| [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | Shared examples maintained in a dedicated application project |
+| [`lilygobox-espidf`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf) | Factory application example for T-Display-P4 |
+| [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | Shared examples maintained in a dedicated application project |
 | [`main/examples`](./main/examples) | Examples specific to the T-Display-P4 board |
 | [`main/keyboard_examples`](./main/keyboard_examples) | Examples for the keyboard expansion board |
 
@@ -103,7 +103,7 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 
 | Firmware | Flash Address | Description |
 | --- | --- | --- |
-| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | Factory network-adapter firmware for the ESP32-C6 onboard the T-Display-P4 |
+| [`LilygoBox`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest) | `0x0 (merged)` | Latest factory firmware for T-Display-P4 |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
 

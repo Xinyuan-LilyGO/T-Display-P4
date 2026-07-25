@@ -19,7 +19,7 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 ## 目录
 
 - [概述](#概述)
-- [硬件版本](#硬件版本)
+- [设备版本](#设备版本)
 - [预览](#预览)
 - [支持框架](#支持框架)
 - [快速开始](#快速开始)
@@ -28,11 +28,11 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 - [项目资料](#项目资料)
 - [常见问题](#常见问题)
 
-## 硬件版本
+## 设备版本
 
 | 版本 | 日期 | 说明 |
 | :---: | :---: | --- |
-| T-Display-P4 V1.0 | 2025-06-13 | 初始硬件版本 |
+| T-Display-P4 V1.0 | 2025-06-13 | 初始设备版本 |
 | T-Display-P4-Keyboard V1.0 | 2025-09-12 | 初始键盘扩展板版本 |
 | T-Display-P4 V2.0 Evaluation Preview | 2026-05-22 | 评估预览版硬件资料 |
 
@@ -88,8 +88,8 @@ Example Configuration
 
 | 示例链接 | 说明 |
 | --- | --- |
-| [`lilygobox-espidf`](./apps/lilygobox-espidf) | T-Display-P4 出厂应用示例 |
-| [`lilygo_device_driver_example`](./apps/lilygo_device_driver_example) | 在独立应用工程中集中维护的通用示例 |
+| [`lilygobox-espidf`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf) | T-Display-P4 出厂应用示例 |
+| [`lilygo_device_driver_example`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example) | 在独立应用工程中集中维护的通用示例 |
 | [`main/examples`](./main/examples) | T-Display-P4 板级专用示例 |
 | [`main/keyboard_examples`](./main/keyboard_examples) | 键盘扩展板专用示例 |
 
@@ -103,7 +103,7 @@ Example Configuration
 
 | 固件 | 烧录地址 | 说明 |
 | --- | --- | --- |
-| [`[T-Display-P4][esp32c6][network_adapter]`](<./firmware/[T-Display-P4][esp32c6][network_adapter]>) | `0x0` | T-Display-P4 板载 ESP32-C6 的网络适配器出厂固件 |
+| [`LilygoBox`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest) | `0x0 (merged)` | T-Display-P4 最新出厂固件 |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent 应用固件 |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
 
