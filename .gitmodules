@@ -19,12 +19,6 @@
 [submodule "libraries/icm20948_we"]
 	path = libraries/icm20948_we
 	url = https://github.com/Llgok/icm20948_we.git
-[submodule "apps/lilygobox-espidf"]
-	path = apps/lilygobox-espidf
-	url = https://github.com/Xinyuan-LilyGO/lilygobox-espidf.git
-[submodule "apps/lilygo_device_driver_example"]
-	path = apps/lilygo_device_driver_example
-	url = https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example.git
 [submodule "libraries/usp_cpp_bus_driver"]
 	path = libraries/usp_cpp_bus_driver
 	url = https://github.com/Llgok/usp_cpp_bus_driver.git
