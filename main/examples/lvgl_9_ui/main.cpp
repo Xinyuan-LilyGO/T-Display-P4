@@ -2,7 +2,7 @@
  * @Description: lvgl_9_ui
  * @Author: LILYGO_L
  * @Date: 2025-06-13 13:34:16
- * @LastEditTime: 2026-06-12 09:08:41
+ * @LastEditTime: 2026-07-06 16:00:40
  * @License: GPL 3.0
  */
 #include <stdio.h>
@@ -339,17 +339,17 @@ static const uint32_t lr2021_rfswitch_dio_pins[] = {
     RADIOLIB_NC,
     RADIOLIB_LR2021_DIO6,
     RADIOLIB_LR2021_DIO7,
-    RADIOLIB_NC,
-    RADIOLIB_NC,
+    RADIOLIB_LR2021_DIO8,
+    RADIOLIB_LR2021_DIO10,
 };
 
 static const Module::RfSwitchMode_t lr2021_rfswitch_table[] = {
-      // mode               DIO5   DIO6  DIO7
-    {LR2021::MODE_STBY, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_RX, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_TX, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_RX_HF, {kGpioLow, kGpioHigh, kGpioLow}},
-    {LR2021::MODE_TX_HF, {kGpioLow, kGpioLow, kGpioHigh}},
+      // mode               NC      DIO6   DIO7   DIO8   DIO10
+    {LR2021::MODE_STBY, {kGpioLow, kGpioLow, kGpioLow, kGpioLow, kGpioLow}},
+    {LR2021::MODE_RX, {kGpioLow, kGpioLow, kGpioLow, kGpioHigh, kGpioLow}},
+    {LR2021::MODE_TX, {kGpioLow, kGpioLow, kGpioLow, kGpioHigh, kGpioLow}},
+    {LR2021::MODE_RX_HF, {kGpioLow, kGpioHigh, kGpioLow, kGpioLow, kGpioHigh}},
+    {LR2021::MODE_TX_HF, {kGpioLow, kGpioLow, kGpioHigh, kGpioLow, kGpioHigh}},
     END_OF_MODE_TABLE,
 };
 

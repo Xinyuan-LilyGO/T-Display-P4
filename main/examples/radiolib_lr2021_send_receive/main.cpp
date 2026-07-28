@@ -47,14 +47,14 @@
 
 static uint8_t send_package[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 static uint8_t receive_package[255] = {0};
-static constexpr float lr2021_freq_mhz = 915.0f;
+static constexpr float lr2021_freq_mhz = 433.0f;
 // 工作在 2.4 G ，建议配置输出功率参数“ #define c_HF_power  8 或 9 ”，
 // 此时，在模块内部，LR2021 RFO_HF 输出功率为 0 dBm ，ANT 脚功率为 + 20 dBm 。
 // 如果配置输出功率参数 > 9 ，ANT 脚功率为 + 20 dBm ，但总电流会增加。
 // 禁止配置输出功率参数 > 12，此时，在模块内部，LR2021 RFO_HF 输出功率极可能 > +5 dBm ，
 // 可能会损坏 PCBA 内部 FEM 芯片
 static constexpr bool kDirectRfCableTest = false;
-static constexpr int8_t lr2021_output_power_dbm = kDirectRfCableTest ? ((lr2021_freq_mhz >= 1000.0f) ? -19 : -9) : ((lr2021_freq_mhz >= 1000.0f) ? 8 : 22);
+static constexpr int8_t lr2021_output_power_dbm = kDirectRfCableTest ? ((lr2021_freq_mhz >= 1000.0f) ? -19 : -9) : ((lr2021_freq_mhz >= 1000.0f) ? 5 : 22);
 static constexpr uint32_t kGpioLow = 0;
 static constexpr uint32_t kGpioHigh = 1;
 static constexpr float kInvalidRssiThresholdDbm = -200.0f;
@@ -77,17 +77,17 @@ static const uint32_t rfswitch_dio_pins[] = {
     RADIOLIB_NC,
     RADIOLIB_LR2021_DIO6,
     RADIOLIB_LR2021_DIO7,
-    RADIOLIB_NC,
-    RADIOLIB_NC,
+    RADIOLIB_LR2021_DIO8,
+    RADIOLIB_LR2021_DIO10,
 };
 
 static const Module::RfSwitchMode_t rfswitch_table[] = {
-      // mode               DIO5   DIO6  DIO7
-    {LR2021::MODE_STBY, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_RX, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_TX, {kGpioLow, kGpioLow, kGpioLow}},
-    {LR2021::MODE_RX_HF, {kGpioLow, kGpioHigh, kGpioLow}},
-    {LR2021::MODE_TX_HF, {kGpioLow, kGpioLow, kGpioHigh}},
+      // mode               NC      DIO6   DIO7   DIO8   DIO10
+    {LR2021::MODE_STBY, {kGpioLow, kGpioLow, kGpioLow, kGpioLow, kGpioLow}},
+    {LR2021::MODE_RX, {kGpioLow, kGpioLow, kGpioLow, kGpioHigh, kGpioLow}},
+    {LR2021::MODE_TX, {kGpioLow, kGpioLow, kGpioLow, kGpioHigh, kGpioLow}},
+    {LR2021::MODE_RX_HF, {kGpioLow, kGpioHigh, kGpioLow, kGpioLow, kGpioHigh}},
+    {LR2021::MODE_TX_HF, {kGpioLow, kGpioLow, kGpioHigh, kGpioLow, kGpioHigh}},
     END_OF_MODE_TABLE,
 };
 

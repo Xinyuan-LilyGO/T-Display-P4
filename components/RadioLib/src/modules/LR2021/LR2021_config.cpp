@@ -171,7 +171,7 @@ int16_t LR2021::setOutputPower(int8_t power, uint32_t rampTimeUs) {
   int16_t state = this->checkOutputPower(power, NULL);
   RADIOLIB_ASSERT(state);
 
-  // pa_sel: 0 = LF (Sub-GHz), 1 = HF (1.9â€“2.5 GHz). Same encoding as lr20xx reference driver.
+  // pa_sel: 0 = LF (Sub-GHz), 1 = HF (1.9–2.5 GHz). Same encoding as lr20xx reference driver.
   uint8_t paSel = this->highFreq ? (uint8_t)1 : (uint8_t)0;
   uint8_t paLfMode = RADIOLIB_LR2021_PA_LF_MODE_FSM;
   uint8_t paLfDutyCycle = RADIOLIB_LR2021_PA_LF_DUTY_CYCLE_UNUSED;
@@ -192,7 +192,7 @@ int16_t LR2021::setOutputPower(int8_t power, uint32_t rampTimeUs) {
       hfTxHalfDbm = (int8_t)(power * 2);
     }
   } else if(this->freqMHz < RADIOLIB_LR2021_LF_PA_TABLE_490_MHZ_MAX) {
-    // LF PA: Table 7-17 (490 MHz ref.), max +20 dBm in table; 21â€“22 use row 20 PA + requested TX half-dBm.
+    // LF PA: Table 7-17 (490 MHz ref.), max +20 dBm in table; 21–22 use row 20 PA + requested TX half-dBm.
     if(power > 20) {
       lr2021Table717LfRow(20, &lfTxHalfDbm, &paLfDutyCycle, &paLfSlices);
       lfTxHalfDbm = (int8_t)(power * 2);
@@ -284,7 +284,7 @@ void LR2021::setRfSwitchTable(const uint32_t (&pins)[Module::RFSWITCH_MAX_PINS],
     uint8_t pull = dioNum == 0 ? RADIOLIB_LR2021_DIO_SLEEP_PULL_UP : RADIOLIB_LR2021_DIO_SLEEP_PULL_AUTO;
     // enable RF control for this pin and set the modes in which it is active
     (void)this->setDioFunction(dioNum + 5, RADIOLIB_LR2021_DIO_FUNCTION_RF_SWITCH, pull);
-    (void)this->setDioRfSwitchConfig(dioNum + 5, dioConfigs[i]);
+    (void)this->setDioRfSwitchConfig(dioNum + 5, dioConfigs[dioNum]);
   }
 }
 
