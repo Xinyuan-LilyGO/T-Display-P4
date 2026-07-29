@@ -2,23 +2,13 @@ menu "Example Configuration"
 
     choice
         prompt "Select the example to build"
-        default EXAMPLE_BUILD_BQ27220
-            config EXAMPLE_BUILD_BQ27220
-                bool "bq27220"
-            config EXAMPLE_BUILD_ES8311
-                bool "es8311"
+        default EXAMPLE_BUILD_ES8311_SD_WAV
             config EXAMPLE_BUILD_ES8311_SD_WAV
                 bool "es8311_sd_wav"
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART
                 bool "esp32c6_at_host_sdio_uart"
             config EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI
                 bool "esp32c6_at_host_sdio_wifi"
-            config EXAMPLE_BUILD_ICM20948
-                bool "icm20948"
-            config EXAMPLE_BUILD_L76K
-                bool "l76k"
-            config EXAMPLE_BUILD_PCF8563
-                bool "pcf8563"
             config EXAMPLE_BUILD_SX1262_GFSK_SEND_RECEIVE
                 bool "sx1262_gfsk_send_receive"
             config EXAMPLE_BUILD_SX1262_LORA_SEND_RECEIVE
@@ -29,8 +19,6 @@ menu "Example Configuration"
                 bool "afe"
             config EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE
                 bool "radiolib_sx1262_send_receive"
-            config EXAMPLE_BUILD_USP_SX1262_LORA_SEND_RECEIVE
-                bool "usp_sx1262_lora_send_receive"
             config EXAMPLE_BUILD_XL9555
                 bool "xl9555"
             config EXAMPLE_BUILD_TCA8418
@@ -47,8 +35,6 @@ menu "Example Configuration"
                 bool "screen_tca8418_lvgl_touch_draw"
             config EXAMPLE_BUILD_IPERF_ETHERNET
                 bool "iperf_ethernet"
-            config EXAMPLE_BUILD_ES8311_SD_MP3
-                bool "es8311_sd_mp3"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET
                 bool "usb_iperf_ethernet"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC
