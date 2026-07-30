@@ -34,8 +34,8 @@
 #include "usb/msc_host_vfs.h"
 #include "usb/usb_host.h"
 
-#ifndef USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
-#define USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST 1
+#ifndef USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
+#define USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST 1
 #endif
 
 namespace {
@@ -47,7 +47,7 @@ static constexpr uint16_t RTL8152B_PID = 0x8152;
 static constexpr EventBits_t EVENT_GOT_IP_BIT = BIT0;
 static constexpr char MSC_MOUNT_ROOT[] = "/usb";
 static constexpr int MAX_MSC_DEVICES = CONFIG_FATFS_VOLUME_COUNT;
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
 static constexpr size_t MSC_RW_TEST_FILE_SIZE = 4096;
 static constexpr char MSC_RW_TEST_FILE_NAME[] = "usb_hub_rw_test.txt";
 #endif
@@ -58,7 +58,7 @@ struct MscDeviceEntry {
   uint8_t usb_addr;
   msc_host_device_handle_t msc_device;
   msc_host_vfs_handle_t vfs_handle;
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
   uint32_t rw_test_counter;
 #endif
 };
@@ -161,7 +161,7 @@ static void scan_msc_files(int slot) {
   }
 }
 
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
 static void fill_text_test_buffer(
     uint8_t* buffer, size_t size, int slot, uint32_t counter) {
   if (size == 0) {
@@ -441,7 +441,7 @@ static void msc_app_task(void* arg) {
   while (true) {
     AppMessage msg = {};
     const TickType_t wait_ticks =
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
         pdMS_TO_TICKS(1000);
 #else
         portMAX_DELAY;
@@ -459,7 +459,7 @@ static void msc_app_task(void* arg) {
       }
     }
 
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
     run_msc_rw_tests();
 #endif
   }
@@ -646,7 +646,7 @@ extern "C" void app_main(void) {
 
   lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
 
-#if USB_IPERF_ETHERNET_HOST_MSC_ENABLE_MSC_RW_TEST
+#if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
   ESP_LOGI(TAG, "MSC RW test enabled: %u bytes every 1000 ms",
       static_cast<unsigned>(MSC_RW_TEST_FILE_SIZE));
 #else

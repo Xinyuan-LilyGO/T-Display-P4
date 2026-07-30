@@ -53,24 +53,24 @@ dependencies:
   espressif/iot_usbh_ecm:
     version: "0.2.1"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC} == True"
 
   espressif/iot_eth:
     version: "1.0.0"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC} == True"
 
   espressif/iperf-cmd:
     version: "0.1.1"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_ETHERNET_IPERF} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC} == True"
 
   usb_host_msc:
     version: "1.2.0"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_USB_HOST_MSC} == True"
