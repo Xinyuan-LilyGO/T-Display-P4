@@ -104,25 +104,40 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 | Firmware | Flash Address | Description |
 | --- | --- | --- |
 | [`LilygoBox`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest) | `0x0 (merged)` | Latest factory firmware for T-Display-P4 |
+| [`[T-Display-P4][coprocessor_download_mode]`](<./firmware/[T-Display-P4][coprocessor_download_mode]>) | `0x0` | Main-device preparation firmware for coprocessor download mode |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent application firmware |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | Xiaozhi application firmware |
 
 > [!IMPORTANT]
-> Select `ESP32-P4` when flashing T-Display-P4 application firmware. Select `ESP32-C6` when flashing ESP32-C6 network-adapter firmware. Firmware images are not interchangeable between the two chips.
+> Select `ESP32-P4` when flashing T-Display-P4 main-device firmware. When flashing the coprocessor network-adapter firmware, select the actual coprocessor fitted to the board; select `ESP32-C6` for T-Display-P4 V1.0. Firmware images are not interchangeable between chips.
 
-#### Flashing the ESP32-C6 Network-Adapter Firmware
+#### Flashing the Coprocessor Network-Adapter Firmware
 
-The ESP32-C6 must be flashed through its dedicated UART connector on the
+To keep these instructions compatible with future hardware revisions that may
+use a different coprocessor, this section uses the generic term
+"coprocessor." T-Display-P4 V1.0 uses an ESP32-C6 coprocessor.
+
+Before flashing the coprocessor, first flash and run the coprocessor
+download-mode preparation program on the T-Display-P4 main device:
+
+1. Preparation program source: [`coprocessor_download_mode`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example/tree/main/main/examples/coprocessor_download_mode).
+2. Alternatively, use the prebuilt firmware in [`firmware/[T-Display-P4][coprocessor_download_mode]`](<./firmware/[T-Display-P4][coprocessor_download_mode]>).
+3. Flash the preparation program to the T-Display-P4 main device, start the main device normally, and monitor its serial output.
+
+> [!IMPORTANT]
+> Continue only after the main device is running normally and its serial log prints `Coprocessor preparation completed`. Do not attempt to flash the coprocessor until this message appears.
+
+The coprocessor must be flashed through its dedicated UART connector on the
 device. The connector location and pin order are shown below:
 
 <p align="center">
-  <img src="image/6.jpg" alt="ESP32-C6 UART flashing connector pinout" width="360">
+  <img src="image/6.jpg" alt="Coprocessor UART flashing connector pinout" width="360">
 </p>
 
 Use a USB-to-UART adapter with **3.3 V logic levels** and cross-connect the
 receive and transmit signals:
 
-| T-Display-P4 ESP32-C6 connector | USB-to-UART adapter |
+| T-Display-P4 coprocessor connector | USB-to-UART adapter |
 | --- | --- |
 | `RX` | `TX` |
 | `TX` | `RX` |
@@ -134,19 +149,18 @@ receive and transmit signals:
 
 Flashing procedure:
 
-1. Download the ESP32-C6 network-adapter firmware from the latest [`LilygoBox` release](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest).
+1. Download the network-adapter firmware matching the fitted coprocessor from the latest [`LilygoBox` release](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest).
 2. Power off the device and connect the USB-to-UART adapter as shown above.
-3. Power the T-Display-P4 normally.
-4. **Put the ESP32-P4 into download mode first:** hold the ESP32-P4 `BOOT` button, press and release the ESP32-P4 `RESET` button once, and then release the ESP32-P4 `BOOT` button.
-5. **Put the ESP32-C6 into download mode second:** hold the ESP32-C6 `BOOT` button, press and release the ESP32-C6 `RESET` button once, and then release the ESP32-C6 `BOOT` button.
-6. Open Espressif's ESP firmware online flashing platform, select `ESP32-C6`, and select the serial port belonging to the USB-to-UART adapter.
-7. Select the network-adapter `.bin` file, set the flash address to `0x0`, and start flashing.
-8. When flashing finishes, power-cycle the device so that both the ESP32-P4 and ESP32-C6 leave download mode, and then start the ESP32-P4 application firmware.
+3. Power the T-Display-P4 normally and confirm again that the main device is running and has printed `Coprocessor preparation completed`.
+4. **Put the coprocessor into download mode:** hold the coprocessor `BOOT` button, press and release its `RESET` button once, and then release the `BOOT` button.
+5. Open Espressif's ESP firmware online flashing platform and select the actual coprocessor fitted to the board (`ESP32-C6` for T-Display-P4 V1.0), then select the serial port belonging to the USB-to-UART adapter.
+6. Select the network-adapter `.bin` file, set the flash address to `0x0`, and start flashing.
+7. When flashing finishes, reflash the required application firmware to the T-Display-P4 main device and power-cycle the complete device.
 
-Always enter download mode in this order: ESP32-P4 first, then ESP32-C6. If
-the flashing tool cannot connect, repeat steps 4 and 5 and verify that `RX/TX`
-are cross-connected, the adapter uses 3.3 V logic, and no other program has
-opened the serial port.
+If the flashing tool cannot connect, first verify that the preparation program
+has printed `Coprocessor preparation completed`. Then repeat step 4 and check
+that `RX/TX` are cross-connected, the adapter uses 3.3 V logic, and no other
+program has opened the serial port.
 
 ## Hardware Modules
 

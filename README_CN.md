@@ -104,23 +104,35 @@ Example Configuration
 | 固件 | 烧录地址 | 说明 |
 | --- | --- | --- |
 | [`LilygoBox`](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest) | `0x0 (merged)` | T-Display-P4 最新出厂固件 |
+| [`[T-Display-P4][coprocessor_download_mode]`](<./firmware/[T-Display-P4][coprocessor_download_mode]>) | `0x0` | 主设备协处理器下载模式准备固件 |
 | [`[T-Display-P4][edge_agent]`](<./firmware/[T-Display-P4][edge_agent]>) | `0x0` | Edge Agent 应用固件 |
 | [`[T-Display-P4][xiaozhi]`](<./firmware/[T-Display-P4][xiaozhi]>) | `0x0` | 小智应用固件 |
 
 > [!IMPORTANT]
-> 烧录 T-Display-P4 应用固件时选择 `ESP32-P4`；烧录 ESP32-C6 网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
+> 烧录 T-Display-P4 主设备固件时选择 `ESP32-P4`；烧录协处理器网络适配器固件时，应按照实际板载协处理器选择芯片型号，T-Display-P4 V1.0 选择 `ESP32-C6`。固件不能跨芯片混用。
 
-#### 烧录 ESP32-C6 网络适配器固件
+#### 烧录协处理器网络适配器固件
 
-ESP32-C6 需要通过机身上的独立串口接口烧录。接口位置和引脚顺序如下图所示：
+为兼容后续可能采用不同协处理器的硬件版本，本节统一使用“协处理器”名称，不将操作流程绑定到某一芯片型号。T-Display-P4 V1.0 使用的协处理器为 ESP32-C6。
+
+烧录协处理器前，必须先为 T-Display-P4 主设备烧录并运行协处理器下载模式准备程序：
+
+1. 准备程序源码：[`coprocessor_download_mode`](https://github.com/Xinyuan-LilyGO/lilygo_device_driver_example/tree/main/main/examples/coprocessor_download_mode)。
+2. 也可以直接使用本仓库提供的预编译固件：[`firmware/[T-Display-P4][coprocessor_download_mode]`](<./firmware/[T-Display-P4][coprocessor_download_mode]>)。
+3. 将准备程序烧录到 T-Display-P4 主设备，正常启动主设备并查看其串口日志。
+
+> [!IMPORTANT]
+> 必须确认主设备已经正常运行，并且串口日志输出 `Coprocessor preparation completed` 后，才能继续烧录协处理器。未看到该日志时，请勿进行协处理器下载。
+
+协处理器需要通过机身上的独立串口接口烧录。接口位置和引脚顺序如下图所示：
 
 <p align="center">
-  <img src="image/6.jpg" alt="ESP32-C6 串口烧录接口引脚定义" width="360">
+  <img src="image/6.jpg" alt="协处理器串口烧录接口引脚定义" width="360">
 </p>
 
 请使用 **3.3 V 逻辑电平**的 USB 转串口工具，并交叉连接收发信号：
 
-| T-Display-P4 ESP32-C6 接口 | USB 转串口工具 |
+| T-Display-P4 协处理器接口 | USB 转串口工具 |
 | --- | --- |
 | `RX` | `TX` |
 | `TX` | `RX` |
@@ -132,18 +144,15 @@ ESP32-C6 需要通过机身上的独立串口接口烧录。接口位置和引�
 
 烧录步骤：
 
-1. 从 [`LilygoBox` 最新版本](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest)下载 ESP32-C6 network-adapter 固件。
+1. 从 [`LilygoBox` 最新版本](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest)下载与板载协处理器相匹配的 network-adapter 固件。
 2. 关闭设备电源，并按照上表连接 USB 转串口工具。
-3. 正常给 T-Display-P4 供电。
-4. **先让 ESP32-P4 进入下载模式：**按住 ESP32-P4 的 `BOOT` 按键，短按一次 ESP32-P4 的 `RESET` 按键，然后松开 ESP32-P4 的 `BOOT`。
-5. **再让 ESP32-C6 进入下载模式：**按住 ESP32-C6 的 `BOOT` 按键，短按一次 ESP32-C6 的 `RESET` 按键，然后松开 ESP32-C6 的 `BOOT`。
-6. 打开乐鑫 ESP 固件在线烧录平台，芯片选择 `ESP32-C6`，串口选择 USB 转串口工具对应的端口。
-7. 选择 network-adapter `.bin` 文件，烧录地址填写 `0x0`，然后开始烧录。
-8. 烧录完成后重新上电，使 ESP32-P4 和 ESP32-C6 退出下载模式，再启动 ESP32-P4 应用固件。
+3. 正常给 T-Display-P4 供电，再次确认主设备正常运行且串口日志已输出 `Coprocessor preparation completed`。
+4. **让协处理器进入下载模式：**按住协处理器的 `BOOT` 按键，短按一次协处理器的 `RESET` 按键，然后松开 `BOOT` 按键。
+5. 打开乐鑫 ESP 固件在线烧录平台，按照实际板载协处理器选择芯片型号（T-Display-P4 V1.0 选择 `ESP32-C6`），串口选择 USB 转串口工具对应的端口。
+6. 选择 network-adapter `.bin` 文件，烧录地址填写 `0x0`，然后开始烧录。
+7. 烧录完成后，为 T-Display-P4 主设备重新烧录所需的应用固件，并将整机重新上电。
 
-必须严格按照先 ESP32-P4、后 ESP32-C6 的顺序进入下载模式。如果烧录工具无法
-连接，请重新执行第4步和第5步，并确认 `RX/TX` 已交叉连接、串口使用
-3.3 V逻辑电平且没有其他程序占用该串口。
+如果烧录工具无法连接，请先确认主设备准备程序已输出 `Coprocessor preparation completed`，然后重新执行第 4 步，并确认 `RX/TX` 已交叉连接、串口使用 3.3 V 逻辑电平且没有其他程序占用该串口。
 
 ## 硬件模块
 
