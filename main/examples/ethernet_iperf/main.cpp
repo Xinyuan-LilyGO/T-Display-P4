@@ -1,8 +1,8 @@
 /*
- * @Description: iperf_ethernet
+ * @Description: 以太网吞吐量测试
  * @Author: LILYGO_L
  * @Date: 2026-01-26 14:42:15
- * @LastEditTime: 2026-04-24 14:09:19
+ * @LastEditTime: 2026-07-30 11:34:23
  * @License: GPL 3.0
  */
 #include <stdatomic.h>
@@ -19,7 +19,7 @@
 
 #define CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER 0
 
-static const char* TAG = "iperf_example";
+static const char* TAG = "ethernet_iperf";
 
 #if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
 static void start_dhcp_server_after_connection(void* arg, esp_event_base_t base,

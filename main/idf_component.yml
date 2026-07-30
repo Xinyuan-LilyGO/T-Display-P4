@@ -48,7 +48,7 @@ dependencies:
   espressif/ethernet_init:
     version: "1.3.0"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_ETHERNET_IPERF} == True"
 
   espressif/iot_usbh_ecm:
     version: "0.2.1"
@@ -65,7 +65,7 @@ dependencies:
   espressif/iperf-cmd:
     version: "0.1.1"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_IPERF_ETHERNET} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_ETHERNET_IPERF} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC} == True"
 

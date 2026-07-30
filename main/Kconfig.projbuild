@@ -33,8 +33,8 @@ menu "Example Configuration"
                 bool "nfc-rfal_st25r3916"
             config EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW
                 bool "screen_tca8418_lvgl_touch_draw"
-            config EXAMPLE_BUILD_IPERF_ETHERNET
-                bool "iperf_ethernet"
+            config EXAMPLE_BUILD_ETHERNET_IPERF
+                bool "ethernet_iperf"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET
                 bool "usb_iperf_ethernet"
             config EXAMPLE_BUILD_USB_IPERF_ETHERNET_HOST_MSC

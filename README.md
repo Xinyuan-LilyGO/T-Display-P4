@@ -110,6 +110,44 @@ To flash prebuilt firmware, refer to Espressif's official [ESP firmware online f
 > [!IMPORTANT]
 > Select `ESP32-P4` when flashing T-Display-P4 application firmware. Select `ESP32-C6` when flashing ESP32-C6 network-adapter firmware. Firmware images are not interchangeable between the two chips.
 
+#### Flashing the ESP32-C6 Network-Adapter Firmware
+
+The ESP32-C6 must be flashed through its dedicated UART connector on the
+device. The connector location and pin order are shown below:
+
+<p align="center">
+  <img src="image/6.jpg" alt="ESP32-C6 UART flashing connector pinout" width="360">
+</p>
+
+Use a USB-to-UART adapter with **3.3 V logic levels** and cross-connect the
+receive and transmit signals:
+
+| T-Display-P4 ESP32-C6 connector | USB-to-UART adapter |
+| --- | --- |
+| `RX` | `TX` |
+| `TX` | `RX` |
+| `GND` | `GND` |
+| `3.3V` | Connect to `3.3V` only when the adapter requires a logic-level reference |
+
+> [!WARNING]
+> Never connect 5 V UART logic or a 5 V supply to the `3.3V` pin. Power the T-Display-P4 normally and connect only `RX`, `TX`, and `GND` to the USB-to-UART adapter whenever possible. Connect `3.3V` only after confirming that the adapter requires an external logic-level reference.
+
+Flashing procedure:
+
+1. Download the ESP32-C6 network-adapter firmware from the latest [`LilygoBox` release](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest).
+2. Power off the device and connect the USB-to-UART adapter as shown above.
+3. Power the T-Display-P4 normally.
+4. **Put the ESP32-P4 into download mode first:** hold the ESP32-P4 `BOOT` button, press and release the ESP32-P4 `RESET` button once, and then release the ESP32-P4 `BOOT` button.
+5. **Put the ESP32-C6 into download mode second:** hold the ESP32-C6 `BOOT` button, press and release the ESP32-C6 `RESET` button once, and then release the ESP32-C6 `BOOT` button.
+6. Open Espressif's ESP firmware online flashing platform, select `ESP32-C6`, and select the serial port belonging to the USB-to-UART adapter.
+7. Select the network-adapter `.bin` file, set the flash address to `0x0`, and start flashing.
+8. When flashing finishes, power-cycle the device so that both the ESP32-P4 and ESP32-C6 leave download mode, and then start the ESP32-P4 application firmware.
+
+Always enter download mode in this order: ESP32-P4 first, then ESP32-C6. If
+the flashing tool cannot connect, repeat steps 4 and 5 and verify that `RX/TX`
+are cross-connected, the adapter uses 3.3 V logic, and no other program has
+opened the serial port.
+
 ## Hardware Modules
 
 ### T-Display-P4 V1.0

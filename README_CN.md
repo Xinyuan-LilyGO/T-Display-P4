@@ -110,6 +110,41 @@ Example Configuration
 > [!IMPORTANT]
 > 烧录 T-Display-P4 应用固件时选择 `ESP32-P4`；烧录 ESP32-C6 网络适配器固件时选择 `ESP32-C6`。固件不能跨芯片混用。
 
+#### 烧录 ESP32-C6 网络适配器固件
+
+ESP32-C6 需要通过机身上的独立串口接口烧录。接口位置和引脚顺序如下图所示：
+
+<p align="center">
+  <img src="image/6.jpg" alt="ESP32-C6 串口烧录接口引脚定义" width="360">
+</p>
+
+请使用 **3.3 V 逻辑电平**的 USB 转串口工具，并交叉连接收发信号：
+
+| T-Display-P4 ESP32-C6 接口 | USB 转串口工具 |
+| --- | --- |
+| `RX` | `TX` |
+| `TX` | `RX` |
+| `GND` | `GND` |
+| `3.3V` | 仅在串口工具需要电平参考时连接 `3.3V` |
+
+> [!WARNING]
+> 严禁将 `5V` 串口电平或 `5V` 电源接入 `3.3V` 引脚。建议正常给 T-Display-P4 供电，USB 转串口工具只连接 `RX`、`TX` 和 `GND`；只有确认工具需要外部电平参考时才连接 `3.3V`。
+
+烧录步骤：
+
+1. 从 [`LilygoBox` 最新版本](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest)下载 ESP32-C6 network-adapter 固件。
+2. 关闭设备电源，并按照上表连接 USB 转串口工具。
+3. 正常给 T-Display-P4 供电。
+4. **先让 ESP32-P4 进入下载模式：**按住 ESP32-P4 的 `BOOT` 按键，短按一次 ESP32-P4 的 `RESET` 按键，然后松开 ESP32-P4 的 `BOOT`。
+5. **再让 ESP32-C6 进入下载模式：**按住 ESP32-C6 的 `BOOT` 按键，短按一次 ESP32-C6 的 `RESET` 按键，然后松开 ESP32-C6 的 `BOOT`。
+6. 打开乐鑫 ESP 固件在线烧录平台，芯片选择 `ESP32-C6`，串口选择 USB 转串口工具对应的端口。
+7. 选择 network-adapter `.bin` 文件，烧录地址填写 `0x0`，然后开始烧录。
+8. 烧录完成后重新上电，使 ESP32-P4 和 ESP32-C6 退出下载模式，再启动 ESP32-P4 应用固件。
+
+必须严格按照先 ESP32-P4、后 ESP32-C6 的顺序进入下载模式。如果烧录工具无法
+连接，请重新执行第4步和第5步，并确认 `RX/TX` 已交叉连接、串口使用
+3.3 V逻辑电平且没有其他程序占用该串口。
+
 ## 硬件模块
 
 ### T-Display-P4 V1.0
