@@ -19,9 +19,9 @@
 
 #define CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER 0
 
+#if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
 static const char* TAG = "ethernet_iperf";
 
-#if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
 static void start_dhcp_server_after_connection(void* arg, esp_event_base_t base,
                                                int32_t id, void* event_data) {
   esp_netif_t* eth_netif = esp_netif_next_unsafe(NULL);
@@ -68,6 +68,7 @@ extern "C" void app_main(void) {
                                     .lost_ip_event = 0,
                                     .route_prio = 50};
   cfg = (esp_netif_config_t){.base = &eth_netif_cfg,
+                             .driver = NULL,
                              .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH};
 
   for (uint8_t i = 0; i < eth_port_cnt; i++) {
@@ -106,6 +107,7 @@ extern "C" void app_main(void) {
         (esp_netif_inherent_config_t)ESP_NETIF_INHERENT_DEFAULT_ETH();
   }
   cfg = (esp_netif_config_t){.base = &eth_netif_cfg,
+                             .driver = NULL,
                              .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH};
   for (int i = 0; i < eth_port_cnt; i++) {
     sprintf(if_key_str, "ETH_%d", i);

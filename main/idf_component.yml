@@ -4,7 +4,7 @@ dependencies:
   common:
     path: "../libraries/common"
     matches:
-      - if: "$CONFIG{EXAMPLE_BUILD_ES8311} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_ES8311_SD_WAV} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   cpp_bus_driver:
