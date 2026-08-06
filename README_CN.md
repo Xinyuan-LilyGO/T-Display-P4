@@ -142,13 +142,17 @@ Example Configuration
 > [!WARNING]
 > 严禁将 `5V` 串口电平或 `5V` 电源接入 `3.3V` 引脚。建议正常给 T-Display-P4 供电，USB 转串口工具只连接 `RX`、`TX` 和 `GND`；只有确认工具需要外部电平参考时才连接 `3.3V`。
 
+##### 使用 Flash Download Tool 检查连接
+
+烧录前建议按照乐鑫官方 [`chipInfoDump` 使用说明](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32c6/production_stage/tools/flash_download_tool.html#chipinfodump)，使用 `Chip Info` 无损确认协处理器已进入下载模式，并验证 COM 端口及 `TX/RX` 双向通信正常。如果无法读取芯片和 Flash 信息，请勿擦除或烧录，先检查下载模式、串口接线和端口占用情况。
+
 烧录步骤：
 
 1. 从 [`LilygoBox` 最新版本](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest)下载与板载协处理器相匹配的 network-adapter 固件。
 2. 关闭设备电源，并按照上表连接 USB 转串口工具。
 3. 正常给 T-Display-P4 供电，再次确认主设备正常运行且串口日志已输出 `Coprocessor preparation completed`。
 4. **让协处理器进入下载模式：**按住协处理器的 `BOOT` 按键，短按一次协处理器的 `RESET` 按键，然后松开 `BOOT` 按键。
-5. 打开乐鑫 ESP 固件在线烧录平台，按照实际板载协处理器选择芯片型号（T-Display-P4 V1.0 选择 `ESP32-C6`），串口选择 USB 转串口工具对应的端口。
+5. 打开乐鑫 ESP 固件在线烧录平台或 Flash Download Tool，按照实际板载协处理器选择芯片型号（T-Display-P4 V1.0 选择 `ESP32-C6`），串口选择 USB 转串口工具对应的端口。
 6. 选择 network-adapter `.bin` 文件，烧录地址填写 `0x0`，然后开始烧录。
 7. 烧录完成后，为 T-Display-P4 主设备重新烧录所需的应用固件，并将整机重新上电。
 

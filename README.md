@@ -147,13 +147,17 @@ receive and transmit signals:
 > [!WARNING]
 > Never connect 5 V UART logic or a 5 V supply to the `3.3V` pin. Power the T-Display-P4 normally and connect only `RX`, `TX`, and `GND` to the USB-to-UART adapter whenever possible. Connect `3.3V` only after confirming that the adapter requires an external logic-level reference.
 
+##### Checking the Connection with Flash Download Tool
+
+Before flashing, follow Espressif's official [`chipInfoDump` instructions](https://docs.espressif.com/projects/esp-test-tools/en/latest/esp32c6/production_stage/tools/flash_download_tool.html#chipinfodump-tab) and use `Chip Info` to confirm non-destructively that the coprocessor is in download mode and that the COM port and bidirectional `TX/RX` communication are working. If the chip and Flash information cannot be read, do not erase or flash; first check download mode, UART wiring, and serial-port usage.
+
 Flashing procedure:
 
 1. Download the network-adapter firmware matching the fitted coprocessor from the latest [`LilygoBox` release](https://github.com/Xinyuan-LilyGO/lilygobox-espidf/releases/latest).
 2. Power off the device and connect the USB-to-UART adapter as shown above.
 3. Power the T-Display-P4 normally and confirm again that the main device is running and has printed `Coprocessor preparation completed`.
 4. **Put the coprocessor into download mode:** hold the coprocessor `BOOT` button, press and release its `RESET` button once, and then release the `BOOT` button.
-5. Open Espressif's ESP firmware online flashing platform and select the actual coprocessor fitted to the board (`ESP32-C6` for T-Display-P4 V1.0), then select the serial port belonging to the USB-to-UART adapter.
+5. Open Espressif's ESP firmware online flashing platform or Flash Download Tool and select the actual coprocessor fitted to the board (`ESP32-C6` for T-Display-P4 V1.0), then select the serial port belonging to the USB-to-UART adapter.
 6. Select the network-adapter `.bin` file, set the flash address to `0x0`, and start flashing.
 7. When flashing finishes, reflash the required application firmware to the T-Display-P4 main device and power-cycle the complete device.
 
