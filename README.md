@@ -255,6 +255,20 @@ A. Hold down the `BOOT` button while starting the download, then release it afte
 </details>
 
 <details>
+<summary>Q. Why does the ESP32-P4 remain locked in download mode after restarting?</summary>
+
+A. If the ESP32-P4 unexpectedly resets while running, or if the device enters deep sleep, it may continue to enter download mode on the next startup. Use the following procedure to clear this state:
+
+1. Disconnect USB and all other external power sources.
+2. Turn off the onboard battery power switch.
+3. Press the ESP32-P4 `RST` button to help discharge any residual power on the board, then wait and confirm that the device is fully powered off.
+4. Turn the battery switch back on or reconnect external power, then start the device.
+
+After a complete power discharge, the ESP32-P4 should boot normally instead of continuing to enter download mode.
+
+</details>
+
+<details>
 <summary>Q. Why are submodule headers or components missing?</summary>
 
 A. Initialize all repository submodules:
