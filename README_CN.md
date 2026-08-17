@@ -39,6 +39,10 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 ## 预览
 
 <p align="center">
+  <img src="image/7.jpg" alt="T-Display-P4 硬件总览图" width="720">
+</p>
+
+<p align="center">
   <img src="image/2.jpg" alt="T-Display-P4 预览图 1" width="24%">
   <img src="image/3.jpg" alt="T-Display-P4 预览图 2" width="24%">
   <img src="image/4.jpg" alt="T-Display-P4 预览图 3" width="24%">

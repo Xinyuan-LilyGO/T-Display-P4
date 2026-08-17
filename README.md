@@ -39,6 +39,10 @@ Two display assemblies are supported: a 4.05-inch 540 x 1168 TFT panel and a 4.1
 ## Preview
 
 <p align="center">
+  <img src="image/7.jpg" alt="T-Display-P4 hardware overview" width="720">
+</p>
+
+<p align="center">
   <img src="image/2.jpg" alt="T-Display-P4 preview 1" width="24%">
   <img src="image/3.jpg" alt="T-Display-P4 preview 2" width="24%">
   <img src="image/4.jpg" alt="T-Display-P4 preview 3" width="24%">
