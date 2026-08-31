@@ -54,6 +54,18 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 
 <p align="center"><em>18650 专用外置充电器示例；图片中的品牌并非指定或推荐品牌。图片来源：<a href="https://commons.wikimedia.org/wiki/File:Four_18650_lithium_cells_in_a_Liitokala_PL4_charger.jpg">Retired electrician / Wikimedia Commons</a>，采用 CC0 1.0 授权。</em></p>
 
+### LoRa 外置天线接口说明
+
+- `MMCX1` 是板载 `SX1262` 或 `LR2021` 射频模块的外置天线接口。
+- `MMCX2` 当前未连接任何天线或射频电路，暂未使用，请勿将其作为天线接口使用。
+
+> [!WARNING]
+> 切换到外置天线通道或进行射频发射前，必须先将匹配的天线连接到 `MMCX1`。未连接匹配天线时进行发射可能会损坏射频电路。
+
+<p align="center">
+  <img src="image/8.jpg" alt="MMCX1 与 MMCX2 接口说明" width="430">
+</p>
+
 ## 预览
 
 <p align="center">

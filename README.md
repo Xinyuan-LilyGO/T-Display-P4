@@ -54,6 +54,18 @@ Do not bypass the battery protection circuit. If the external charger cannot rec
 
 <p align="center"><em>Example of a dedicated external 18650 charger; the pictured brand is not required or endorsed. Photo: <a href="https://commons.wikimedia.org/wiki/File:Four_18650_lithium_cells_in_a_Liitokala_PL4_charger.jpg">Retired electrician / Wikimedia Commons</a>, CC0 1.0.</em></p>
 
+### LoRa External Antenna Connectors
+
+- `MMCX1` is the external antenna connector for the onboard `SX1262` or `LR2021` radio.
+- `MMCX2` is not connected to any antenna or radio circuit and is currently unused. Do not use it as an antenna connector.
+
+> [!WARNING]
+> Before selecting the external antenna path or transmitting, connect a suitable antenna to `MMCX1`. Transmitting without a suitable antenna connected may damage the RF circuit.
+
+<p align="center">
+  <img src="image/8.jpg" alt="MMCX1 and MMCX2 connector description" width="430">
+</p>
+
 ## Preview
 
 <p align="center">
