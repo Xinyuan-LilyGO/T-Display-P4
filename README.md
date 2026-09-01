@@ -59,7 +59,7 @@ Do not bypass the battery protection circuit. If the external charger cannot rec
 - `MMCX1` is the external antenna connector for the onboard `SX1262` or `LR2021` radio.
 - `MMCX2` is not connected to any antenna or radio circuit and is currently unused. Do not use it as an antenna connector.
 
-The `SKY13453` RF switch is controlled by `XL9535 IO1` (`VCTL`). Use the encapsulated `SetSky13453RfSwitch()` API to select the antenna path instead of writing to the IO expander directly.
+The `SKY13453` RF switch is controlled by `XL9535 IO1` (`VCTL`).
 
 | `XL9535 IO1` / `VCTL` | Selected antenna path |
 | :---: | --- |
