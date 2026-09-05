@@ -16,9 +16,6 @@
 [submodule "libraries/radiolib_cpp_bus_driver"]
 	path = libraries/radiolib_cpp_bus_driver
 	url = https://github.com/Llgok/radiolib_cpp_bus_driver.git
-[submodule "libraries/icm20948_we"]
-	path = libraries/icm20948_we
-	url = https://github.com/Llgok/icm20948_we.git
 [submodule "libraries/usp_cpp_bus_driver"]
 	path = libraries/usp_cpp_bus_driver
 	url = https://github.com/Llgok/usp_cpp_bus_driver.git
