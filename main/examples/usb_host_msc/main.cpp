@@ -18,7 +18,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 #include "sdkconfig.h"
 #include "usb/msc_host.h"
 #include "usb/msc_host_vfs.h"
@@ -490,7 +490,11 @@ static void usb_lib_task(void* arg) {
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.SetUsbHostPowerEnabled(true)) {
+    ESP_LOGE(TAG, "USB host power initialization failed");
+    return;
+  }
 
 #if USB_HOST_MSC_ENABLE_RW_TEST
   ESP_LOGI(TAG, "MSC RW test enabled: %u bytes every 1000 ms",

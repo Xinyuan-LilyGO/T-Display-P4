@@ -5,10 +5,15 @@
  * @LastEditTime: 2026-04-25 09:39:47
  * @License: GPL 3.0
  */
+#include <cstdio>
+#include <cstring>
 #include <fstream>
+#include <memory>
 #include <string>
 
-#include "lilygo_device_driver_library.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "lilygo_device_driver.h"
 
 namespace board = lilygo_device_driver::t_display_p4;
 
@@ -123,7 +128,14 @@ bool PlayWavFile(const char* file_path) {
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.InitEs8311() ||
+      !driver.InitSdmmc(board::device::sd::kBasePath) ||
+      !driver.SetEs8311OperatingMode(
+          lilygo_device_driver::TDisplayP4Driver::Es8311OperatingMode::kPlayback)) {
+    printf("Audio or SD card initialization failed\n");
+    return;
+  }
 
   if (!PlayWavFile(kMusicFilePath.c_str())) {
     printf("PlayWavFile failed\n");

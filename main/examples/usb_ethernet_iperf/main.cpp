@@ -6,6 +6,7 @@
  * @License: GPL 3.0
  */
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "esp_check.h"
@@ -14,12 +15,15 @@
 #include "esp_intr_alloc.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "freertos/task.h"
 #include "iot_eth.h"
 #include "iot_eth_netif_glue.h"
 #include "iot_usbh_cdc.h"
 #include "iot_usbh_ecm.h"
 #include "iperf_cmd.h"
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 #include "usb/usb_host.h"
 
 static const char* TAG = "rtl8152b_iperf";
@@ -212,7 +216,11 @@ static esp_err_t install_rtl8152b_ecm(void) {
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.SetUsbHostPowerEnabled(true)) {
+    ESP_LOGE(TAG, "USB host power initialization failed");
+    return;
+  }
 
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());

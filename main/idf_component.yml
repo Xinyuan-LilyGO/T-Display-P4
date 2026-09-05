@@ -5,6 +5,8 @@ dependencies:
     path: "../libraries/common"
     matches:
       - if: "$CONFIG{EXAMPLE_BUILD_ES8311_SD_WAV} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_UART} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_ESP32C6_AT_HOST_SDIO_WIFI} == True"
       - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   cpp_bus_driver:
@@ -12,18 +14,30 @@ dependencies:
 
   arduino_cpp_bus_driver:
     override_path: "../libraries/arduino_cpp_bus_driver"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   lilygo_device_driver:
     override_path: "../libraries/lilygo_device_driver"
 
   radiolib_cpp_bus_driver:
     override_path: "../libraries/radiolib_cpp_bus_driver"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_CC1101_SEND_RECEIVE} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE} == True"
+      - if: "$CONFIG{EXAMPLE_BUILD_RADIOLIB_NRF24L01_SEND_RECEIVE} == True"
 
   icm20948_we:
     override_path: "../libraries/icm20948_we"
+    matches:
+      - if: "$CONFIG{EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW} == True"
 
   usp_cpp_bus_driver:
     path: "../libraries/usp_cpp_bus_driver"
+
+  stsw-st25rfal002_cpp_bus_driver:
+    path: "../libraries/stsw-st25rfal002_cpp_bus_driver"
 
   ST25R3916:
     path: "../libraries/ST25R3916"

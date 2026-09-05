@@ -5,107 +5,115 @@
  * @LastEditTime: 2026-04-25 16:43:05
  * @License: GPL 3.0
  */
-#include "lilygo_device_driver_library.h"
+#include <cstdio>
+#include <string>
 
-namespace board = lilygo_device_driver::t_display_p4;
+#include "esp_at_transport.h"
+#include "esp_log.h"
 
-size_t g_cycle_time = 0;
+namespace {
+
+constexpr char kWifiSsid[] = "LilyGo-AABB";
+constexpr char kWifiPassword[] = "xinyuandianzi";
+
+std::string QuoteAtString(const char* value) {
+  std::string quoted = "\"";
+  for (const char* cursor = value; *cursor != '\0'; ++cursor) {
+    if (*cursor == '\\' || *cursor == '"' || *cursor == ',') {
+      quoted += '\\';
+    }
+    quoted += *cursor;
+  }
+  quoted += '"';
+  return quoted;
+}
+
+bool SendCommand(cpp_bus_driver::EspAt& transport,
+    const std::string& command, uint32_t timeout_ms = 5000) {
+  if (!transport.SendPacket(command + "\r\n")) {
+    printf("ESP-AT command send failed\n");
+    return false;
+  }
+
+  const uint32_t started = esp_log_timestamp();
+  std::string pending;
+  std::string received;
+  while (esp_log_timestamp() - started < timeout_ms) {
+    if (!transport.IsConnected() ||
+        !esp_at_example::ReceiveAvailable(transport, received)) {
+      printf("ESP-AT command receive failed\n");
+      return false;
+    }
+
+    pending += received;
+    size_t end = 0;
+    while ((end = pending.find('\n')) != std::string::npos) {
+      std::string line = pending.substr(0, end);
+      pending.erase(0, end + 1);
+      if (!line.empty() && line.back() == '\r') {
+        line.pop_back();
+      }
+      if (line.empty()) {
+        continue;
+      }
+      if (line == "OK") {
+        return true;
+      }
+      printf("%s\n", line.c_str());
+      if (line == "ERROR" || line == "FAIL" ||
+          line.rfind("+CME ERROR", 0) == 0 || line.rfind("busy ", 0) == 0) {
+        return false;
+      }
+    }
+    if (pending.size() > 4096) {
+      printf("ESP-AT response line is too long\n");
+      return false;
+    }
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  printf("ESP-AT command response timed out\n");
+  return false;
+}
+
+bool ConfigureWifi(cpp_bus_driver::EspAt& transport) {
+  if (!SendCommand(transport, "ATE0") ||
+      !SendCommand(transport, "AT+SYSSTORE=1") ||
+      !SendCommand(transport, "AT+CWMODE=1") ||
+      !SendCommand(transport, "AT+CWLAP", 20000)) {
+    return false;
+  }
+  const std::string join_command =
+      "AT+CWJAP=" + QuoteAtString(kWifiSsid) + "," + QuoteAtString(kWifiPassword);
+  if (!SendCommand(transport, join_command, 30000)) {
+    printf("Wi-Fi connection failed\n");
+    return false;
+  }
+  printf("Connected to Wi-Fi: %s\n", kWifiSsid);
+  return SendCommand(transport,
+      "AT+CIPSNTPCFG=1,8,\"pool.ntp.org\",\"time.nist.gov\"");
+}
+
+}  // namespace
 
 extern "C" void app_main(void) {
-  printf("Ciallo\n");
-
-  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
-  driver.Init();
-
-  auto esp32c6_at_sdio_bus = std::make_shared<cpp_bus_driver::HardwareSdio>(
-      board::gpio::esp32c6::kSdioClk, board::gpio::esp32c6::kSdioCmd,
-      board::gpio::esp32c6::kSdioD0, board::gpio::esp32c6::kSdioD1,
-      board::gpio::esp32c6::kSdioD2, board::gpio::esp32c6::kSdioD3,
-      -1, -1, -1, -1,
-      cpp_bus_driver::HardwareSdio::SdioPort::kSlot1);
-
-  auto esp32c6_at = std::make_unique<cpp_bus_driver::EspAt>(
-      esp32c6_at_sdio_bus, [](bool value) -> void {
-        // ESP32C6复位
-        lilygo_device_driver::TDisplayP4Driver::GetInstance()
-            .chip()
-            .xl9535->GpioWrite(board::gpio::xl9535::kEsp32c6En,
-                static_cast<uint8_t>(value));
-      });
-
-  esp32c6_at->Init();
-
-  uart_driver_install(UART_NUM_0, 1024 * 2, 0, 0, NULL, 0);
-
-  uart_flush_input(UART_NUM_0);
-
-  // 开启falsh保存
-  if (esp32c6_at->SetFlashSave(true)) {
-    printf("SetFlashSave success\n");
-  } else {
-    printf("SetFlashSave fail\n");
+  auto esp32c6_at = esp_at_example::CreateTransport();
+  if (esp32c6_at == nullptr) {
+    return;
   }
 
-  if (esp32c6_at->SetWifiMode(cpp_bus_driver::EspAt::WifiMode::kStation)) {
-    printf("SetWifiMode success\n");
-  } else {
-    printf("SetWifiMode fail\n");
-  }
-
-  std::vector<uint8_t> buffer_wifi_scan;
-  if (esp32c6_at->WifiScan(buffer_wifi_scan)) {
-    printf("WifiScan: \n[%s]\n", buffer_wifi_scan.data());
-  } else {
-    printf("WifiScan fail\n");
-  }
-
-  std::string ssid = "LilyGo-AABB";
-  std::string password = "xinyuandianzi";
-  if (esp32c6_at->SetWifiConnect(ssid, password)) {
-    printf(
-        "SetWifiConnect success\nConnected to wifi ssid: [%s],password: "
-        "[%s]\n",
-        ssid.c_str(), password.c_str());
-  } else {
-    printf("SetWifiConnect fail\n");
-  }
-
-  cpp_bus_driver::EspAt::RealTime rt;
-  if (esp32c6_at->GetRealTime(rt)) {
-    printf("GetRealTime success\n");
-    printf(
-        "Week: [%s] day: [%d] Month: [%d] Year: [%d] Time: [%02d:%02d:%02d] "
-        "Time zone: [%s] China time: [%02d:%02d:%02d]\n",
-        rt.week.c_str(), rt.day, rt.month, rt.year, rt.hour, rt.minute,
-        rt.second, rt.time_zone.c_str(), (rt.hour + 8 + 24) % 24, rt.minute,
-        rt.second);
-  } else {
-    printf("GetRealTime fail\n");
-  }
-
-  while (1) {
-    if (esp_log_timestamp() > g_cycle_time) {
-      if (esp32c6_at->GetRealTime(rt)) {
-        printf("GetRealTime success\n");
-        printf(
-            "Week: [%s] Day: [%d] Month: [%d] Year: [%d] Time: "
-            "[%02d:%02d:%02d] Time zone: [%s] China time: [%02d:%02d:%02d]\n",
-            rt.week.c_str(), rt.day, rt.month, rt.year, rt.hour, rt.minute,
-            rt.second, rt.time_zone.c_str(), (rt.hour + 8 + 24) % 24, rt.minute,
-            rt.second);
-      } else {
-        printf("GetRealTime fail\n");
+  bool configured = ConfigureWifi(*esp32c6_at);
+  while (true) {
+    if (!configured || !esp32c6_at->IsConnected()) {
+      configured = esp_at_example::Reconnect(*esp32c6_at) &&
+                   ConfigureWifi(*esp32c6_at);
+      if (!configured) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        continue;
       }
-
-      g_cycle_time = esp_log_timestamp() + 1000;
     }
 
-    if (!esp32c6_at->GetConnectStatus()) {
-      printf("Esp32c6 at lost connection,attempting to reconnect\n");
-
-      esp32c6_at->Reconnect();
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(10));
+    // ESP-AT reports SNTP time in UTC+8, configured above.
+    configured = SendCommand(*esp32c6_at, "AT+CIPSNTPTIME?");
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

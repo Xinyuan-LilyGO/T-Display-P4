@@ -22,3 +22,6 @@
 [submodule "libraries/usp_cpp_bus_driver"]
 	path = libraries/usp_cpp_bus_driver
 	url = https://github.com/Llgok/usp_cpp_bus_driver.git
+[submodule "libraries/stsw-st25rfal002_cpp_bus_driver"]
+	path = libraries/stsw-st25rfal002_cpp_bus_driver
+	url = https://github.com/Llgok/stsw-st25rfal002_cpp_bus_driver.git

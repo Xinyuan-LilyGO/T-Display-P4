@@ -28,7 +28,7 @@
 #include "iot_usbh_cdc.h"
 #include "iot_usbh_ecm.h"
 #include "iperf_cmd.h"
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 #include "sdkconfig.h"
 #include "usb/msc_host.h"
 #include "usb/msc_host_vfs.h"
@@ -644,7 +644,11 @@ static esp_err_t install_rtl8152b_ecm(void) {
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.SetUsbHostPowerEnabled(true)) {
+    ESP_LOGE(TAG, "USB host power initialization failed");
+    return;
+  }
 
 #if USB_ETHERNET_IPERF_HOST_MSC_ENABLE_MSC_RW_TEST
   ESP_LOGI(TAG, "MSC RW test enabled: %u bytes every 1000 ms",

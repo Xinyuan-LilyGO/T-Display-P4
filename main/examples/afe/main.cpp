@@ -5,10 +5,18 @@
  * @LastEditTime: 2026-04-22 14:42:10
  * @License: GPL 3.0
  */
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+
 #include "esp_afe_sr_models.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "hiesp.h"
 #include "hilexin.h"
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 
 #define MCLK_MULTIPLE i2s_mclk_multiple_t::I2S_MCLK_MULTIPLE_256
 #define SAMPLE_RATE 16000
@@ -20,26 +28,26 @@ void feed_Task(void* arg) {
   int audio_chunksize = g_afe_handle->get_feed_chunksize(afe_data);
   int nch = g_afe_handle->get_feed_channel_num(afe_data);
 
-  auto i2s_buffer =
-      std::make_unique<int16_t[]>(audio_chunksize * sizeof(int16_t));
+  const size_t sample_count = static_cast<size_t>(audio_chunksize) * nch;
+  const size_t buffer_size = sample_count * sizeof(int16_t);
+  auto i2s_buffer = std::make_unique<int16_t[]>(sample_count);
+  auto& es8311 =
+      lilygo_device_driver::TDisplayP4Driver::GetInstance().chip().es8311;
 
   while (1) {
-    lilygo_device_driver::TDisplayP4Driver::GetInstance()
-        .chip()
-        .es8311->ReadData(i2s_buffer.get(), audio_chunksize * sizeof(uint16_t));
-
-    // lilygo_device_driver::TDisplayP4Driver::GetInstance()
-    //     .chip()
-    //     .es8311->WriteData(i2s_buffer, audio_chunksize * sizeof(uint16_t));
-
-    // for (uint8_t i = 0; i < 10; i++)
-    // {
-    //     printf("ReadData: %d\n", i2s_buffer[i]);
-    // }
-
+    size_t filled = 0;
+    while (filled < buffer_size) {
+      const size_t bytes_read = es8311->ReadI2s(
+          reinterpret_cast<uint8_t*>(i2s_buffer.get()) + filled,
+          buffer_size - filled);
+      if (bytes_read == 0) {
+        printf("ES8311 audio read failed\n");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        continue;
+      }
+      filled += bytes_read;
+    }
     g_afe_handle->feed(afe_data, i2s_buffer.get());
-
-    vTaskDelay(pdMS_TO_TICKS(50));
   }
 
   vTaskDelete(NULL);
@@ -47,7 +55,6 @@ void feed_Task(void* arg) {
 
 void detect_Task(void* arg) {
   esp_afe_sr_data_t* afe_data = (esp_afe_sr_data_t*)arg;
-  int afe_chunksize = g_afe_handle->get_fetch_chunksize(afe_data);
   printf("------------detect start------------\n");
 
   // modify wakenet detection threshold
@@ -96,8 +103,18 @@ void Afe_Init() {
     }
   }
 
+  if (models == nullptr) {
+    printf("Speech models could not be loaded\n");
+    return;
+  }
+
+  // ES8311 has one microphone in a two-slot I2S stream.
   afe_config_t* afe_config =
-      afe_config_init("MM", models, AFE_TYPE_SR, AFE_MODE_LOW_COST);
+      afe_config_init("MN", models, AFE_TYPE_SR, AFE_MODE_LOW_COST);
+  if (afe_config == nullptr) {
+    printf("AFE configuration failed\n");
+    return;
+  }
 
   // print/modify wake word model.
   if (afe_config->wakenet_model_name) {
@@ -111,10 +128,20 @@ void Afe_Init() {
 
   g_afe_handle =
       const_cast<esp_afe_sr_iface_t*>(esp_afe_handle_from_config(afe_config));
+  if (g_afe_handle == nullptr) {
+    afe_config_free(afe_config);
+    printf("AFE interface unavailable\n");
+    return;
+  }
   esp_afe_sr_data_t* afe_data = g_afe_handle->create_from_config(afe_config);
 
   //
   afe_config_free(afe_config);
+
+  if (afe_data == nullptr) {
+    printf("AFE creation failed\n");
+    return;
+  }
 
   xTaskCreatePinnedToCore(&feed_Task, "feed", 8 * 1024, (void*)afe_data, 5,
                           NULL, 0);
@@ -137,11 +164,11 @@ void Wakenet_Init() {
   if (strstr(model_name, "hiesp") != NULL) {
     data = (unsigned char*)hiesp;
     data_size = sizeof(hiesp);
-    printf("wake word: %s, size:%d\n", "hiesp", data_size);
+    printf("wake word: %s, size:%zu\n", "hiesp", data_size);
   } else if (strstr(model_name, "hilexin") != NULL) {
     data = (unsigned char*)hilexin;
     data_size = sizeof(hilexin);
-    printf("wake word: %s, size:%d\n", "hilexin", data_size);
+    printf("wake word: %s, size:%zu\n", "hilexin", data_size);
   }
 
   int chunks = 0;
@@ -169,7 +196,26 @@ void Wakenet_Init() {
 extern "C" void app_main() {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.InitEs8311() ||
+      !driver.SetEs8311OperatingMode(
+          lilygo_device_driver::TDisplayP4Driver::Es8311OperatingMode::kCapture)) {
+    printf("ES8311 capture initialization failed\n");
+    return;
+  }
+
+  auto& es8311 = driver.chip().es8311;
+  if (!es8311->SetI2sChannelEnable(false)) {
+    printf("ES8311 I2S stop failed\n");
+    return;
+  }
+  const bool clock_configured =
+      es8311->ReconfigureClock(MCLK_MULTIPLE, SAMPLE_RATE);
+  const bool channel_enabled = es8311->SetI2sChannelEnable(true);
+  if (!clock_configured || !channel_enabled) {
+    printf("ES8311 16 kHz clock configuration failed\n");
+    return;
+  }
 
   // Wakenet_Init();
   Afe_Init();

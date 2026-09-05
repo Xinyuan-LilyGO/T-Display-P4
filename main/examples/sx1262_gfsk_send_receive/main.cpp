@@ -5,7 +5,14 @@
  * @LastEditTime: 2026-07-15 16:30:00
  * @License: GPL 3.0
  */
-#include "lilygo_device_driver_library.h"
+#include <cstdio>
+#include <cstring>
+#include <memory>
+
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "lilygo_device_driver.h"
 
 namespace board = lilygo_device_driver::t_display_p4;
 
@@ -18,15 +25,26 @@ extern "C" void app_main(void) {
   size_t cycle_time = 0;
 
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
-  driver.CreateDrivers();
-
-  if (!driver.InitXl9535() || !driver.InitPower() ||
-      !driver.ConfigXl9535()) {
+  if (!driver.InitMinimal()) {
     printf("Board radio power init failed\n");
     return;
   }
 
-  auto sx1262 = std::make_unique<Sx126x>(driver.bus().sx1262_spi_bus,
+  auto& xl9535 = driver.chip().xl9535;
+  if (!xl9535->GpioWrite(board::gpio::xl9535::kRadioRst, 0) ||
+      !xl9535->SetGpioMode(board::gpio::xl9535::kRadioRst,
+          cpp_bus_driver::Xl95x5::Mode::kOutput)) {
+    printf("Sx1262 reset initialization failed\n");
+    return;
+  }
+  vTaskDelay(pdMS_TO_TICKS(10));
+  if (!xl9535->GpioWrite(board::gpio::xl9535::kRadioRst, 1)) {
+    printf("Sx1262 reset release failed\n");
+    return;
+  }
+  vTaskDelay(pdMS_TO_TICKS(10));
+
+  auto sx1262 = std::make_unique<Sx126x>(driver.bus().radio_spi_bus,
       Sx126x::ChipType::kSx1262, board::gpio::sx1262::kBusy,
       board::gpio::sx1262::kCs);
   if (!sx1262->Init(10000000)) {
@@ -34,12 +52,11 @@ extern "C" void app_main(void) {
     return;
   }
 
-  auto& xl9535 = driver.chip().xl9535;
-  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
+  auto esp32p4 = std::make_unique<cpp_bus_driver::PlatformHal>();
 
   esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
-      cpp_bus_driver::Tool::GpioMode::kInput,
-      cpp_bus_driver::Tool::GpioStatus::kPullup);
+      cpp_bus_driver::PlatformHal::GpioMode::kInput,
+      cpp_bus_driver::PlatformHal::GpioStatus::kPullup);
 
   Sx126x::GfskConfig gfsk_config;
   gfsk_config.frequency_mhz = 850.0;
@@ -62,10 +79,10 @@ extern "C" void app_main(void) {
 
   while (1) {
     if (esp_log_timestamp() > cycle_time) {
-      Sx126x::DeviceId device_id;
-      if (sx1262->GetDeviceId(device_id)) {
-        printf("Sx1262 id: %.*s\n", static_cast<int>(device_id.bytes.size()),
-            reinterpret_cast<const char*>(device_id.bytes.data()));
+      Sx126x::ChipId chip_id;
+      if (sx1262->GetChipId(chip_id)) {
+        printf("Sx1262 id: %.*s\n", static_cast<int>(chip_id.bytes.size()),
+            reinterpret_cast<const char*>(chip_id.bytes.data()));
       }
 
       float current_limit = 0.0f;

@@ -6,6 +6,9 @@
  * @License: GPL 3.0
  */
 #include <stdatomic.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "esp_console.h"
 #include "esp_eth.h"
@@ -13,15 +16,17 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "ethernet_init.h"
 #include "iperf_cmd.h"
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 
 #define CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER 0
 
-#if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
 static const char* TAG = "ethernet_iperf";
 
+#if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
 static void start_dhcp_server_after_connection(void* arg, esp_event_base_t base,
                                                int32_t id, void* event_data) {
   esp_netif_t* eth_netif = esp_netif_next_unsafe(NULL);
@@ -42,9 +47,12 @@ static void start_dhcp_server_after_connection(void* arg, esp_event_base_t base,
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  lilygo_device_driver::TDisplayP4Driver::GetInstance().Init();
-
-  // auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
+  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
+  if (!driver.InitMinimal() || !driver.SetEthernetPowerEnabled(true)) {
+    ESP_LOGE(TAG, "Ethernet power initialization failed");
+    return;
+  }
+  vTaskDelay(pdMS_TO_TICKS(10));
 
   uint8_t eth_port_cnt = 0;
   char if_key_str[10];
@@ -137,10 +145,6 @@ extern "C" void app_main(void) {
 
   esp_console_start_repl(repl);
 
-  // esp32p4->SetGpioMode(ETHERNET_MDC, cpp_bus_driver::Tool::GpioMode::kInput,
-  //                     cpp_bus_driver::Tool::GpioStatus::kPulldown);
-  // esp32p4->SetGpioMode(ETHERNET_MDIO, cpp_bus_driver::Tool::GpioMode::kInput,
-  //                     cpp_bus_driver::Tool::GpioStatus::kPulldown);
 
   // vTaskDelay(pdMS_TO_TICKS(5000));
 
