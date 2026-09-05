@@ -42,17 +42,17 @@ Two display assemblies are supported: a 4.05-inch 540 x 1168 TFT panel and a 4.1
 ### Keyboard-Version Battery Safety and Usage
 
 > [!WARNING]
-> This notice applies to **T-Display-P4-Keyboard**. When the keyboard version is not in use, always slide the power switch on the keyboard to **OFF**. Leaving the switch on continues to consume battery power and may eventually discharge the 18650 cell into its low-voltage protection state.
+> This notice applies to **T-Display-P4-Keyboard**. When the keyboard version is not in use, always slide the power switch on the keyboard to **OFF**. Leaving the switch on continues to consume battery power and may eventually discharge the 21700 cell into its low-voltage protection state.
 
-If the battery enters low-voltage protection, it must first be removed and reactivated with a qualified external charger designed for rechargeable 18650 lithium-ion cells and capable of low-voltage recovery charging. Observe the correct polarity and follow the charger's instructions. After the battery has recovered, reinstall it in the keyboard; it can then continue to be charged and discharged normally through the T-Display-P4 host.
+If the battery enters low-voltage protection, it must first be removed and reactivated with a qualified external charger designed for rechargeable 21700 lithium-ion cells and capable of low-voltage recovery charging. Observe the correct polarity and follow the charger's instructions. After the battery has recovered, reinstall it in the keyboard; it can then continue to be charged and discharged normally through the T-Display-P4 host.
 
 Do not bypass the battery protection circuit. If the external charger cannot recognize the cell, or if the cell is damaged, swollen, leaking, or unusually hot, stop using it and replace it safely.
 
 <p align="center">
-  <img src="image/18650-external-charger.jpg" alt="18650 cells installed in an external battery charger" width="360">
+  <img src="image/21700-external-charger.jpg" alt="21700 cells placed in an external battery charger" width="360">
 </p>
 
-<p align="center"><em>Example of a dedicated external 18650 charger; the pictured brand is not required or endorsed. Photo: <a href="https://commons.wikimedia.org/wiki/File:Four_18650_lithium_cells_in_a_Liitokala_PL4_charger.jpg">Retired electrician / Wikimedia Commons</a>, CC0 1.0.</em></p>
+<p align="center"><em>Example showing 21700 cells in an external charger. Before use, confirm that the charger explicitly supports rechargeable 21700 lithium-ion cells and low-voltage recovery charging; the pictured brand is not required or endorsed. Photo: <a href="https://commons.wikimedia.org/wiki/File:21700_batteries_by_Liitokala_in_the_charger.jpg">Retired electrician / Wikimedia Commons</a>, CC0 1.0.</em></p>
 
 ### LoRa External Antenna Connectors
 

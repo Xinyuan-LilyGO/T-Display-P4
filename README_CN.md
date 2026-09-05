@@ -42,17 +42,17 @@ T-Display-P4 是一款以 **ESP32-P4** 为主控的高性能开发平台。产�
 ### 键盘版本电池安全与使用说明
 
 > [!WARNING]
-> 本注意事项仅适用于 **T-Display-P4-Keyboard 键盘版本**。不使用设备时，务必将键盘上的电源拨动开关拨到 **OFF（关闭）** 位置。开关保持开启会持续消耗电量，长时间放置可能导致 18650 电池进入低电压保护状态。
+> 本注意事项仅适用于 **T-Display-P4-Keyboard 键盘版本**。不使用设备时，务必将键盘上的电源拨动开关拨到 **OFF（关闭）** 位置。开关保持开启会持续消耗电量，长时间放置可能导致 21700 电池进入低电压保护状态。
 
-如果电池已经触发低电压保护，必须先取出电池，并使用支持低压恢复充电的合格 18650 锂离子电池专用外置充电器进行恢复（俗称“激活”）。请确认电池极性正确，并遵循充电器的使用说明。电池恢复后再装回键盘，即可继续通过 T-Display-P4 主机正常充放电。
+如果电池已经触发低电压保护，必须先取出电池，并使用支持低压恢复充电的合格 21700 锂离子电池专用外置充电器进行恢复（俗称“激活”）。请确认电池极性正确，并遵循充电器的使用说明。电池恢复后再装回键盘，即可继续通过 T-Display-P4 主机正常充放电。
 
 请勿绕过电池保护电路。如果外置充电器无法识别电池，或电池出现破损、鼓包、漏液、异常发热等情况，请立即停止使用并妥善更换。
 
 <p align="center">
-  <img src="image/18650-external-charger.jpg" alt="安装在外置充电器中的 18650 电池" width="360">
+  <img src="image/21700-external-charger.jpg" alt="放置在外置充电器中的 21700 电池" width="360">
 </p>
 
-<p align="center"><em>18650 专用外置充电器示例；图片中的品牌并非指定或推荐品牌。图片来源：<a href="https://commons.wikimedia.org/wiki/File:Four_18650_lithium_cells_in_a_Liitokala_PL4_charger.jpg">Retired electrician / Wikimedia Commons</a>，采用 CC0 1.0 授权。</em></p>
+<p align="center"><em>21700 电池放置在外置充电器中的示例。使用前必须确认充电器明确支持可充电 21700 锂离子电池及低压恢复充电；图片中的品牌并非指定或推荐品牌。图片来源：<a href="https://commons.wikimedia.org/wiki/File:21700_batteries_by_Liitokala_in_the_charger.jpg">Retired electrician / Wikimedia Commons</a>，采用 CC0 1.0 授权。</em></p>
 
 ### LoRa 外置天线接口说明
 
