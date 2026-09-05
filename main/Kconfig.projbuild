@@ -19,10 +19,6 @@ menu "Example Configuration"
                 bool "afe"
             config EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE
                 bool "radiolib_sx1262_send_receive"
-            config EXAMPLE_BUILD_XL9555
-                bool "xl9555"
-            config EXAMPLE_BUILD_TCA8418
-                bool "tca8418"
             config EXAMPLE_BUILD_CC1101_SEND_RECEIVE
                 bool "cc1101_send_receive"
             config EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE

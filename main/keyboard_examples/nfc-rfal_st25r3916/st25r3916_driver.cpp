@@ -28,22 +28,18 @@
 #include "rfal_nfc.h"
 #include "ndef_class.h"
 #include "ndef_t5t.h"
+#include "rfal_rfst25r3916.h"
 #include "st25r3916_driver.h"
-#include "t_display_p4_keyboard_config.h"
+#include "t_display_p4_keyboard_expansion_config.h"
 
 namespace board = lilygo_device_driver::t_display_p4;
 
-/* Uncomment this line if you want to use the NFC reader with I2C bus instead of SPI */
-// #define I2C_ENABLED
+#define ST25R3916_SPI_MOSI board::keyboard_expansion::gpio::t_mix_rf::st25r3916::kMosi
+#define ST25R3916_SPI_MISO board::keyboard_expansion::gpio::t_mix_rf::st25r3916::kMiso
+#define ST25R3916_SPI_SCLK board::keyboard_expansion::gpio::t_mix_rf::st25r3916::kSclk
 
-#ifndef I2C_ENABLED
-#define ST25R3916_SPI_MOSI board::keyboard::gpio::t_mix_rf::st25r3916::kMosi
-#define ST25R3916_SPI_MISO board::keyboard::gpio::t_mix_rf::st25r3916::kMiso
-#define ST25R3916_SPI_SCLK board::keyboard::gpio::t_mix_rf::st25r3916::kSclk
-#endif
-
-#define CS_PIN board::keyboard::gpio::t_mix_rf::st25r3916::kCs
-#define IRQ_PIN board::keyboard::gpio::t_mix_rf::st25r3916::kInt
+#define CS_PIN board::keyboard_expansion::gpio::t_mix_rf::st25r3916::kCs
+#define IRQ_PIN board::keyboard_expansion::gpio::t_mix_rf::st25r3916::kInt
 
 #define LED_A_PIN -1
 #define LED_B_PIN -1
@@ -156,11 +152,7 @@ uint8_t hexStrIdx = 0;
 int PushButtonState = 0;
 
 /* SPI, Component and NFC */
-#ifndef I2C_ENABLED
-RfalRfST25R3916Class rfst25r3916(&SPI, -1, IRQ_PIN);
-#else
-RfalRfST25R3916Class rfst25r3916(&dev_i2c, IRQ_PIN);
-#endif
+static RfalRfST25R3916Class rfst25r3916(&SPI, -1, IRQ_PIN);
 RfalNfcClass rfal_nfc(&rfst25r3916);
 NdefClass ndef(&rfal_nfc);
 
@@ -291,17 +283,15 @@ static void ndefShowDemoUsage()
 #endif /* NDEF_FEATURE_FULL_API */
 }
 
-void St25r3916_Init(bool bus_init_flag)
+bool St25r3916_Init(
+    const std::shared_ptr<cpp_bus_driver::HardwareSpi>& spi_bus)
 {
-#ifndef I2C_ENABLED
-    SPI.set_bus_init_flag(bus_init_flag);
+    if (spi_bus == nullptr || !SPI.setBus(spi_bus))
+    {
+        Serial.println("ST25R3916 SPI bus is unavailable");
+        return false;
+    }
     SPI.begin(ST25R3916_SPI_SCLK, ST25R3916_SPI_MISO, ST25R3916_SPI_MOSI, CS_PIN);
-#else
-    pinMode(CS_PIN, OUTPUT);
-    digitalWrite(CS_PIN, HIGH);
-    Wire.begin();
-    Wire.setClock(400000);
-#endif
 
     pinMode(LED_A_PIN, OUTPUT);
     pinMode(LED_B_PIN, OUTPUT);
@@ -402,7 +392,7 @@ void St25r3916_Init(bool bus_init_flag)
         else
         {
             Serial.printf("rfalNfcDiscover init failed (error code: %d)\n", err);
-            return;
+            return false;
         }
         err = rfal_nfc.rfalNfcDeactivate(RFAL_NFC_DEACTIVATE_IDLE);
         if (err == ERR_NONE)
@@ -412,15 +402,17 @@ void St25r3916_Init(bool bus_init_flag)
         else
         {
             Serial.printf("rfalNfcDeactivate init failed (error code: %d)\n", err);
-            return;
+            return false;
         }
 
         state = DEMO_ST_START_DISCOVERY;
         Serial.printf("st25r3916 init success\n");
+        return true;
     }
     else
     {
         Serial.printf("st25r3916 init failed (error code: %d)\n", err);
+        return false;
     }
 }
 

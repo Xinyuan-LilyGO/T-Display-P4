@@ -6,9 +6,12 @@
  * @License: GPL 3.0
  */
 #pragma once
-#include "rfal_rfst25r3916.h"
+#include <memory>
 
-void St25r3916_Init(bool bus_init_flag = false);
+namespace cpp_bus_driver {
+class HardwareSpi;
+}
+
+bool St25r3916_Init(
+    const std::shared_ptr<cpp_bus_driver::HardwareSpi>& spi_bus);
 void St25r3916_Loop(void);
-
-extern RfalRfST25R3916Class rfst25r3916;

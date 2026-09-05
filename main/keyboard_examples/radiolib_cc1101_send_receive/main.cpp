@@ -5,111 +5,129 @@
  * @LastEditTime: 2026-04-27 09:11:16
  * @License: GPL 3.0
  */
-#include "lilygo_device_driver_library.h"
+#include <cstdio>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "lilygo_device_driver.h"
+#include "radiolib_cpp_bus_driver.h"
 
 namespace board = lilygo_device_driver::t_display_p4;
+namespace keyboard = board::keyboard_expansion;
 
-const uint8_t g_send_package[] = {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-
-    'a', 'b', 'c', 'd', 'e', 'f', 'g',
-};
-
-volatile bool g_interrupt_flag = false;
+// The 64-byte RX FIFO also holds the length byte and two status bytes.
+constexpr uint8_t kMaxPacketLength = 61;
 
 extern "C" void app_main(void) {
-  printf("Ciallo\n");
-
   auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
-  driver.Init();
-
-  auto cc1101 = driver.chip().cc1101;
-  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
-
-  esp32p4->SetGpioMode(board::gpio::button::kEsp32p4Boot,
-      cpp_bus_driver::Tool::GpioMode::kInput);
-
-  esp32p4->InitGpioInterrupt(
-      board::keyboard::gpio::t_mix_rf::cc1101::kInt,
-      cpp_bus_driver::Tool::InterruptMode::kRising,
-      [](void* arg) -> void { g_interrupt_flag = true; });
-
-  int16_t status = cc1101->begin(868.0);
-  if (status == RADIOLIB_ERR_NONE) {
-    printf("Cc1101 init success\n");
-  } else {
-    printf("Cc1101 init failed (error code: %d)\n", status);
+  if (!driver.InitMinimal()) {
+    printf("Board initialization failed\n");
+    return;
+  }
+  if (!driver.InitKeyboardExpansion()) {
+    printf("Some keyboard expansion peripherals could not be initialized\n");
+  }
+  if (!driver.IsCc1101Ready() || !driver.IsXl9555Ready() ||
+      driver.bus().cc1101_spi_bus == nullptr) {
+    printf("Keyboard expansion CC1101 initialization failed\n");
+    return;
+  }
+  if (!driver.SetCc1101RfSwitch(
+          lilygo_device_driver::TDisplayP4Driver::Cc1101RfSwitch::k868_915Mhz)) {
+    printf("CC1101 RF switch configuration failed\n");
+    return;
   }
 
-  status = cc1101->setSyncWord(0xAA, 0xBB);
-  if (status != RADIOLIB_ERR_NONE) {
-    printf("setSyncWord failed (error code: %d)\n", status);
+  // Leave the radio awake and release the native SPI device before RadioLib
+  // reopens it with hardware CS. The shared SPI host remains available.
+  if (!driver.chip().cc1101->Wakeup() ||
+      !driver.chip().cc1101->DeinitLocalResources(false)) {
+    printf("CC1101 native driver release failed\n");
+    return;
+  }
+  cpp_bus_driver::PlatformHal platform_hal;
+  if (!platform_hal.SetGpioMode(board::gpio::button::kEsp32p4Boot,
+          cpp_bus_driver::PlatformHal::GpioMode::kInput,
+          cpp_bus_driver::PlatformHal::GpioStatus::kPullup) ||
+      !platform_hal.SetGpioMode(keyboard::gpio::t_mix_rf::cc1101::kGdo2,
+          cpp_bus_driver::PlatformHal::GpioMode::kInput)) {
+    printf("CC1101 GPIO initialization failed\n");
+    return;
   }
 
-  status = cc1101->startReceive();
-  if (status != RADIOLIB_ERR_NONE) {
-    printf("startReceive failed (error code: %d)\n", status);
+  RadiolibCppBusDriverHal radiolib_hal(driver.bus().cc1101_spi_bus,
+      keyboard::device::cc1101::kSpiFrequencyHz,
+      keyboard::gpio::t_mix_rf::cc1101::kCs);
+  Module module(&radiolib_hal, static_cast<uint32_t>(RADIOLIB_NC),
+      keyboard::gpio::t_mix_rf::cc1101::kGdo0,
+      static_cast<uint32_t>(RADIOLIB_NC),
+      keyboard::gpio::t_mix_rf::cc1101::kGdo2);
+  CC1101 cc1101(&module);
+  int16_t result = cc1101.begin(868.0);
+  if (result != RADIOLIB_ERR_NONE) {
+    printf("CC1101 initialization failed (error: %d)\n", result);
+    return;
+  }
+  result = cc1101.setSyncWord(0xAA, 0xBB);
+  if (result != RADIOLIB_ERR_NONE) {
+    printf("CC1101 sync word configuration failed (error: %d)\n", result);
+    return;
+  }
+  result = cc1101.variablePacketLengthMode(kMaxPacketLength);
+  if (result != RADIOLIB_ERR_NONE) {
+    printf("CC1101 packet length configuration failed (error: %d)\n", result);
+    return;
+  }
+  result = cc1101.startReceive();
+  if (result != RADIOLIB_ERR_NONE) {
+    printf("CC1101 receive start failed (error: %d)\n", result);
+    return;
   }
 
-  g_interrupt_flag = false;
-
-  while (1) {
-    if (esp32p4->GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
-      vTaskDelay(pdMS_TO_TICKS(300));
-
-      printf("Cc1101 send package\n");
-
-      status = cc1101->transmit(g_send_package, 10);
-      if (status != RADIOLIB_ERR_NONE) {
-        printf("transmit failed (error code: %d)\n", status);
+  const uint8_t send_package[] = {'a', 'b', 'c', 'd', 'e',
+      'f', 'g', 'h', 'i', 'j'};
+  bool button_was_pressed = false;
+  while (true) {
+    if (platform_hal.GpioRead(keyboard::gpio::t_mix_rf::cc1101::kGdo0) == 1) {
+      uint8_t receive_package[kMaxPacketLength] = {};
+      const size_t length = cc1101.getPacketLength();
+      if (length > 0 && length <= sizeof(receive_package)) {
+        result = cc1101.readData(receive_package, length);
+        if (result == RADIOLIB_ERR_NONE) {
+          printf("CC1101 received %zu bytes, RSSI: %.2f dBm\n",
+              length, cc1101.getRSSI());
+          for (size_t i = 0; i < length; ++i) {
+            printf("CC1101 data[%zu]: %u\n", i,
+                static_cast<unsigned int>(receive_package[i]));
+          }
+        } else {
+          printf("CC1101 receive failed (error: %d)\n", result);
+        }
+      } else {
+        printf("CC1101 invalid packet length: %zu\n", length);
       }
-
-      status = cc1101->startReceive();
-      if (status != RADIOLIB_ERR_NONE) {
-        printf("startReceive failed (error code: %d)\n", status);
+      result = cc1101.startReceive();
+      if (result != RADIOLIB_ERR_NONE) {
+        printf("CC1101 receive restart failed (error: %d)\n", result);
+        return;
       }
-
-      g_interrupt_flag = false;
     }
 
-    if (g_interrupt_flag) {
-      uint8_t receive_package[255] = {0};
-      if (cc1101->readData(receive_package, 9) == RADIOLIB_ERR_NONE) {
-        for (uint8_t i = 0; i < 9; i++) {
-          printf("Get t_mixrf_cc1101 data[%d]: %d\n", i, receive_package[i]);
+    const bool button_pressed =
+        platform_hal.GpioRead(board::gpio::button::kEsp32p4Boot) == 0;
+    if (button_pressed && !button_was_pressed) {
+      vTaskDelay(pdMS_TO_TICKS(30));
+      if (platform_hal.GpioRead(board::gpio::button::kEsp32p4Boot) == 0) {
+        result = cc1101.transmit(send_package, sizeof(send_package));
+        printf("CC1101 transmit result: %d\n", result);
+        result = cc1101.startReceive();
+        if (result != RADIOLIB_ERR_NONE) {
+          printf("CC1101 receive restart failed (error: %d)\n", result);
+          return;
         }
       }
-
-      status = cc1101->startReceive();
-      if (status != RADIOLIB_ERR_NONE) {
-        printf("startReceive failed (error code: %d)\n", status);
-      }
-
-      g_interrupt_flag = false;
     }
-
+    button_was_pressed = button_pressed;
     vTaskDelay(pdMS_TO_TICKS(10));
   }
 }

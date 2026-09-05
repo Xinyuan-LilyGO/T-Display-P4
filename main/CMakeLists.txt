@@ -15,10 +15,6 @@ elseif(CONFIG_EXAMPLE_BUILD_AFE)
     set(project_path "examples/afe/")
 elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_SX1262_SEND_RECEIVE)
     set(project_path "examples/radiolib_sx1262_send_receive/")
-elseif(CONFIG_EXAMPLE_BUILD_XL9555)
-    set(project_path "keyboard_examples/xl9555/")
-elseif(CONFIG_EXAMPLE_BUILD_TCA8418)
-    set(project_path "keyboard_examples/tca8418/")
 elseif(CONFIG_EXAMPLE_BUILD_CC1101_SEND_RECEIVE)
     set(project_path "keyboard_examples/radiolib_cc1101_send_receive/")
 elseif(CONFIG_EXAMPLE_BUILD_RADIOLIB_CC1101_SEND_RECEIVE)
@@ -41,3 +37,22 @@ endif()
 
 idf_component_register(SRC_DIRS ${project_path} 
                         INCLUDE_DIRS ${project_path})
+
+if(CONFIG_EXAMPLE_BUILD_NFC_RFAL_ST25R3916)
+    idf_component_get_property(arduino_rfal_dir NFC-RFAL COMPONENT_DIR)
+    idf_component_get_property(arduino_st25r3916_dir ST25R3916 COMPONENT_DIR)
+    idf_component_get_property(native_rfal_dir stsw-st25rfal002_cpp_bus_driver COMPONENT_DIR)
+
+    # The Arduino and native RFAL headers share names but define different APIs.
+    set_property(SOURCE "keyboard_examples/nfc-rfal_st25r3916/st25r3916_driver.cpp"
+        APPEND PROPERTY INCLUDE_DIRECTORIES
+        "${arduino_rfal_dir}/src"
+        "${arduino_st25r3916_dir}/src")
+    set_property(SOURCE "keyboard_examples/nfc-rfal_st25r3916/main.cpp"
+        APPEND PROPERTY INCLUDE_DIRECTORIES
+        "${native_rfal_dir}/src"
+        "${native_rfal_dir}/src/platform"
+        "${native_rfal_dir}/third_party/STSW-ST25RFAL002/include"
+        "${native_rfal_dir}/third_party/STSW-ST25RFAL002/source"
+        "${native_rfal_dir}/third_party/STSW-ST25RFAL002/source/st25r3916")
+endif()

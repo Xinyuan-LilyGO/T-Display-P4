@@ -5,15 +5,28 @@
  * @LastEditTime: 2026-04-27 15:20:11
  * @License: GPL 3.0
  */
-#include "lilygo_device_driver_library.h"
+#include "lilygo_device_driver.h"
 #include "lvgl.h"
 #include "lvgl_keyboard_config.h"
 
+#include <algorithm>
+#include <cassert>
+#include <ctime>
 #include <iterator>
+#include <vector>
+
+#include "esp_heap_caps.h"
+#include "esp_lcd_mipi_dsi.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #define LVGL_TICK_PERIOD_MS 1
 
 namespace board = lilygo_device_driver::t_display_p4;
+namespace keyboard = board::keyboard_expansion::device::tca8418;
+using DeviceDriver = lilygo_device_driver::TDisplayP4Driver;
+static_assert(keyboard::kMap.size() == std::size(Tca8418_Map_Lvgl));
 
 std::vector<uint16_t> g_lvgl_draw_x_data;
 std::vector<uint16_t> g_lvgl_draw_y_data;
@@ -24,21 +37,82 @@ bool g_need_clear_lock_flag = false;
 static lv_obj_t* g_canvas;
 static lv_layer_t g_layer;
 static lv_obj_t* g_keyboard_label;
+static uint8_t* g_rotation_buffer = nullptr;
 
 lv_point_t g_point;
 
-cpp_bus_driver::Xl95x5* g_xl9555 = nullptr;
 cpp_bus_driver::Tca8418* g_tca8418 = nullptr;
 
-#if defined CONFIG_SCREEN_TYPE_HI8561
-cpp_bus_driver::Hi8561* g_screen = nullptr;
-cpp_bus_driver::Hi8561Touch* g_touch = nullptr;
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-cpp_bus_driver::Rm69a10* g_screen = nullptr;
-cpp_bus_driver::Gt9895* g_touch = nullptr;
-#endif
+lv_color_format_t ScreenColorFormat() {
+  return DeviceDriver::GetInstance().screen_info().bits_per_pixel == 24
+             ? LV_COLOR_FORMAT_RGB888
+             : LV_COLOR_FORMAT_RGB565;
+}
 
-volatile bool g_interrupt_flag = false;
+void ShowKeyLabel(const keyboard::KeyMapping& mapping) {
+  if (mapping.key == keyboard::KeyCode::kCharacter) {
+    const char label[] = {mapping.character, '\0'};
+    lv_label_set_text(g_keyboard_label, label);
+    return;
+  }
+  if (mapping.key >= keyboard::KeyCode::kF1 &&
+      mapping.key <= keyboard::KeyCode::kF11) {
+    lv_label_set_text_fmt(g_keyboard_label, "F%u",
+        static_cast<unsigned int>(mapping.key) -
+            static_cast<unsigned int>(keyboard::KeyCode::kF1) + 1);
+    return;
+  }
+  switch (mapping.key) {
+    case keyboard::KeyCode::kEscape:
+      lv_label_set_text(g_keyboard_label, "Esc");
+      break;
+    case keyboard::KeyCode::kBackspace:
+      lv_label_set_text(g_keyboard_label, "Backspace");
+      break;
+    case keyboard::KeyCode::kEnter:
+      lv_label_set_text(g_keyboard_label, "Enter");
+      break;
+    case keyboard::KeyCode::kTab:
+      lv_label_set_text(g_keyboard_label, "Tab");
+      break;
+    case keyboard::KeyCode::kUp:
+      lv_label_set_text(g_keyboard_label, "Up");
+      break;
+    case keyboard::KeyCode::kDown:
+      lv_label_set_text(g_keyboard_label, "Down");
+      break;
+    case keyboard::KeyCode::kLeft:
+      lv_label_set_text(g_keyboard_label, "Left");
+      break;
+    case keyboard::KeyCode::kRight:
+      lv_label_set_text(g_keyboard_label, "Right");
+      break;
+    case keyboard::KeyCode::kCapsLock:
+      lv_label_set_text(g_keyboard_label, "Caps");
+      break;
+    case keyboard::KeyCode::kShift:
+      lv_label_set_text(g_keyboard_label, "Shift");
+      break;
+    case keyboard::KeyCode::kControl:
+      lv_label_set_text(g_keyboard_label, "Ctrl");
+      break;
+    case keyboard::KeyCode::kAlt:
+      lv_label_set_text(g_keyboard_label, "Alt");
+      break;
+    case keyboard::KeyCode::kMeta:
+      lv_label_set_text(g_keyboard_label, "Win");
+      break;
+    case keyboard::KeyCode::kFunction:
+      lv_label_set_text(g_keyboard_label, "Fn");
+      break;
+    case keyboard::KeyCode::kRecord:
+      lv_label_set_text(g_keyboard_label, "Record");
+      break;
+    default:
+      lv_label_set_text(g_keyboard_label, "Unknown");
+      break;
+  }
+}
 
 void LvglUiTask(void* arg) {
   printf("LvglUiTask start\n");
@@ -62,119 +136,100 @@ void LvglUiTask(void* arg) {
   }
 }
 
-void MyTouchpadRead(lv_indev_t* indev, lv_indev_data_t* data) {
-#if defined CONFIG_SCREEN_TYPE_HI8561
-  cpp_bus_driver::Hi8561Touch::TouchPoint tp;
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-  cpp_bus_driver::Gt9895::TouchPoint tp;
-#endif
+void MyTouchpadRead(lv_indev_t*, lv_indev_data_t* data) {
+  auto& driver = DeviceDriver::GetInstance();
+  cpp_bus_driver::TouchFrame frame;
+  cpp_bus_driver::TouchReadStatus status =
+      cpp_bus_driver::TouchReadStatus::kNoData;
+  if (driver.screen_type() == board::device::ScreenType::kHi8561) {
+    status = driver.chip().hi8561_touch->ReadPrimaryTouch(&frame);
+  } else if (driver.screen_type() == board::device::ScreenType::kRm69a10) {
+    status = driver.chip().gt9895->ReadPrimaryTouch(&frame);
+  }
 
-  if ((g_touch->GetSingleTouchPoint(tp) == true) && !tp.info.empty()) {
+  if (status == cpp_bus_driver::TouchReadStatus::kSuccess &&
+      frame.contact_count != 0) {
     data->state = LV_INDEV_STATE_PR;
-    data->point.x = tp.info[0].x;
-    data->point.y = tp.info[0].y;
+    data->point.x = frame.contacts[0].x;
+    data->point.y = frame.contacts[0].y;
   } else {
     data->state = LV_INDEV_STATE_REL;
   }
 }
 
-void MyKeyboardRead(lv_indev_t* indev, lv_indev_data_t* data) {
+void MyKeyboardRead(lv_indev_t*, lv_indev_data_t* data) {
   static uint32_t last_key = 0;
+  static uint8_t last_key_number = 0;
   static bool pressed_state_flag = false;
   static bool caps_lock_flag = false;
+  static cpp_bus_driver::Tca8418::TouchPoint events;
+  static size_t event_index = 0;
 
-  if (g_interrupt_flag == true) {
+  // Deliver every FIFO event separately so a quick press/release reaches LVGL.
+  if (event_index >= events.info.size()) {
+    events.info.clear();
+    event_index = 0;
+    const uint8_t irq_flags = g_tca8418->GetIrqFlag();
     cpp_bus_driver::Tca8418::IrqStatus irq_status;
-
-    if (g_tca8418->ParseIrqStatus(g_tca8418->GetIrqFlag(), irq_status) ==
-        false) {
-      printf("ParseIrqStatus failed\n");
-    } else if (irq_status.key_events_flag == true) {
-      cpp_bus_driver::Tca8418::TouchPoint tp;
-
-      if (g_tca8418->GetMultipleTouchPoint(tp) == true) {
-        printf("Touch finger: %d\n", tp.finger_count);
-
-        for (uint8_t i = 0; i < tp.info.size(); i++) {
-          switch (tp.info[i].event_type) {
-            case cpp_bus_driver::Tca8418::EventType::kKeypad: {
-              cpp_bus_driver::Tca8418::TouchPosition touch_position;
-
-              if (g_tca8418->ParseTouchNum(tp.info[i].num, touch_position) ==
-                  true) {
-                printf("Keypad event\n");
-                printf("   Touch num:[%d] num: %d x: %d y: %d press flag: %d\n",
-                       i + 1, tp.info[i].num, touch_position.x,
-                       touch_position.y, tp.info[i].press_flag);
-
-                const auto& key_map = board::keyboard::device::tca8418::kMap;
-                const size_t key_count = std::size(key_map);
-                const size_t lvgl_key_count =
-                    sizeof(Tca8418_Map_Lvgl) / sizeof(uint32_t);
-                const bool key_valid = (tp.info[i].num > 0) &&
-                                       (tp.info[i].num <= key_count) &&
-                                       (tp.info[i].num <= lvgl_key_count);
-                const size_t key_index = tp.info[i].num - 1;
-
-                if (key_valid) {
-                  printf("   Touch string: %s\n",
-                         key_map[key_index].c_str());
-                  lv_label_set_text(g_keyboard_label,
-                                    key_map[key_index].c_str());
-                }
-
-                if (tp.info[i].press_flag == 1) {
-                  pressed_state_flag = true;
-
-                  if (key_valid && (key_map[key_index] == "Caps")) {
-                    caps_lock_flag = !caps_lock_flag;
-
-                    const uint8_t led_value = caps_lock_flag ? 0 : 1;
-                    g_xl9555->GpioWrite(
-                        board::keyboard::gpio::xl9555::kLed1, led_value);
-                    g_xl9555->GpioWrite(
-                        board::keyboard::gpio::xl9555::kLed2, led_value);
-                    g_xl9555->GpioWrite(
-                        board::keyboard::gpio::xl9555::kLed3, led_value);
-                  }
-
-                  if (key_valid) {
-                    last_key = Tca8418_Map_Lvgl[key_index];
-                    if ((caps_lock_flag == true) && (last_key >= 'a') &&
-                        (last_key <= 'z')) {
-                      last_key = last_key - 'a' + 'A';
-                    }
-                  }
-                } else {
-                  pressed_state_flag = false;
-                }
-              }
-              break;
-            }
-
-            case cpp_bus_driver::Tca8418::EventType::kGpio:
-              printf("Gpio event\n");
-              printf("   Touch num:[%d] num: %d press flag: %d\n", i + 1,
-                     tp.info[i].num, tp.info[i].press_flag);
-              break;
-
-            default:
-              break;
-          }
-        }
+    if (g_tca8418->ParseIrqStatus(irq_flags, irq_status)) {
+      if (irq_status.fifo_overflow_flag) {
+        printf("Keyboard FIFO overflow\n");
+        pressed_state_flag = false;
       }
-
-      g_tca8418->ClearIrqFlag(cpp_bus_driver::Tca8418::IrqFlag::kKeyEvents);
+      if (irq_status.gpio_interrupt_flag) {
+        uint32_t gpio_flags = 0;
+        g_tca8418->GetClearGpioIrqFlag(&gpio_flags);
+      }
+      g_tca8418->ClearIrqFlag(irq_flags);
+      // Poll the FIFO as well as IRQ status to retain events around IRQ clear.
+      g_tca8418->GetMultipleTouchPoint(events);
+    } else {
+      pressed_state_flag = false;
     }
-
-    g_interrupt_flag = false;
   }
 
+  if (event_index < events.info.size()) {
+    const auto& event = events.info[event_index++];
+    const bool key_valid =
+        event.event_type == cpp_bus_driver::Tca8418::EventType::kKeypad &&
+        event.num > 0 && event.num <= keyboard::kMap.size() &&
+        event.num <= std::size(Tca8418_Map_Lvgl);
+    if (key_valid) {
+      const size_t key_index = event.num - 1;
+      const auto& mapping = keyboard::kMap[key_index];
+      ShowKeyLabel(mapping);
+
+      if (event.press_flag) {
+        if (mapping.key == keyboard::KeyCode::kCapsLock) {
+          caps_lock_flag = !caps_lock_flag;
+          auto& driver = DeviceDriver::GetInstance();
+          for (auto led : {DeviceDriver::KeyboardExpansionLed::kLed1,
+                   DeviceDriver::KeyboardExpansionLed::kLed2,
+                   DeviceDriver::KeyboardExpansionLed::kLed3}) {
+            driver.SetKeyboardExpansionLed(led, caps_lock_flag);
+          }
+        } else {
+          last_key_number = event.num;
+          last_key = mapping.key == keyboard::KeyCode::kCharacter
+                         ? static_cast<uint32_t>(mapping.character)
+                         : Tca8418_Map_Lvgl[key_index];
+          if (caps_lock_flag && last_key >= 'a' && last_key <= 'z') {
+            last_key = last_key - 'a' + 'A';
+          }
+          pressed_state_flag = true;
+        }
+      } else if (event.num == last_key_number) {
+        pressed_state_flag = false;
+      }
+    }
+  }
+
+  data->continue_reading = event_index < events.info.size();
+  data->key = last_key;
   if (pressed_state_flag == false) {
     data->state = LV_INDEV_STATE_RELEASED;
   } else {
     data->state = LV_INDEV_STATE_PRESSED;
-    data->key = last_key;
   }
 }
 
@@ -224,22 +279,17 @@ void DrawPoint(lv_event_t* e) {
 }
 
 void InitLvglCanvas(void) {
-  void* draw_buf = NULL;
-  size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
-  draw_buf = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
+  const int width = lv_display_get_horizontal_resolution(nullptr);
+  const int height = lv_display_get_vertical_resolution(nullptr);
+  const auto color_format = ScreenColorFormat();
+  const size_t draw_buffer_sz =
+      static_cast<size_t>(lv_draw_buf_width_to_stride(width, color_format)) *
+      height;
+  void* draw_buf = heap_caps_malloc(draw_buffer_sz, MALLOC_CAP_SPIRAM);
+  assert(draw_buf != nullptr);
 
   g_canvas = lv_canvas_create(lv_screen_active());
-  lv_canvas_set_buffer(g_canvas, draw_buf, SCREEN_WIDTH, SCREEN_HEIGHT,
-                       [](uint8_t format) -> lv_color_format_t {
-                         switch (format) {
-                           case 16:
-                             return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
-                           case 24:
-                             return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
-                           default:
-                             return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
-                         }
-                       }(SCREEN_BITS_PER_PIXEL));
+  lv_canvas_set_buffer(g_canvas, draw_buf, width, height, color_format);
   lv_canvas_fill_bg(g_canvas, lv_color_hex3(0xCCC), LV_OPA_COVER);
   lv_obj_center(g_canvas);
 
@@ -267,24 +317,27 @@ void InitLvgl(void) {
 
   lv_init();
 
-  lv_display_t* display = lv_display_create(SCREEN_WIDTH, SCREEN_HEIGHT);
-  lv_display_set_user_data(display, g_screen);
-  lv_display_set_color_format(display, [](uint8_t format) -> lv_color_format_t {
-    switch (format) {
-      case 16:
-        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
-      case 24:
-        return lv_color_format_t::LV_COLOR_FORMAT_RGB888;
-      default:
-        return lv_color_format_t::LV_COLOR_FORMAT_RGB565;
-    }
-  }(SCREEN_BITS_PER_PIXEL));
+  const auto& screen_info = DeviceDriver::GetInstance().screen_info();
+  lv_display_t* display =
+      lv_display_create(screen_info.width, screen_info.height);
+  assert(display != nullptr);
+  lv_display_set_color_format(display, ScreenColorFormat());
 
   printf("Allocate separate lvgl draw buffers\n");
-  size_t draw_buffer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(lv_color_t);
+  const size_t draw_buffer_sz = std::max(
+      static_cast<size_t>(lv_draw_buf_width_to_stride(
+          screen_info.width, ScreenColorFormat())) * screen_info.height,
+      static_cast<size_t>(lv_draw_buf_width_to_stride(
+          screen_info.height, ScreenColorFormat())) * screen_info.width);
   void* buf1 = heap_caps_malloc(
       draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
   assert(buf1);
+  if (board::device::screen::kRotationDirection != 0) {
+    // Keep the rotated pixels alive until the asynchronous panel flush ends.
+    g_rotation_buffer = static_cast<uint8_t*>(heap_caps_malloc(
+        draw_buffer_sz, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT | MALLOC_CAP_DMA));
+    assert(g_rotation_buffer != nullptr);
+  }
 
   lv_display_set_buffers(display, buf1, NULL, draw_buffer_sz,
                          LV_DISPLAY_RENDER_MODE_PARTIAL);
@@ -293,7 +346,6 @@ void InitLvgl(void) {
                                       uint8_t* px_map) {
     lv_display_rotation_t rotation = lv_display_get_rotation(disp);
     lv_area_t rotated_area;
-    std::unique_ptr<uint8_t[]> rotated_buf;
 
     if (rotation != LV_DISPLAY_ROTATION_0) {
       lv_color_format_t color_format = lv_display_get_color_format(disp);
@@ -306,27 +358,30 @@ void InitLvgl(void) {
           lv_area_get_width(&rotated_area), color_format);
       int32_t src_w = lv_area_get_width(area);
       int32_t src_h = lv_area_get_height(area);
-      rotated_buf = std::make_unique<uint8_t[]>(SCREEN_WIDTH * SCREEN_HEIGHT *
-                                                (SCREEN_BITS_PER_PIXEL / 8));
-      lv_draw_sw_rotate(px_map, rotated_buf.get(), src_w, src_h, src_stride,
+      lv_draw_sw_rotate(px_map, g_rotation_buffer, src_w, src_h, src_stride,
                         dest_stride, rotation, color_format);
 
       area = &rotated_area;
-      px_map = rotated_buf.get();
+      px_map = g_rotation_buffer;
     }
 
-#if defined CONFIG_SCREEN_TYPE_HI8561
-    auto screen = (cpp_bus_driver::Hi8561*)lv_display_get_user_data(disp);
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-        auto screen = (cpp_bus_driver::Rm69a10*)lv_display_get_user_data(disp);
-#endif
-
-    int offsetx1 = area->x1;
-    int offsetx2 = area->x2;
-    int offsety1 = area->y1;
-    int offsety2 = area->y2;
-    screen->SendColorStreamCoordinate(offsetx1, offsety1, offsetx2 + 1,
-                                      offsety2 + 1, px_map);
+    auto& driver = DeviceDriver::GetInstance();
+    bool sent = false;
+    switch (driver.screen_type()) {
+      case board::device::ScreenType::kHi8561:
+        sent = driver.chip().hi8561->SendColorStreamCoordinate(
+            area->x1, area->y1, area->x2 + 1, area->y2 + 1, px_map);
+        break;
+      case board::device::ScreenType::kRm69a10:
+        sent = driver.chip().rm69a10->SendColorStreamCoordinate(
+            area->x1, area->y1, area->x2 + 1, area->y2 + 1, px_map);
+        break;
+      default:
+        break;
+    }
+    if (!sent) {
+      lv_display_flush_ready(disp);
+    }
   });
 
   lv_indev_t* indev = lv_indev_create();
@@ -376,14 +431,14 @@ void InitLvgl(void) {
           default:
             return lv_display_rotation_t::LV_DISPLAY_ROTATION_0;
         }
-      }(SCREEN_ROTATION_DIRECTION));
+      }(board::device::screen::kRotationDirection));
 }
 
 void InitLvglKeyboard(void) {
   lv_obj_t* text_area = lv_textarea_create(g_canvas);
   lv_obj_set_width(text_area, 300);
   lv_obj_set_height(text_area, 150);
-  lv_obj_align(text_area, LV_ALIGN_BOTTOM_MID, -370, -50);
+  lv_obj_align(text_area, LV_ALIGN_BOTTOM_LEFT, 24, -50);
   lv_obj_set_style_bg_opa(text_area, LV_OPA_50, 0);
   lv_obj_set_style_text_font(text_area, &lv_font_montserrat_24, 0);
   lv_obj_remove_flag(text_area, LV_OBJ_FLAG_CLICKABLE);
@@ -418,43 +473,40 @@ void InitLvglKeyboard(void) {
 extern "C" void app_main(void) {
   printf("Ciallo\n");
 
-  auto& driver = lilygo_device_driver::TDisplayP4Driver::GetInstance();
-  driver.Init();
+  auto& driver = DeviceDriver::GetInstance();
+  if (!driver.InitMinimal() || !driver.InitScreen() || !driver.InitTouch() ||
+      !driver.InitScreenBacklight()) {
+    printf("Screen or touch initialization failed\n");
+    return;
+  }
+  if (!driver.InitKeyboardExpansion()) {
+    printf("Keyboard expansion initialization completed with errors\n");
+  }
+  if (!driver.IsTca8418Ready() || !driver.IsXl9555Ready() ||
+      !driver.IsSy7200aReady()) {
+    printf("Keyboard or keyboard backlight initialization failed\n");
+    return;
+  }
 
-  g_xl9555 = driver.chip().xl9555.get();
   g_tca8418 = driver.chip().tca8418.get();
-
-#if defined CONFIG_SCREEN_TYPE_HI8561
-  g_screen = driver.chip().hi8561.get();
-  g_touch = driver.chip().hi8561_touch.get();
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-  g_screen = driver.chip().rm69a10.get();
-  g_touch = driver.chip().gt9895.get();
-#endif
-
-  auto esp32p4 = std::make_unique<cpp_bus_driver::Tool>();
-  esp32p4->InitGpioInterrupt(
-      board::keyboard::gpio::tca8418::kInt,
-      cpp_bus_driver::Tool::InterruptMode::kFalling,
-      [](void* arg) -> void { g_interrupt_flag = true; });
-
-  driver.chip().tca8418_backlight->StartGradientTime(30, 1000);
+  driver.chip().sy7200a->FadeTo(
+      {.value = 1, .scale = 2}, 1000, cpp_bus_driver::Pwm::FadeMode::kNoWait);
 
   InitLvgl();
   InitLvglCanvas();
   InitLvglKeyboard();
-  xTaskCreate(LvglUiTask, "LvglUiTask", 4 * 1024, NULL, 2, NULL);
-
-  while (lv_display_flush_is_last(lv_display_get_default()) == false) {
-    vTaskDelay(pdMS_TO_TICKS(10));
+  lv_refr_now(lv_display_get_default());
+  if (driver.screen_type() == board::device::ScreenType::kHi8561) {
+    driver.chip().pt4103->FadeTo({.value = 1, .scale = 1}, 500,
+        cpp_bus_driver::Pwm::FadeMode::kNoWait);
+  } else if (driver.screen_type() == board::device::ScreenType::kRm69a10) {
+    for (uint16_t brightness = 0; brightness <= 255; brightness += 5) {
+      driver.chip().rm69a10->SetBrightness(static_cast<uint8_t>(brightness));
+      vTaskDelay(pdMS_TO_TICKS(10));
+    }
   }
-
-#if defined CONFIG_SCREEN_TYPE_HI8561
-  driver.chip().hi8561_backlight->StartGradientTime(100, 500);
-#elif defined CONFIG_SCREEN_TYPE_RM69A10
-  for (uint8_t i = 0; i < 255; i += 5) {
-    g_screen->SetBrightness(i);
-    vTaskDelay(pdMS_TO_TICKS(10));
+  if (xTaskCreate(LvglUiTask, "LvglUiTask", 16 * 1024, NULL, 2, NULL) !=
+      pdPASS) {
+    printf("LVGL task creation failed\n");
   }
-#endif
 }
