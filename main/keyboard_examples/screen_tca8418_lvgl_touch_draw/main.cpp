@@ -492,6 +492,19 @@ extern "C" void app_main(void) {
   driver.chip().sy7200a->FadeTo(
       {.value = 1, .scale = 2}, 1000, cpp_bus_driver::Pwm::FadeMode::kNoWait);
 
+  bool screen_awake = false;
+  if (driver.screen_type() == board::device::ScreenType::kHi8561) {
+    screen_awake = driver.chip().hi8561->SetSleep(false) &&
+                   driver.chip().hi8561->SetScreenOff(false);
+  } else if (driver.screen_type() == board::device::ScreenType::kRm69a10) {
+    screen_awake = driver.chip().rm69a10->SetSleep(false) &&
+                   driver.chip().rm69a10->SetScreenOff(false);
+  }
+  if (!screen_awake) {
+    printf("Screen wake-up failed\n");
+    return;
+  }
+
   InitLvgl();
   InitLvglCanvas();
   InitLvglKeyboard();
