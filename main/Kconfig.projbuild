@@ -31,12 +31,6 @@ menu "Example Configuration"
                 bool "screen_tca8418_lvgl_touch_draw"
             config EXAMPLE_BUILD_ETHERNET_IPERF
                 bool "ethernet_iperf"
-            config EXAMPLE_BUILD_USB_ETHERNET_IPERF
-                bool "usb_ethernet_iperf"
-            config EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC
-                bool "usb_ethernet_iperf_host_msc"
-            config EXAMPLE_BUILD_USB_HOST_MSC
-                bool "usb_host_msc"
 
     endchoice
 

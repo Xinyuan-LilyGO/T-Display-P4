@@ -27,12 +27,6 @@ elseif(CONFIG_EXAMPLE_BUILD_SCREEN_TCA8418_LVGL_TOUCH_DRAW)
     set(project_path "keyboard_examples/screen_tca8418_lvgl_touch_draw/")
 elseif(CONFIG_EXAMPLE_BUILD_ETHERNET_IPERF)
     set(project_path "examples/ethernet_iperf/")
-elseif(CONFIG_EXAMPLE_BUILD_USB_ETHERNET_IPERF)
-    set(project_path "examples/usb_ethernet_iperf/")
-elseif(CONFIG_EXAMPLE_BUILD_USB_ETHERNET_IPERF_HOST_MSC)
-    set(project_path "examples/usb_ethernet_iperf_host_msc/")
-elseif(CONFIG_EXAMPLE_BUILD_USB_HOST_MSC)
-    set(project_path "examples/usb_host_msc/")
 endif()
 
 idf_component_register(SRC_DIRS ${project_path} 
