@@ -274,6 +274,8 @@ Example Configuration
 | --- | --- |
 | [`T-Display-P4 V1.0 TFT`](<./project/T-Display-P4_V1.0(H0405S002T002-V0)_202601061148.pdf>) | 4.05 英寸 TFT 组件的 V1.0 硬件项目 PDF |
 | [`T-Display-P4 V1.0 AMOLED`](<./project/T-Display-P4_V1.0(H0410S001AMT001-V0)_202601061148.pdf>) | 4.1 英寸 AMOLED 组件的 V1.0 硬件项目 PDF |
+| [`T-Display-P4 Keyboard V1.1`](./project/T-Display-P4-Keyboard_V1.1.pdf) | 键盘扩展板原理图 |
+| [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 电池板原理图 |
 | [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 评估预览版硬件项目 PDF |
 | [`docs`](./docs) | 数据手册与外设文档 |
 | [`功耗测试日志`](<./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf>) | T-Display-P4 V1.0 功耗测试数据 |
