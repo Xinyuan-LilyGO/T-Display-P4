@@ -274,6 +274,8 @@ Example Configuration
 | --- | --- |
 | [`T-Display-P4 V1.0 TFT`](<./project/T-Display-P4_V1.0(H0405S002T002-V0)_202601061148.pdf>) | 4.05 英寸 TFT 组件的 V1.0 硬件项目 PDF |
 | [`T-Display-P4 V1.0 AMOLED`](<./project/T-Display-P4_V1.0(H0410S001AMT001-V0)_202601061148.pdf>) | 4.1 英寸 AMOLED 组件的 V1.0 硬件项目 PDF |
+| [`LR2021 433 MHz V0.3`](./project/LR2021_433_V0.3.pdf) | LR2021 433 MHz 射频原理图 |
+| [`LR2021 868/915 MHz V1.0`](./project/LR2021_868_915_V1.0.pdf) | LR2021 868/915 MHz 射频原理图 |
 | [`T-Display-P4 Keyboard V1.1`](./project/T-Display-P4-Keyboard_V1.1.pdf) | 键盘扩展板原理图 |
 | [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 电池板原理图 |
 | [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 评估预览版硬件项目 PDF |

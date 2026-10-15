@@ -282,6 +282,8 @@ Board pin definitions are provided in the device-driver configuration files:
 | --- | --- |
 | [`T-Display-P4 V1.0 TFT`](<./project/T-Display-P4_V1.0(H0405S002T002-V0)_202601061148.pdf>) | V1.0 hardware project PDF for the 4.05-inch TFT assembly |
 | [`T-Display-P4 V1.0 AMOLED`](<./project/T-Display-P4_V1.0(H0410S001AMT001-V0)_202601061148.pdf>) | V1.0 hardware project PDF for the 4.1-inch AMOLED assembly |
+| [`LR2021 433 MHz V0.3`](./project/LR2021_433_V0.3.pdf) | LR2021 433 MHz radio schematic |
+| [`LR2021 868/915 MHz V1.0`](./project/LR2021_868_915_V1.0.pdf) | LR2021 868/915 MHz radio schematic |
 | [`T-Display-P4 Keyboard V1.1`](./project/T-Display-P4-Keyboard_V1.1.pdf) | Keyboard expansion board schematic |
 | [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 battery board schematic |
 | [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 evaluation-preview hardware project PDF |
