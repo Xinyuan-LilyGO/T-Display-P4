@@ -288,7 +288,7 @@ Board pin definitions are provided in the device-driver configuration files:
 | [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 battery board schematic |
 | [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 evaluation-preview hardware project PDF |
 | [`TW504045 1000 mAh IEC 62133`](<./docs/芯元TW504045-1000mAh-IEC 62133.pdf>) | 1000 mAh battery specification and IEC 62133 document |
-| [`T-Display-P4 V1.0 enclosure CAD`](./structure/T-Display-P4_V1.0_enclosure.dxf) | Enclosure CAD drawing for mechanical reference |
+| [`T-Display-P4 V1.0 PCB CAD`](./structure/T-Display-P4_V1.0_PCB.dxf) | PCB CAD drawing for mechanical reference |
 | [`docs`](./docs) | Datasheets and peripheral documentation |
 | [`Power Consumption Test Log`](<./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf>) | T-Display-P4 V1.0 power-consumption measurements |
 
