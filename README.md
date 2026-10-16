@@ -286,7 +286,7 @@ Board pin definitions are provided in the device-driver configuration files:
 | [`LR2021 868/915 MHz V1.0`](./project/LR2021_868_915_V1.0.pdf) | LR2021 868/915 MHz radio schematic |
 | [`T-Display-P4 Keyboard V1.1`](./project/T-Display-P4-Keyboard_V1.1.pdf) | Keyboard expansion board schematic |
 | [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 battery board schematic |
-| [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 evaluation-preview hardware project PDF |
+| [`T-Display-P4 V2.0 Evaluation Preview - Updated 2026-10-16`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202610161400.pdf>) | Latest V2.0 evaluation-preview schematic revision |
 | [`TW504045 1000 mAh IEC 62133`](<./docs/芯元TW504045-1000mAh-IEC 62133.pdf>) | 1000 mAh battery specification and IEC 62133 document |
 | [`T-Display-P4 V1.0 PCB CAD`](./structure/T-Display-P4_V1.0_PCB.dxf) | PCB CAD drawing for mechanical reference |
 | [`docs`](./docs) | Datasheets and peripheral documentation |
