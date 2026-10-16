@@ -279,6 +279,8 @@ Example Configuration
 | [`T-Display-P4 Keyboard V1.1`](./project/T-Display-P4-Keyboard_V1.1.pdf) | 键盘扩展板原理图 |
 | [`T-Display-P4 Battery V1.2`](./project/T-Display-P4-Battery_V1.2.pdf) | 21700 电池板原理图 |
 | [`T-Display-P4 V2.0 Evaluation Preview`](<./project/T-Display-P4_v2.0(Evaluation Preview)_202605221021.pdf>) | V2.0 评估预览版硬件项目 PDF |
+| [`TW504045 1000 mAh IEC 62133`](<./docs/芯元TW504045-1000mAh-IEC 62133.pdf>) | 1000 mAh 电池规格及 IEC 62133 资料 |
+| [`T-Display-P4 V1.0 外壳 CAD`](./structure/T-Display-P4_V1.0_enclosure.dxf) | 用于机械定位参考的外壳 CAD 图纸 |
 | [`docs`](./docs) | 数据手册与外设文档 |
 | [`功耗测试日志`](<./relevant_test/PowerConsumptionTestLog_[T-Display-P4_V1.0]_20250605.pdf>) | T-Display-P4 V1.0 功耗测试数据 |
 
